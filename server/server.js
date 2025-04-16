@@ -1,9 +1,9 @@
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
-const dotenv = require('dotenv');
-const connectDB = require('./config/db');
-const { scheduleDailyCardReset, schedulePeriodicCardCheck } = require('./utils/scheduler');
+import express from "express";
+import cors from 'cors';
+import morgan from 'morgan';
+import dotenv from 'dotenv';
+import connectDB from './config/db.js';
+import { scheduleDailyCardReset, schedulePeriodicCardCheck } from './utils/scheduler.js';
 
 // 加载环境变量
 dotenv.config();
@@ -20,20 +20,20 @@ app.use(express.json()); // 解析JSON请求体
 app.use(morgan('dev')); // HTTP请求日志
 
 // 路由
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/tasks', require('./routes/taskRoutes'));
-app.use('/api/cards', require('./routes/cardRoutes'));
+import routes from "./routes/routes.js";
+app.use("/", routes);
 
-// 基本路由
-app.get('/', (req, res) => {
-  res.json({ message: 'API已运行' });
-});
+// app.use('/api/users', require('./routes/userRoutes'));
+// app.use('/api/tasks', require('./routes/taskRoutes'));
+// app.use('/api/cards', require('./routes/cardRoutes'));
+
+// // 基本路由
+// app.get('/', (req, res) => {
+//   res.json({ message: 'API已运行' });
+// });
 
 // 错误处理中间件
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: '服务器错误', error: process.env.NODE_ENV === 'development' ? err.message : undefined });
-});
+
 
 // 设置端口并启动服务器
 const PORT = process.env.PORT || 5000;

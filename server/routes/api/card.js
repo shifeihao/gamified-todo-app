@@ -1,12 +1,14 @@
-const express = require('express');
+import express from "express";
 const router = express.Router();
-const { protect } = require('../middleware/auth');
-const { 
+
+import { protect } from '../../middleware/auth.js';
+
+import {
   consumeCard,
   getCardInventory,
   issueDailyCards,
   issueRewardCard
-} = require('../controllers/cardController');
+} from '../../controllers/cardController.js';
 
 // 获取卡片库存
 router.route('/inventory')
@@ -24,4 +26,4 @@ router.route('/issue-reward')
 router.route('/consume')
   .post(protect, consumeCard);
 
-module.exports = router;
+export default router;

@@ -1,16 +1,19 @@
-const express = require('express');
+import express from "express";
 const router = express.Router();
-const {
-  getTasks,
-  createTask,
-  getTaskById,
-  updateTask,
-  deleteTask,
-  getEquippedTasks,
-  equipTask,
-  unequipTask,
-} = require('../controllers/taskController');
-const { protect } = require('../middleware/auth');
+
+import {
+    getTasks,
+    createTask,
+    getTaskById,
+    updateTask,
+    deleteTask,
+    getEquippedTasks,
+    equipTask,
+    unequipTask
+  } from '../../controllers/taskController.js';
+  
+import { protect } from '../../middleware/auth.js';
+  
 
 // 所有任务路由都需要认证
 router.use(protect);
@@ -39,4 +42,4 @@ router.route('/:id/equip')
 router.route('/:id/unequip')
   .put(unequipTask);
 
-module.exports = router;
+export default router;
