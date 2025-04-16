@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 // 卡片模型架构
 const cardSchema = new mongoose.Schema(
@@ -67,4 +67,4 @@ cardSchema.index({ user: 1, used: 1 });
 
 const Card = mongoose.model('Card', cardSchema);
 
-module.exports = Card;
+export default Card;

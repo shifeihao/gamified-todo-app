@@ -1,6 +1,6 @@
-const asyncHandler = require('express-async-handler');
-const Card = require('../models/Card');
-const User = require('../models/User');
+import asyncHandler from 'express-async-handler';
+import Card from '../models/Card.js';
+import User from '../models/User.js';
 
 // @desc    获取用户卡片库存
 // @route   GET /api/cards/inventory
@@ -161,7 +161,7 @@ const consumeCard = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = {
+export {
   consumeCard,
   getCardInventory,
   issueDailyCards,

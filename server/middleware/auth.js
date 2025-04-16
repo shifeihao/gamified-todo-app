@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 // JWT密钥，在实际项目中应该存储在环境变量中
 const JWT_SECRET = process.env.JWT_SECRET || 'mern_demo_secret_key';
@@ -51,4 +51,4 @@ const generateToken = (id) => {
   });
 };
 
-module.exports = { protect, admin, generateToken };
+export { protect, admin, generateToken };

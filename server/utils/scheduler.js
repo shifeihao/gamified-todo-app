@@ -1,6 +1,6 @@
-const cron = require('node-cron');
-const User = require('../models/User');
-const Card = require('../models/Card');
+import cron from 'node-cron';
+import User from '../models/User.js';
+import Card from '../models/Card.js';
 
 // 每天凌晨0点重置卡片
 const scheduleDailyCardReset = () => {
@@ -63,7 +63,7 @@ const schedulePeriodicCardCheck = () => {
   });
 };
 
-module.exports = {
+export {
   scheduleDailyCardReset,
   schedulePeriodicCardCheck
 };
