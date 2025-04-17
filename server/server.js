@@ -4,6 +4,8 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import { scheduleDailyCardReset, schedulePeriodicCardCheck } from './utils/scheduler.js';
+import { loadDefaultAchievements } from './utils/loadDefaultAchievements.js';
+
 
 // 加载环境变量
 dotenv.config();
@@ -37,16 +39,23 @@ app.use("/", routes);
 
 // 设置端口并启动服务器
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`服务器运行在端口 ${PORT}`);
-  
-  // 初始化定时任务
+
+  // 👇 初始化默认成就
+  try {
+    await loadDefaultAchievements();
+    console.log('默认成就同步完成');
+  } catch (e) {
+    console.error('成就导入失败:', e);
+  }
+
+  // 👇 初始化定时任务
   try {
     scheduleDailyCardReset();
     schedulePeriodicCardCheck();
     console.log('定时任务初始化成功');
   } catch (error) {
     console.error('定时任务初始化失败:', error);
-    console.log('请确保已安装 node-cron 依赖: npm install node-cron --save');
   }
 });
