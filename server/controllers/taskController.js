@@ -1,5 +1,5 @@
-const Task = require('../models/Task');
-const User = require('../models/User');
+import Task from '../models/Task.js';
+import User from '../models/User.js';
 
 // @desc    获取当前用户的所有任务
 // @route   GET /api/tasks
@@ -264,7 +264,7 @@ const unequipTask = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getTasks,
   createTask,
   getTaskById,
