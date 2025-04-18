@@ -201,7 +201,7 @@ router.route('/:id/unequip')
   - 对于长期任务，支持添加和删除子任务
   - 表单验证功能
 
-#### 4. 任务页面更新 (client/src/pages/TasksPage.js)
+#### 4. 任务页面更新 (client/src/pages/TasksPage)
 
 完全重写了TasksPage组件，整合了所有新组件：
 

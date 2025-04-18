@@ -1,9 +1,11 @@
+// index.js（原 TasksPage.js）
+
 import React, { useState, useEffect, useContext } from 'react';
 import Navbar from '../../components/Navbar';
 import CreateTaskModal from '../../components/CreateTaskModal';
 import AuthContext from '../../context/AuthContext';
 import DailyTaskPanel from './DailyTaskPanel';
-import LongtermTaskPanel from './LongtermTaskPanel';
+import TimetablePanel from './TimetablePanel';
 import RepositoryPanel from './RepositoryPanel';
 import {
   getTasks,
@@ -99,7 +101,7 @@ const TasksPage = () => {
       case 'daily':
         return (
             <DailyTaskPanel
-                tasks={tasks} // ✅ 必需
+                tasks={tasks}
                 equippedTasks={equippedTasks}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
@@ -107,11 +109,12 @@ const TasksPage = () => {
                 onUnequip={handleUnequip}
                 onDrop={handleDropToSlot}
                 onCreateTask={handleCreateFromSlot}
+                onEquip={handleEquip}
             />
         );
-      case 'longterm':
+      case 'timetable':
         return (
-            <LongtermTaskPanel
+            <TimetablePanel
                 tasks={tasks}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
@@ -251,7 +254,7 @@ const TasksPage = () => {
             <button onClick={() => setActiveTab('repository')} className={activeTab === 'repository' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}>
               任务仓库
             </button>
-            <button onClick={() => setActiveTab('longterm')} className={activeTab === 'longterm' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}>
+            <button onClick={() => setActiveTab('timetable')} className={activeTab === 'timetable' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}>
               Timetable
             </button>
           </div>
