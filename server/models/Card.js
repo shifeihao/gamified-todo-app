@@ -8,12 +8,13 @@ const cardSchema = new mongoose.Schema(
       required: true,
       ref: 'User', // 关联到User模型
     },
-    type: {
-      type: String,
-      enum: ['blank', 'special', 'periodic'],
-      default: 'blank',
-      required: true,
-    },
+      type: {
+          // 卡片类型：空白、自带奖励（周期卡片机制交由模板系统管理）
+          type: String,
+          enum: ['blank', 'special'],
+          default: 'blank',
+          required: true,
+      },
     title: {
       type: String,
       required: [true, '请提供卡片标题'],
@@ -24,6 +25,7 @@ const cardSchema = new mongoose.Schema(
       trim: true,
     },
     bonus: {
+        //金币和经验，默认倍率都是1
       experienceMultiplier: {
         type: Number,
         default: 1.0,
@@ -37,23 +39,28 @@ const cardSchema = new mongoose.Schema(
         default: '',
       },
     },
+      //表示是否为可重复使用的卡片
     reusable: {
       type: Boolean,
       default: false, // 默认卡片不可重复使用
     },
+      //发放时间
     issuedAt: {
       type: Date,
       default: Date.now,
     },
+      // 可选，卡片过期时间
     expiresAt: {
-      type: Date, // 可选，卡片过期时间
+      type: Date,
     },
+      // 标记卡片是否已使用
     used: {
       type: Boolean,
-      default: false, // 标记卡片是否已使用
+      default: false,
     },
+      // 周期性卡片的冷却时间
     cooldownUntil: {
-      type: Date, // 周期性卡片的冷却时间
+      type: Date,
     },
   },
   {

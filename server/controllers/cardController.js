@@ -148,7 +148,10 @@ const consumeCard = asyncHandler(async (req, res) => {
     $pull: { cardInventory: card.type !== 'periodic' ? cardId : null }
   });
 
-  // 5. 返回处理后的任务数据（包含加成）
+  // ✅ 5. 安全访问加成信息（避免空白卡报错）
+  const bonus = card.bonus || { experienceMultiplier: 1, goldMultiplier: 1 };
+
+  // 6. 返回处理后的任务数据（包含加成）
   res.status(200).json({
     success: true,
     processedTask: {
