@@ -73,13 +73,16 @@ const taskSchema = new mongoose.Schema(
     dueDate: {
       type: Date,
     },
+      //实际完成任务的时间
     completedAt: {
       type: Date,
     },
+      //实际获得的经验奖励（可能受卡片影响）
     experienceReward: {
       type: Number,
       default: 10,
     },
+      //实际获得的金币奖励（同上）
     goldReward: {
       type: Number,
       default: 5,
@@ -88,9 +91,10 @@ const taskSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+      //装备的任务槽位置（0、1、2），-1 表示未装备
     slotPosition: {
       type: Number,
-      default: -1, // -1表示未装备到任务槽
+      default: -1,
     },
     subTasks: [subTaskSchema], // 长期任务的子任务
   },

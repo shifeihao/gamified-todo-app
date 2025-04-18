@@ -51,7 +51,7 @@ function App() {
             path="/tasks"
             element={
               <ProtectedRoute>
-                <TasksPage />
+                <TasksPage/>
               </ProtectedRoute>
             }
           />
