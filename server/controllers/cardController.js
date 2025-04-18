@@ -1,4 +1,5 @@
 import asyncHandler from 'express-async-handler';
+import mongoose from 'mongoose';
 import Card from '../models/Card.js';
 import User from '../models/User.js';
 
@@ -106,18 +107,31 @@ const issueRewardCard = asyncHandler(async (req, res) => {
 // @access  Private
 const consumeCard = asyncHandler(async (req, res) => {
   const { cardId, taskData } = req.body;
+
+  // 校验 cardId 是否有效
+  if (!cardId || !mongoose.Types.ObjectId.isValid(cardId)) {
+    res.status(400);
+    throw new Error('无效的卡片ID');
+  }
+
   const user = await User.findById(req.user.id);
 
   // 1. 验证卡片
   const card = await Card.findOne({
     _id: cardId,
-    user: req.user.id,
-    used: false
+    user: req.user.id
   });
+  // console.log("Card: ", card);
 
   if (!card) {
     res.status(400);
     throw new Error('无效的卡片');
+  }
+
+  // 检查卡片是否已使用
+  if (card.type !== 'periodic' && card.used) {
+    res.status(400);
+    throw new Error('卡片已被使用');
   }
 
   // 2. 处理不同类型卡片
@@ -143,10 +157,18 @@ const consumeCard = asyncHandler(async (req, res) => {
   }
 
   // 4. 更新用户数据
-  await User.findByIdAndUpdate(req.user.id, {
-    $inc: { 'dailyCards.blank': card.type === 'blank' ? -1 : 0 },
-    $pull: { cardInventory: card.type !== 'periodic' ? cardId : null }
-  });
+  if (card.type === 'periodic') {
+    // 周期性卡片只更新冷却时间，不从库存中移除
+    await User.findByIdAndUpdate(req.user.id, {
+      $inc: { 'dailyCards.blank': 0 }
+    });
+  } else {
+    // 非周期性卡片从库存中移除
+    await User.findByIdAndUpdate(req.user.id, {
+      $inc: { 'dailyCards.blank': card.type === 'blank' ? -1 : 0 },
+      $pull: { cardInventory: cardId }
+    });
+  }
 
   // ✅ 5. 安全访问加成信息（避免空白卡报错）
   const bonus = card.bonus || { experienceMultiplier: 1, goldMultiplier: 1 };

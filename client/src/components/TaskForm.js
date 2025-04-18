@@ -216,16 +216,6 @@ const TaskForm = ({
             />
           </div>
           
-          {/* 卡片选择器 */}
-          <div className="col-span-2">
-            <CardSelector 
-              onSelect={(card) => {
-                setSelectedCard(card);
-                setFormData({...formData, cardId: card._id});
-              }}
-              selectedCard={selectedCard}
-            />
-          </div>
         </div>
         
         {/* 任务描述 */}

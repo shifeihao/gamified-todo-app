@@ -19,36 +19,24 @@ const getTasks = async (req, res) => {
 // @access  Private
 const createTask = async (req, res) => {
   try {
-    // 先调用卡片消耗API
-    const cardResponse = await fetch(`${process.env.API_URL}/api/cards/consume`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${req.cookies.token}`
-      },
-      body: JSON.stringify({
-        cardId: req.body.cardId,
-        taskData: req.body
-      })
-    });
-
-    const cardData = await cardResponse.json();
-    
-    if (!cardData.success) {
-      return res.status(400).json({ message: cardData.error || '卡片消耗失败' });
+    // 校验必要字段
+    if (!req.body.title || !req.body.experienceReward || !req.body.goldReward) {
+      return res.status(400).json({ message: '缺少必要的任务信息' });
     }
 
-    // 使用处理后的任务数据创建任务
+    // 使用前端传来的任务数据创建任务
     const task = await Task.create({
       user: req.user._id,
-      ...cardData.processedTask,
+      title: req.body.title,
+      description: req.body.description,
+      type: req.body.type,
+      priority: req.body.priority,
+      category: req.body.category,
+      dueDate: req.body.dueDate,
+      experienceReward: req.body.experienceReward,
+      goldReward: req.body.goldReward,
       subTasks: req.body.subTasks || [],
-    });
-
-    // 更新用户卡片库存
-    await User.findByIdAndUpdate(req.user._id, {
-      $inc: { 'dailyCards.blank': -1 },
-      $pull: { cardInventory: req.body.cardId }
+      cardUsed: req.body.cardUsed
     });
 
     res.status(201).json(task);
