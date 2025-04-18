@@ -536,7 +536,7 @@ const defaultAchievements = [
     description: "满配短期和长期卡槽，工作空间爆表。",
     condition: "解锁全部 10 个卡槽",
     points: 20,
-    category: "探索型",
+    category: "累计型",
     isHidden: false,
     reward: {
       exp: 0,
@@ -565,7 +565,7 @@ const defaultAchievements = [
     icon: null,
     isEnabled: true,
     logic: {
-      type: "login_days_total",
+      type: "login_days_in_row",
       value: 100,
     },
   },
@@ -699,7 +699,7 @@ const defaultAchievements = [
     isEnabled: true,
     logic: {
       type: "achievements_total_unlocked",
-      value: "all",
+      value: "50",
     },
   },
 ];

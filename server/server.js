@@ -1,11 +1,14 @@
 import express from "express";
-import cors from 'cors';
-import morgan from 'morgan';
-import dotenv from 'dotenv';
-import connectDB from './config/db.js';
-import { scheduleDailyCardReset, schedulePeriodicCardCheck } from './utils/scheduler.js';
-import { loadDefaultAchievements } from './utils/loadDefaultAchievements.js';
-
+import cors from "cors";
+import morgan from "morgan";
+import dotenv from "dotenv";
+import connectDB from "./config/db.js";
+import {
+  scheduleDailyCardReset,
+  schedulePeriodicCardCheck,
+} from "./utils/scheduler.js";
+import { loadDefaultAchievements } from "./seeds/loadDefaultAchievements.js";
+import { ensureTestUser } from "./seeds/generateTestUser.js";
 
 // 加载环境变量
 dotenv.config();
@@ -19,7 +22,7 @@ const app = express();
 // 中间件
 app.use(cors()); // 允许跨域请求
 app.use(express.json()); // 解析JSON请求体
-app.use(morgan('dev')); // HTTP请求日志
+app.use(morgan("dev")); // HTTP请求日志
 
 // 路由
 import routes from "./routes/routes.js";
@@ -36,7 +39,6 @@ app.use("/", routes);
 
 // 错误处理中间件
 
-
 // 设置端口并启动服务器
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
@@ -44,18 +46,21 @@ app.listen(PORT, async () => {
 
   // 👇 初始化默认成就
   try {
+    // 加载默认成就
     await loadDefaultAchievements();
-    console.log('默认成就同步完成');
+    // 创建测试用户/确保用户存在/创建用户行为记录表（填充数据）
+    await ensureTestUser();
+    console.log("默认成就同步完成");
   } catch (e) {
-    console.error('成就导入失败:', e);
+    console.error("成就导入失败:", e);
   }
 
   // 👇 初始化定时任务
   try {
     scheduleDailyCardReset();
     schedulePeriodicCardCheck();
-    console.log('定时任务初始化成功');
+    console.log("定时任务初始化成功");
   } catch (error) {
-    console.error('定时任务初始化失败:', error);
+    console.error("定时任务初始化失败:", error);
   }
 });
