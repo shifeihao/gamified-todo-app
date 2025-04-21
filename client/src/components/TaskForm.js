@@ -16,7 +16,6 @@ const TaskForm = ({
     title: '',
     description: '',
     type: '短期',
-    priority: '中',
     category: '默认',
     dueDate: '',
     baseExperience: 10,
@@ -39,7 +38,6 @@ const TaskForm = ({
         title: initialData.title || '',
         description: initialData.description || '',
         type: initialData.type || '短期',
-        priority: initialData.priority || '中',
         category: initialData.category || '默认',
         dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : '',
         experienceReward: initialData.experienceReward || 10,
@@ -168,23 +166,6 @@ const TaskForm = ({
             >
               <option value="短期">短期</option>
               <option value="长期">长期</option>
-            </select>
-          </div>
-          
-          {/* 优先级 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              优先级
-            </label>
-            <select
-              name="priority"
-              value={formData.priority}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="低">低</option>
-              <option value="中">中</option>
-              <option value="高">高</option>
             </select>
           </div>
           

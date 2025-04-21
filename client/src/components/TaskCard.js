@@ -28,20 +28,6 @@ const TaskCard = ({
     }
   };
 
-  // 根据任务优先级设置不同的样式
-  const getPriorityClass = (priority) => {
-    switch (priority) {
-      case '高':
-        return 'bg-red-100 text-red-800';
-      case '中':
-        return 'bg-orange-100 text-orange-800';
-      case '低':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   // 根据任务类型设置不同的样式
   const getTypeClass = (type) => {
     switch (type) {
@@ -100,13 +86,6 @@ const TaskCard = ({
             )}`}
           >
             {task.status}
-          </span>
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityClass(
-              task.priority
-            )}`}
-          >
-            {task.priority}优先级
           </span>
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeClass(

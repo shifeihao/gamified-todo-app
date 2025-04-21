@@ -30,7 +30,6 @@ const createTask = async (req, res) => {
       title: req.body.title,
       description: req.body.description,
       type: req.body.type,
-      priority: req.body.priority,
       category: req.body.category,
       dueDate: req.body.dueDate,
       experienceReward: req.body.experienceReward,
@@ -92,7 +91,6 @@ const updateTask = async (req, res) => {
     task.description = req.body.description || task.description;
     task.type = req.body.type || task.type;
     task.status = req.body.status || task.status;
-    task.priority = req.body.priority || task.priority;
     task.category = req.body.category || task.category;
     task.dueDate = req.body.dueDate || task.dueDate;
     task.experienceReward = req.body.experienceReward || task.experienceReward;
