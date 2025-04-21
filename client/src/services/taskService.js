@@ -57,7 +57,10 @@ export const createTask = async (taskData, token) => {
     // 使用处理后的任务数据创建任务
     const { data } = await axios.post(
       '/api/tasks', 
-      consumeResponse.data.processedTask,
+      {
+        ...consumeResponse.data.processedTask,
+        cardUsed: taskData.cardId  // 添加使用的卡片ID
+      },
       getConfig(token)
     );
     
