@@ -2,6 +2,7 @@ import express from "express";
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 import { scheduleDailyCardReset, schedulePeriodicCardCheck } from './utils/scheduler.js';
 
@@ -14,9 +15,11 @@ connectDB();
 // 初始化Express应用
 const app = express();
 
+
 // 中间件
 app.use(cors()); // 允许跨域请求
 app.use(express.json()); // 解析JSON请求体
+app.use(cookieParser()); // 解析 Cookie
 app.use(morgan('dev')); // HTTP请求日志
 
 // 路由

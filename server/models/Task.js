@@ -60,11 +60,6 @@ const taskSchema = new mongoose.Schema(
       enum: ['待完成', '进行中', '已完成', '过期'],
       default: '待完成',
     },
-    priority: {
-      type: String,
-      enum: ['低', '中', '高'],
-      default: '中',
-    },
     category: {
       type: String,
       trim: true,

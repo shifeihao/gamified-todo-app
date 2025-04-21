@@ -9,7 +9,7 @@ const CardSelector = ({ onSelect, selectedCard }) => {
   useEffect(() => {
     const fetchCards = async () => {
       try {
-        const response = await fetch('/api/users/me/cards', {
+        const response = await fetch('/api/cards/inventory', {
           headers: {
             Authorization: `Bearer ${user.token}`
           }
