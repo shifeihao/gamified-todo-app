@@ -1,6 +1,7 @@
 // seeds/generateTestUser.js
 import User from "../models/User.js";
 import UserStats from "../models/UserStats.js";
+import { checkAndUnlockAchievements } from "../utils/achievementEngine.js";
 
 export async function ensureTestUser() {
   try {
@@ -61,6 +62,8 @@ export async function ensureTestUser() {
     });
 
     console.log("✅ 测试用户 & Stats 已创建：test@example.com / 123456");
+    await checkAndUnlockAchievements(user._id); // 触发成就检查
+    console.log("✅ 成就检查已触发");
   } catch (err) {
     console.error("❌ 创建测试用户失败:", err);
   }

@@ -46,5 +46,4 @@ const UserStatsSchema = new mongoose.Schema(
 );
 
 const UserStats = mongoose.model("UserStats", UserStatsSchema);
-
 export default UserStats;
