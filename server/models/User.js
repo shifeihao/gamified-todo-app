@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema(
         default: null, // 上次发放日期
       },
     },
-    // 卡片库存引用
+    // 指向用户拥有的所有卡片
     cardInventory: [
       {
         type: mongoose.Schema.Types.ObjectId,
