@@ -13,15 +13,15 @@ const TaskChain = ({
   const longTermTasks = tasks.filter(task => task.type === '长期');
   const totalSlots = 5;
   const activeCount = 2;
-  const [slots, setSlots] = useState(Array(totalSlots).fill(null));
-
-  useEffect(() => {
-    const newSlots = Array(totalSlots).fill(null);
-    longTermTasks.forEach((task, idx) => {
-      if (idx < activeCount) newSlots[idx] = task;
-    });
-    setSlots(newSlots);
-  }, [longTermTasks]);
+    // ✅ 使用 useMemo 来计算槽位内容，避免死循环
+    const slots = useMemo(() => {
+        const longTermTasks = tasks.filter(task => task.type === '长期');
+        const result = Array(totalSlots).fill(null);
+        longTermTasks.forEach((task, idx) => {
+            if (idx < activeCount) result[idx] = task;
+        });
+        return result;
+    }, [tasks]);
 
   const handleDragOver = (e, idx) => {
     e.preventDefault();
