@@ -1,306 +1,195 @@
-import React, {useState, useEffect, useContext} from 'react';
-import CardSelector from './CardSelector';
+import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 
-// 任务表单组件
-const TaskForm = ({ 
-  onSubmit, 
-  initialData = null, 
+// 任务表单组件（仅展示分类、截止日期、描述、子任务；仅长期任务显示子任务区）
+const TaskForm = ({
+  onSubmit,
+  initialData = null,
   onCancel,
-  loading = false
+  loading = false,
+  taskType
 }) => {
-  // 表单数据
   const { user } = useContext(AuthContext);
-  const [selectedCard, setSelectedCard] = useState(null);
+
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    type: '短期',
-    category: '默认',
-    dueDate: '',
+    category: initialData?.category || '默认',
+    dueDate: initialData?.dueDate
+      ? new Date(initialData.dueDate).toISOString().split('T')[0]
+      : '',
     baseExperience: 10,
     baseGold: 5,
-    subTasks: [],
-    cardId: ''
+    description: initialData?.description || '',
+    subTasks: initialData?.subTasks || []
   });
-
-  // 子任务表单
   const [subTaskTitle, setSubTaskTitle] = useState('');
   const [subTaskDueDate, setSubTaskDueDate] = useState('');
-
-  // 表单验证错误
   const [errors, setErrors] = useState({});
 
-  // 如果有初始数据，则填充表单
+  // 如果有初始子任务，填充
   useEffect(() => {
-    if (initialData) {
-      setFormData({
-        title: initialData.title || '',
-        description: initialData.description || '',
-        type: initialData.type || '短期',
-        category: initialData.category || '默认',
-        dueDate: initialData.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : '',
-        experienceReward: initialData.experienceReward || 10,
-      baseGold: initialData.baseGold || 5,
-      cardId: initialData.cardUsed || '',
-        subTasks: initialData.subTasks || []
-      });
+    if (initialData?.subTasks) {
+      setFormData(prev => ({ ...prev, subTasks: initialData.subTasks }));
     }
   }, [initialData]);
 
-  // 处理表单输入变化
-  const handleInputChange = (e) => {
+  // 通用字段变更
+  const handleChange = e => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-    
-    // 清除错误
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: null
-      });
+      setErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
   // 添加子任务
-  const handleAddSubTask = () => {
+  const handleAddSub = () => {
     if (!subTaskTitle.trim()) {
-      setErrors({
-        ...errors,
-        subTaskTitle: '请输入子任务标题'
-      });
+      setErrors(prev => ({ ...prev, subTaskTitle: '请输入子任务标题' }));
       return;
     }
-    
-    const newSubTask = {
+    const newSub = {
       title: subTaskTitle,
       status: '待完成',
       dueDate: subTaskDueDate || null
     };
-    
-    setFormData({
-      ...formData,
-      subTasks: [...formData.subTasks, newSubTask]
-    });
-    
-    // 重置子任务表单
+    setFormData(prev => ({
+      ...prev,
+      subTasks: [...prev.subTasks, newSub]
+    }));
     setSubTaskTitle('');
     setSubTaskDueDate('');
-    setErrors({
-      ...errors,
-      subTaskTitle: null
-    });
+    setErrors(prev => ({ ...prev, subTaskTitle: null }));
   };
 
   // 删除子任务
-  const handleRemoveSubTask = (index) => {
-    const updatedSubTasks = [...formData.subTasks];
-    updatedSubTasks.splice(index, 1);
-    
-    setFormData({
-      ...formData,
-      subTasks: updatedSubTasks
+  const handleRemoveSub = index => {
+    setFormData(prev => {
+      const subs = [...prev.subTasks];
+      subs.splice(index, 1);
+      return { ...prev, subTasks: subs };
     });
   };
 
-  // 验证表单
-  const validateForm = () => {
+  // 校验
+  const validate = () => {
     const newErrors = {};
-    
-    if (!formData.title.trim()) {
-      newErrors.title = '请输入任务标题';
-    }
-    
-    if (formData.type === '长期' && formData.subTasks.length === 0) {
+    if (taskType === '长期' && formData.subTasks.length === 0) {
       newErrors.subTasks = '长期任务至少需要一个子任务';
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // 处理表单提交
-  const handleSubmit = (e) => {
+  // 提交
+  const handleSubmit = e => {
     e.preventDefault();
-    
-    if (validateForm()) {
-      onSubmit(formData);
-    }
+    if (!validate()) return;
+    onSubmit(formData);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {/* 任务标题 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              任务标题 *
-            </label>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* 分类 & 截止日期 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">分类</label>
+          <input
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">截止日期</label>
+          <input
+            type="date"
+            name="dueDate"
+            value={formData.dueDate}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+          />
+        </div>
+      </div>
+
+      {/* 任务描述 */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">任务描述</label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          rows="3"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+        />
+      </div>
+
+      {/* 子任务，仅长期任务 */}
+      {taskType === '长期' && (
+        <div className="p-4 bg-gray-50 rounded-lg">
+          <h3 className="text-md font-medium mb-2">子任务</h3>
+          {errors.subTasks && (
+            <p className="text-red-500 text-sm mb-2">{errors.subTasks}</p>
+          )}
+          {formData.subTasks.map((sub, idx) => (
+            <div
+              key={idx}
+              className="flex justify-between items-center p-2 bg-white rounded border border-gray-200 mb-2"
+            >
+              <span>{sub.title}</span>
+              <button
+                type="button"
+                onClick={() => handleRemoveSub(idx)}
+                className="text-red-500 hover:text-red-700"
+              >
+                删除
+              </button>
+            </div>
+          ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <input
               type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
+              value={subTaskTitle}
+              onChange={e => setSubTaskTitle(e.target.value)}
+              placeholder="输入子任务标题"
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 ${
-                errors.title ? 'border-red-500' : 'border-gray-300'
+                errors.subTaskTitle ? 'border-red-500' : 'border-gray-300'
               }`}
             />
-            {errors.title && (
-              <p className="mt-1 text-sm text-red-500">{errors.title}</p>
-            )}
-          </div>
-          
-          {/* 任务类型 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              任务类型
-            </label>
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="短期">短期</option>
-              <option value="长期">长期</option>
-            </select>
-          </div>
-          
-          {/* 分类 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              分类
-            </label>
-            <input
-              type="text"
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-            />
-          </div>
-          
-          {/* 截止日期 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              截止日期
-            </label>
             <input
               type="date"
-              name="dueDate"
-              value={formData.dueDate}
-              onChange={handleInputChange}
+              value={subTaskDueDate}
+              onChange={e => setSubTaskDueDate(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
             />
+            <button
+              type="button"
+              onClick={handleAddSub}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded"
+            >
+              添加
+            </button>
           </div>
-          
         </div>
-        
-        {/* 任务描述 */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            任务描述
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            rows="3"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-          ></textarea>
-        </div>
-        
-        {/* 子任务（仅长期任务） */}
-        {formData.type === '长期' && (
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-            <h3 className="text-md font-medium mb-3">子任务</h3>
-            
-            {errors.subTasks && (
-              <p className="mb-2 text-sm text-red-500">{errors.subTasks}</p>
-            )}
-            
-            {/* 子任务列表 */}
-            {formData.subTasks.length > 0 && (
-              <ul className="mb-4 space-y-2">
-                {formData.subTasks.map((subTask, index) => (
-                  <li key={index} className="flex justify-between items-center p-2 bg-white rounded border border-gray-200">
-                    <div>
-                      <span className="font-medium">{subTask.title}</span>
-                      {subTask.dueDate && (
-                        <span className="ml-2 text-xs text-gray-500">
-                          截止: {new Date(subTask.dueDate).toLocaleDateString('zh-CN')}
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSubTask(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            
-            {/* 添加子任务表单 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <div className="md:col-span-2">
-                <input
-                  type="text"
-                  value={subTaskTitle}
-                  onChange={(e) => setSubTaskTitle(e.target.value)}
-                  placeholder="输入子任务标题"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 ${
-                    errors.subTaskTitle ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.subTaskTitle && (
-                  <p className="mt-1 text-sm text-red-500">{errors.subTaskTitle}</p>
-                )}
-              </div>
-              <div className="flex space-x-2">
-                <input
-                  type="date"
-                  value={subTaskDueDate}
-                  onChange={(e) => setSubTaskDueDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddSubTask}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded"
-                >
-                  添加
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* 提交按钮 */}
-        <div className="flex justify-end space-x-2 mt-6">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            取消
-          </button>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-            disabled={loading}
-          >
-            {loading ? '处理中...' : initialData ? '更新任务' : '创建任务'}
-          </button>
-        </div>
+      )}
+
+      {/* 操作按钮 */}
+      <div className="flex justify-end space-x-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+        >
+          取消
+        </button>
+        <button
+          type="submit"
+          className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+          disabled={loading}
+        >
+          {loading ? '处理中...' : initialData ? '更新任务' : '创建任务'}
+        </button>
+      </div>
     </form>
   );
 };

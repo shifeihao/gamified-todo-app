@@ -20,6 +20,7 @@ const getTasks = async (req, res) => {
 const createTask = async (req, res) => {
   try {
     // 校验必要字段
+    console.log(req.body);
     if (!req.body.title || !req.body.experienceReward || !req.body.goldReward) {
       return res.status(400).json({ message: '缺少必要的任务信息' });
     }
