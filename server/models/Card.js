@@ -9,7 +9,7 @@ const cardSchema = new mongoose.Schema(
       ref: 'User', // 关联到User模型
     },
       type: {
-          // 卡片类型：空白、自带奖励（周期卡片机制交由模板系统管理）
+          // 卡片类型：空白 or 特殊
           type: String,
           enum: ['blank', 'special'],
           default: 'blank',
@@ -24,6 +24,7 @@ const cardSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // 奖励倍率等信息
     bonus: {
         //金币和经验，默认倍率都是1
       experienceMultiplier: {
@@ -38,6 +39,12 @@ const cardSchema = new mongoose.Schema(
         type: String,
         default: '',
       },
+    },
+    // 任务持续时长：短期、长期或通用
+    taskDuration: {
+      type: String,
+      enum: ['短期','长期','通用'],
+      default: '通用',
     },
       //表示是否为可重复使用的卡片
     reusable: {
@@ -71,6 +78,7 @@ const cardSchema = new mongoose.Schema(
 // 添加索引以提高查询性能
 cardSchema.index({ user: 1, type: 1 });
 cardSchema.index({ user: 1, used: 1 });
+cardSchema.index({ user: 1, taskDuration: 1 });
 
 const Card = mongoose.model('Card', cardSchema);
 

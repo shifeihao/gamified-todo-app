@@ -1,113 +1,126 @@
 import React, { useState, useEffect } from 'react';
 import TaskCard from './TaskCard';
 
-// 每日任务槽组件
-const DailyTaskSlots = ({ 
-  equippedTasks, 
-  onComplete, 
-  onDelete, 
-  onEdit, 
-  onUnequip,
-  onDrop,
-  onCreateTask
-}) => {
-  // 创建3个任务槽
-  const [slots, setSlots] = useState([null, null, null]);
+// 每日任务槽组件：卡片铺满槽位，菜单不被裁剪
+const DailyTaskSlots = ({
+                          equippedTasks,
+                          onComplete,
+                          onDelete,
+                          onEdit,
+                          onUnequip,
+                          onDrop,
+                          onCreateTask,
+                          totalSlots = 5,
+                          activeCount = 2,
+                        }) => {
+  const [slots, setSlots] = useState(() => Array(totalSlots).fill(null));
 
-  // 当已装备任务变化时，更新任务槽
   useEffect(() => {
-    const newSlots = [null, null, null];
-    
+    const newSlots = Array(totalSlots).fill(null);
     equippedTasks.forEach(task => {
-      if (task.slotPosition >= 0 && task.slotPosition < 3) {
+      if (task.slotPosition >= 0 && task.slotPosition < totalSlots) {
         newSlots[task.slotPosition] = task;
       }
     });
-    
     setSlots(newSlots);
-  }, [equippedTasks]);
+  }, [equippedTasks, totalSlots]);
 
-  // 处理拖拽进入
-  const handleDragOver = (e, slotIndex) => {
+  const handleDragOver = (e, idx) => {
     e.preventDefault();
     e.currentTarget.classList.add('bg-blue-50');
   };
-
-  // 处理拖拽离开
-  const handleDragLeave = (e) => {
+  const handleDragLeave = e => {
     e.currentTarget.classList.remove('bg-blue-50');
   };
-
-  // 处理放置
-  const handleDrop = (e, slotIndex) => {
+  const handleDrop = (e, idx) => {
     e.preventDefault();
     e.currentTarget.classList.remove('bg-blue-50');
-    
     try {
-      const taskData = JSON.parse(e.dataTransfer.getData('task'));
-      if (taskData && onDrop) {
-        onDrop(taskData._id, slotIndex);
-      }
-    } catch (error) {
-      console.error('拖放任务时出错:', error);
+      const data = JSON.parse(e.dataTransfer.getData('task'));
+      if (data && onDrop) onDrop(data._id, idx);
+    } catch (err) {
+      console.error('拖放任务时出错:', err);
     }
   };
 
-  // 渲染任务槽
-  const renderSlot = (task, index) => {
-    return (
-      <div 
-        key={index}
-        className="task-slot border-2 border-dashed border-gray-300 rounded-lg p-4 h-64 flex items-center justify-center"
-        onDragOver={(e) => handleDragOver(e, index)}
-        onDragLeave={handleDragLeave}
-        onDrop={(e) => handleDrop(e, index)}
+  // 渲染可用槽
+  const renderSlot = (task, idx) => (
+      <div
+          key={idx}
+          className="border-2 border-dashed border-gray-300 rounded-lg h-40 overflow-visible relative"
+          onDragOver={e => handleDragOver(e, idx)}
+          onDragLeave={handleDragLeave}
+          onDrop={e => handleDrop(e, idx)}
       >
         {task ? (
-          <TaskCard 
-            task={task} 
-            onComplete={onComplete}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            onUnequip={onUnequip}
-            isEquipped={true}
-          />
+            <TaskCard
+                className="absolute inset-0 w-full h-full"
+                task={task}
+                onComplete={onComplete}
+                onDelete={onDelete}
+                onEdit={onEdit}
+                onUnequip={onUnequip}
+                isEquipped
+            />
         ) : (
-          <button
-            onClick={() => onCreateTask(index)}
-            className="w-full h-full flex flex-col items-center justify-center text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors group"
-          >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-12 w-12 mb-2 transform group-hover:scale-110 transition-transform" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
+            <button
+                onClick={() => onCreateTask(idx)}
+                className="absolute inset-0 w-full h-full flex flex-col items-center justify-center text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 4v16m8-8H4" 
-              />
-            </svg>
-            <p>点击创建新任务</p>
-            <p className="text-sm mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              或拖放现有任务到此处
-            </p>
-          </button>
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-10 w-10 mb-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <p>点击创建新任务</p>
+            </button>
         )}
       </div>
-    );
-  };
+  );
+
+  // 渲染锁定槽
+  const renderLocked = idx => (
+      <div
+          key={idx}
+          className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-40 flex items-center justify-center bg-gray-50"
+      >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+        >
+          <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 11c1.657 0 3-1.343 3-3V5a3 3 0 10-6 0v3c0 1.657 1.343 3 3 3z"
+          />
+          <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 11h14a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2z"
+          />
+        </svg>
+        <p className="ml-2 text-gray-400">锁定</p>
+      </div>
+  );
 
   return (
-    <div className="mb-8">
-      <h2 className="text-xl font-bold mb-4">每日任务槽</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {slots.map((task, index) => renderSlot(task, index))}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4">短期任务槽</h2>
+        <div className="flex flex-col space-y-4">
+          {slots.map((task, idx) =>
+              idx < activeCount ? renderSlot(task, idx) : renderLocked(idx)
+          )}
+        </div>
       </div>
-    </div>
   );
 };
 
