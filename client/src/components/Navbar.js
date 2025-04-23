@@ -1,6 +1,6 @@
-import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
+import React, { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import AuthContext from "../context/AuthContext";
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -10,7 +10,7 @@ const Navbar = () => {
   // 处理登出
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   // 切换菜单
@@ -53,6 +53,12 @@ const Navbar = () => {
                   className="px-3 py-2 rounded-md hover:bg-primary-700"
                 >
                   个人资料
+                </Link>
+                <Link
+                  to="/achievements"
+                  className="px-3 py-2 rounded-md hover:bg-primary-700"
+                >
+                  个人成就
                 </Link>
                 <button
                   onClick={handleLogout}

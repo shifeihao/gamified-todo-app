@@ -1,5 +1,5 @@
-import User from '../models/User.js';
-import { generateToken } from '../middleware/auth.js';
+import User from "../models/User.js";
+import { generateToken } from "../middleware/auth.js";
 
 // @desc    注册新用户
 // @route   POST /api/users/register
@@ -11,7 +11,7 @@ const registerUser = async (req, res) => {
     // 检查用户是否已存在
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: '用户已存在' });
+      return res.status(400).json({ message: "用户已存在" });
     }
 
     // 创建新用户
@@ -32,11 +32,11 @@ const registerUser = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
-      res.status(400).json({ message: '无效的用户数据' });
+      res.status(400).json({ message: "无效的用户数据" });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: "服务器错误" });
   }
 };
 
@@ -48,8 +48,8 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     // 查找用户并包含密码字段
-    const user = await User.findOne({ email }).select('+password');
-console.log(user);
+    const user = await User.findOne({ email }).select("+password");
+    console.log(user);
     // 检查用户是否存在以及密码是否匹配
     if (user && (await user.matchPassword(password))) {
       res.json({
@@ -62,11 +62,11 @@ console.log(user);
         token: generateToken(user._id),
       });
     } else {
-      res.status(401).json({ message: '邮箱或密码不正确' });
+      res.status(401).json({ message: "邮箱或密码不正确" });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: "服务器错误" });
   }
 };
 
@@ -87,11 +87,11 @@ const getUserProfile = async (req, res) => {
         gold: user.gold,
       });
     } else {
-      res.status(404).json({ message: '用户不存在' });
+      res.status(404).json({ message: "用户不存在" });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: "服务器错误" });
   }
 };
 
@@ -105,7 +105,7 @@ const updateUserProfile = async (req, res) => {
     if (user) {
       user.username = req.body.username || user.username;
       user.email = req.body.email || user.email;
-      
+
       if (req.body.password) {
         user.password = req.body.password;
       }
@@ -122,17 +122,12 @@ const updateUserProfile = async (req, res) => {
         token: generateToken(updatedUser._id),
       });
     } else {
-      res.status(404).json({ message: '用户不存在' });
+      res.status(404).json({ message: "用户不存在" });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: "服务器错误" });
   }
 };
 
-export {
-  registerUser,
-  loginUser,
-  getUserProfile,
-  updateUserProfile,
-};
+export { registerUser, loginUser, getUserProfile, updateUserProfile };

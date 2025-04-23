@@ -11,7 +11,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "UNKNOWN",
@@ -30,7 +30,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_failed_total",
@@ -49,7 +49,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_deleted_single",
@@ -68,7 +68,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_failed_days_in_row",
@@ -87,7 +87,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_total",
@@ -106,7 +106,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_modified_total",
@@ -125,7 +125,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_deleted_total",
@@ -144,11 +144,11 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_deleted_all_in_day",
-      value: true,
+      value: 1,
     },
   },
   {
@@ -163,7 +163,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_early_hour",
@@ -178,11 +178,11 @@ const defaultAchievements = [
     category: "持续型",
     isHidden: false,
     reward: {
-      exp: 100,
+      exp: 0,
       coins: 200,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -197,11 +197,11 @@ const defaultAchievements = [
     category: "持续型",
     isHidden: false,
     reward: {
-      exp: 200,
+      exp: 0,
       coins: 400,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -220,7 +220,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_after_11pm",
@@ -239,7 +239,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_failed_total",
@@ -258,7 +258,7 @@ const defaultAchievements = [
       coins: 0,
       item: "道具：开槽卡+1",
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
@@ -277,7 +277,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_created_with_subtasks",
@@ -292,11 +292,11 @@ const defaultAchievements = [
     category: "累计型",
     isHidden: false,
     reward: {
-      exp: 100,
+      exp: 0,
       coins: 300,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_total",
@@ -315,7 +315,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_pending_in_warehouse",
@@ -330,11 +330,11 @@ const defaultAchievements = [
     category: "持续型",
     isHidden: false,
     reward: {
-      exp: 400,
+      exp: 0,
       coins: 800,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "login_days_in_row",
@@ -353,7 +353,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_last_five_min",
@@ -372,7 +372,7 @@ const defaultAchievements = [
       coins: 0,
       item: "道具：开槽卡+1",
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
@@ -387,11 +387,11 @@ const defaultAchievements = [
     category: "持续型",
     isHidden: false,
     reward: {
-      exp: 600,
+      exp: 0,
       coins: 1200,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -410,7 +410,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_before_8am",
@@ -429,7 +429,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_within_hour",
@@ -448,7 +448,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_created_with_subtasks",
@@ -463,11 +463,11 @@ const defaultAchievements = [
     category: "累计型",
     isHidden: false,
     reward: {
-      exp: 200,
+      exp: 0,
       coins: 600,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_short_total",
@@ -482,11 +482,11 @@ const defaultAchievements = [
     category: "累计型",
     isHidden: false,
     reward: {
-      exp: 500,
+      exp: 0,
       coins: 1000,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_total",
@@ -501,11 +501,11 @@ const defaultAchievements = [
     category: "累计型",
     isHidden: false,
     reward: {
-      exp: 1000,
+      exp: 0,
       coins: 2000,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_total",
@@ -520,11 +520,11 @@ const defaultAchievements = [
     category: "累计型",
     isHidden: false,
     reward: {
-      exp: 500,
+      exp: 0,
       coins: 1000,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_long_total",
@@ -543,7 +543,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "card_slot_total",
@@ -558,11 +558,11 @@ const defaultAchievements = [
     category: "持续型",
     isHidden: false,
     reward: {
-      exp: 1200,
+      exp: 0,
       coins: 2100,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "login_days_in_row",
@@ -581,7 +581,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "exp_total",
@@ -596,11 +596,11 @@ const defaultAchievements = [
     category: "持续型",
     isHidden: false,
     reward: {
-      exp: 2500,
+      exp: 0,
       coins: 4000,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -615,11 +615,11 @@ const defaultAchievements = [
     category: "累计型",
     isHidden: false,
     reward: {
-      exp: 10000,
+      exp: 0,
       coins: 20000,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_total",
@@ -638,7 +638,7 @@ const defaultAchievements = [
       coins: 0,
       item: "道具：开槽卡+1",
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
@@ -657,7 +657,7 @@ const defaultAchievements = [
       coins: 0,
       item: "道具：开槽卡+1",
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
@@ -672,11 +672,11 @@ const defaultAchievements = [
     category: "持续型",
     isHidden: false,
     reward: {
-      exp: 10000,
+      exp: 0,
       coins: 20000,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -695,11 +695,11 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: null,
+    icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "achievements_total_unlocked",
-      value: "50",
+      value: "37",
     },
   },
 ];

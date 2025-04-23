@@ -3,6 +3,7 @@ import UserStats from "../models/UserStats.js";
 import Achievement from "../models/Achievement.js";
 import UserAchievement from "../models/UserAchievement.js";
 import User from "../models/User.js";
+import { checkIfGodAchievementUnlocked } from "./godAchievement.js";
 
 export async function checkAndUnlockAchievements(userId) {
   try {
@@ -59,6 +60,8 @@ export async function checkAndUnlockAchievements(userId) {
         );
       }
     }
+
+    await checkIfGodAchievementUnlocked(userId);
   } catch (error) {
     console.error("❌ 检查并解锁成就失败:", error);
   }

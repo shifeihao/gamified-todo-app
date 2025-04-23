@@ -1,5 +1,6 @@
 // seeds/generateTestUser.js
 import User from "../models/User.js";
+import UserAchievement from "../models/UserAchievement.js";
 import UserStats from "../models/UserStats.js";
 import { checkAndUnlockAchievements } from "../utils/achievementEngine.js";
 
@@ -25,6 +26,9 @@ export async function ensureTestUser() {
     // 清空旧的 UserStats（如果存在）
     await UserStats.deleteOne({ user: user._id });
     console.log("✅ 清空旧的 UserStats");
+
+    await UserAchievement.deleteMany({ user: user._id });
+    console.log("✅ 清空旧的 UserAchievement");
 
     // 创建行为统计 UserStats（测试触发成就）
     await UserStats.create({
@@ -52,7 +56,7 @@ export async function ensureTestUser() {
       login_days_total: 120, // 累计登录天数
       task_completed_before_8am: 1, // 8点前完成所有任务的数量
       task_completed_after_11pm: 1, // 11点后完成的任务数
-      task_deleted_all_in_day: true, // 今日是否删除所有任务
+      task_deleted_all_in_day: 1, // 今日是否删除所有任务
       task_completed_early_hour: 4, // 提前1小时完成了任务
       task_created_with_subtasks: 6, // 创建了子任务的任务数
       task_pending_in_warehouse: 6, // 仓库中待处理的任务数
