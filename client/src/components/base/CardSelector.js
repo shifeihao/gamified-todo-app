@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../../context/AuthContext';
 
 // 卡片选择组件：可显示空白卡片数或奖励卡片列表
-const CardSelector = ({
+export const CardSelector = ({
   onSelect,
   selectedCard,
   showRewards = false,   // 是否显示奖励卡片列表
@@ -80,5 +80,3 @@ const CardSelector = ({
     </div>
   );
 };
-
-export default CardSelector;

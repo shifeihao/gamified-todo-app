@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import TaskCard from './TaskCard';
+import {TaskCard} from './TaskCard';
 
-const TaskSlots = ({
+export const TaskSlots = ({
   items = [],
   totalSlots = 5,
   activeCount = 2,
@@ -118,5 +118,3 @@ const TaskSlots = ({
     </div>
   );
 };
-
-export default TaskSlots;

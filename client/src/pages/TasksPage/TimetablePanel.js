@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import TaskSlots from '../../components/task/TaskSlots';
+import {TaskSlots} from '../../components';
 
 const TimetablePanel = ({ tasks, onComplete, onDelete, onEdit, onCreateTask, onDrop }) => {
     const [activeTab, setActiveTab] = useState('list');

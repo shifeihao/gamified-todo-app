@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import TaskCard from './TaskCard';
+import {TaskCard} from './TaskCard';
 
-const TaskRepository = ({
+export const TaskRepository = ({
                           tasks,
                           onComplete,
                           onDelete,
@@ -181,5 +181,3 @@ const TaskRepository = ({
       </div>
   );
 };
-
-export default TaskRepository;

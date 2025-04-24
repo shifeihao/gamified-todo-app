@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import TaskCard from './TaskCard';
+import {TaskCard} from './TaskCard';
 
 // 每日任务槽组件：卡片铺满槽位，菜单不被裁剪
-const DailyTaskSlots = ({
+export const DailyTaskSlots = ({
                           equippedTasks,
                           onComplete,
                           onDelete,
@@ -123,5 +123,3 @@ className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-28 flex items
       </div>
   );
 };
-
-export default DailyTaskSlots;

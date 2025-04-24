@@ -1,8 +1,8 @@
 // src/pages/TasksPage/index.js
 
 import React, { useState, useEffect, useContext } from 'react';
-import { Navbar } from '../../components/navbar';
-import CreateTaskModal from '../../components/modal/CreateTaskModal';
+import { Navbar } from '../../components';
+import {CreateTaskModal} from '../../components';
 import AuthContext from '../../context/AuthContext';
 
 import DailyTaskPanel from './DailyTaskPanel';

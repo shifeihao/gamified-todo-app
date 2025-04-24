@@ -145,5 +145,3 @@ export const RegisterForm = ({ isEmbedded = false }) => {
     </div>
   );
 };
-
-export default RegisterForm;

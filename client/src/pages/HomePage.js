@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SparklesIcon, ChartBarIcon, BookOpenIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import { LoginForm, RegisterForm } from '../components/form';
+import { LoginForm, RegisterForm } from '../components';
 
 const HomePage = () => {
   const [activeTab, setActiveTab] = useState('login');

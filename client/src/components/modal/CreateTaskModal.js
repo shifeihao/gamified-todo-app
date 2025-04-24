@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 
-import Modal from '../base/Modal';
-import TaskForm from '../form/TaskForm';
-import CardSelector from '../base/CardSelector';
+import {Modal} from '../base';
+import {TaskForm} from '../form';
+import {CardSelector} from '../base';
 import axios from 'axios';
 import AuthContext from '../../context/AuthContext';
 
@@ -161,4 +161,3 @@ export const CreateTaskModal = ({
   );
 };
 
-export default CreateTaskModal;

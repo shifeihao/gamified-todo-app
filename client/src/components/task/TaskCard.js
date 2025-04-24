@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 // 任务卡片组件（操作收进“⋮”菜单）
-const TaskCard = ({
+export const TaskCard = ({
                     task,
                     onComplete,
                     onDelete,
@@ -213,5 +213,3 @@ className={`card equipped-card hover:shadow-lg transition-shadow duration-300 bo
       </div>
   );
 };
-
-export default TaskCard;

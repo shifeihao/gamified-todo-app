@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import TaskCard from './TaskCard';
+import {TaskCard} from './TaskCard';
 
-const TaskChain = ({
+export const TaskChain = ({
                        tasks,
                        onComplete,
                        onDelete,
@@ -116,5 +116,3 @@ const TaskChain = ({
         </div>
     );
 };
-
-export default TaskChain;

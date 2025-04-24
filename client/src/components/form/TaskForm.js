@@ -193,5 +193,3 @@ export const TaskForm = ({
     </form>
   );
 };
-
-export default TaskForm;

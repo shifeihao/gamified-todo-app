@@ -6,7 +6,7 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
-const ExampleHeadlessUIDropdown = () => {
+export const ExampleHeadlessUIDropdown = () => {
   const [selected, setSelected] = useState('选择一个选项');
 
   const options = [
@@ -56,5 +56,3 @@ const ExampleHeadlessUIDropdown = () => {
     </Menu>
   );
 };
-
-export default ExampleHeadlessUIDropdown;

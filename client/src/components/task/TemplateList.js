@@ -1,7 +1,7 @@
 // src/components/TemplateList.js
 import React from 'react';
 
-const TemplateList = ({ templates = [], onSelect }) => {
+export const TemplateList = ({ templates = [], onSelect }) => {
     return (
         <div className="space-y-4">
             {templates.length === 0 ? (
@@ -23,5 +23,3 @@ const TemplateList = ({ templates = [], onSelect }) => {
         </div>
     );
 };
-
-export default TemplateList;

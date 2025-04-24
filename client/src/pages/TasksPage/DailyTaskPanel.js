@@ -1,5 +1,5 @@
 import React from 'react';
-import TaskSlots from '../../components/task/TaskSlots';
+import {TaskSlots} from '../../components';
 
 const DailyTaskPanel = ({
   equippedTasks,
