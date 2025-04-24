@@ -8,6 +8,7 @@ const TaskCard = ({
                     onEdit,
                     onEquip,
                     onUnequip,
+                    onViewDetail,
                     draggable = false,
                     onDragStart,
                     isEquipped = false,
@@ -49,6 +50,62 @@ const TaskCard = ({
     return new Date(dateString).toLocaleDateString('zh-CN');
   };
 
+  // 倒计时状态
+  const [timeLeft, setTimeLeft] = useState('');
+
+  // 倒计时逻辑（仅针对已装备卡片）
+  useEffect(() => {
+    if (!isEquipped || !task.dueDate) return;
+    const updateTime = () => {
+      const diff = new Date(task.dueDate).getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft('已过期');
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      setTimeLeft(`${days}天${hours}时${minutes}分`);
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 60000);
+    return () => clearInterval(timer);
+  }, [task.dueDate, isEquipped]);
+
+  if (isEquipped) {
+    return (
+      <div
+className={`card equipped-card hover:shadow-lg transition-shadow duration-300 border-2 border-blue-500 p-2 text-xs flex flex-col justify-between h-full ${className}`}
+        draggable={draggable}
+        onDragStart={onDragStart ? (e) => onDragStart(e, task) : undefined}
+      >
+<div className="flex justify-between items-center">
+  <h3 className="truncate font-semibold text-sm">{task.title}</h3>
+  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(task.status)}`}>
+    {task.status}
+  </span>
+</div>
+<div className="flex justify-between text-gray-500 text-xs mb-1">
+  {task.category && <span>分类: {task.category}</span>}
+  <span>剩余 {timeLeft}</span>
+</div>
+<div className="flex justify-between mt-1">
+          <button
+            onClick={() => onComplete(task._id)}
+            className="btn-primary text-xs py-1 px-2"
+          >
+            完成
+          </button>
+          <button
+            onClick={() => onViewDetail(task)}
+            className="btn-secondary text-xs py-1 px-2"
+          >
+            查看详情
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
       <div
           className={`card hover:shadow-lg transition-shadow duration-300 relative ${isEquipped ? 'border-2 border-blue-500' : ''} ${className}`}

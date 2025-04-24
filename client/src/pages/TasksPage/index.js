@@ -1,8 +1,8 @@
 // src/pages/TasksPage/index.js
 
 import React, { useState, useEffect, useContext } from 'react';
-import Navbar from '../../components/Navbar';
-import CreateTaskModal from '../../components/CreateTaskModal';
+import { Navbar } from '../../components/navbar';
+import CreateTaskModal from '../../components/modal/CreateTaskModal';
 import AuthContext from '../../context/AuthContext';
 
 import DailyTaskPanel from './DailyTaskPanel';
@@ -74,11 +74,13 @@ const TasksPage = () => {
     setShowForm(true);
   };
 
-  // 完成任务
+  // 完成任务并卸下已完成任务
   const handleComplete = async (id) => {
     try {
       setLoading(true);
       await completeTask(id, user.token);
+      // 卸下已完成的任务，防止其继续占用任务槽
+      await unequipTask(id, user.token);
       showSuccess('任务已完成');
       await fetchTasks();
     } catch (err) {
@@ -107,6 +109,11 @@ const TasksPage = () => {
 
   // 装备任务
   const handleEquip = async (task) => {
+    // 不允许装备已完成任务
+    if (task.status === '已完成') {
+      setError('无法装备已完成的任务');
+      return;
+    }
     try {
       const occupied = equippedTasks.map(t => t.slotPosition);
       let freeSlot = -1;

@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import Navbar from '../components/Navbar';
+import { Navbar } from '../components/navbar';
 import AuthContext from '../context/AuthContext';
 
 const ProfilePage = () => {

@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthContext from '../context/AuthContext';
+import AuthContext from '../../context/AuthContext';
 
-const LoginForm = ({ isEmbedded = false }) => {
+export const LoginForm = ({ isEmbedded = false }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -108,5 +108,3 @@ const LoginForm = ({ isEmbedded = false }) => {
     </div>
   );
 };
-
-export default LoginForm;

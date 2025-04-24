@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import AuthContext from '../context/AuthContext';
+import AuthContext from '../../context/AuthContext';
 
 // 卡片选择组件：可显示空白卡片数或奖励卡片列表
 const CardSelector = ({

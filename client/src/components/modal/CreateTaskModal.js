@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
-import Modal from './Modal';
-import TaskForm from './TaskForm';
-import CardSelector from './CardSelector';
-import axios from 'axios';
-import AuthContext from '../context/AuthContext';
 
-const CreateTaskModal = ({
+import Modal from '../base/Modal';
+import TaskForm from '../form/TaskForm';
+import CardSelector from '../base/CardSelector';
+import axios from 'axios';
+import AuthContext from '../../context/AuthContext';
+
+export const CreateTaskModal = ({
   isOpen,
   onClose,
   onSubmit,

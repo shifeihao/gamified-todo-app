@@ -8,7 +8,7 @@ const TaskRepository = ({
                           onEdit,
                           onEquip
                         }) => {
-  // 只取未装备的任务
+  // 只取未装备的任务（包括已完成）
   const unequippedTasks = tasks.filter(t => !t.equipped);
 
   // 本地状态：搜索、分类、类型、排序

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import TaskRepository from '../../components/TaskRepository';
-import TemplateList from '../../components/TemplateList'; // 后续实现
+import TaskRepository from '../../components/task/TaskRepository';
+import TemplateList from '../../components/task/TemplateList'; // 后续实现
 
 const RepositoryPanel = ({
                              tasks,

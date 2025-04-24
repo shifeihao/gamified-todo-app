@@ -47,7 +47,7 @@ const DailyTaskSlots = ({
   const renderSlot = (task, idx) => (
       <div
           key={idx}
-          className="border-2 border-dashed border-gray-300 rounded-lg h-40 overflow-visible relative"
+className="border-2 border-dashed border-gray-300 rounded-lg h-28 overflow-visible relative"
           onDragOver={e => handleDragOver(e, idx)}
           onDragLeave={handleDragLeave}
           onDrop={e => handleDrop(e, idx)}
@@ -86,7 +86,7 @@ const DailyTaskSlots = ({
   const renderLocked = idx => (
       <div
           key={idx}
-          className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-40 flex items-center justify-center bg-gray-50"
+className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-28 flex items-center justify-center bg-gray-50"
       >
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -113,9 +113,9 @@ const DailyTaskSlots = ({
   );
 
   return (
-      <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4">短期任务槽</h2>
-        <div className="flex flex-col space-y-4">
+      <div className="flex flex-col h-screen mb-8">
+        <h2 className="text-xl font-bold mb-4">短期任务槽 Quick Quests</h2>
+        <div className="flex flex-col flex-1 overflow-y-auto space-y-4">
           {slots.map((task, idx) =>
               idx < activeCount ? renderSlot(task, idx) : renderLocked(idx)
           )}

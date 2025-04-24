@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
-import AuthContext from '../context/AuthContext';
+import AuthContext from '../../context/AuthContext';
 
 // 任务表单组件（仅展示分类、截止日期、描述、子任务；仅长期任务显示子任务区）
-const TaskForm = ({
+export const TaskForm = ({
   onSubmit,
   initialData = null,
   onCancel,
