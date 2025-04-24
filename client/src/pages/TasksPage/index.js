@@ -8,7 +8,7 @@ import AuthContext from '../../context/AuthContext';
 import DailyTaskPanel from './DailyTaskPanel';
 import TimetablePanel from './TimetablePanel';
 import RepositoryPanel from './RepositoryPanel';
-
+import { getCardInventory } from '../../services/cardService'; // ✅ 卡片接口
 import {
   getTasks,
   getEquippedTasks,
@@ -24,6 +24,7 @@ const TasksPage = () => {
   const { user } = useContext(AuthContext);
 
   const [tasks, setTasks] = useState([]);
+  const [cards, setCards] = useState([]); // ✅ 卡片 state
   const [equippedTasks, setEquippedTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -32,19 +33,19 @@ const TasksPage = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [createSlotIndex, setCreateSlotIndex] = useState(-1);
 
-  // 当前激活的 tab: 'daily' | 'repository' | 'timetable'
   const [activeTab, setActiveTab] = useState('daily');
 
   // 拉取任务数据
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const [allTasks, equipped] = await Promise.all([
+        const [allTasks, equipped, inventory] = await Promise.all([
         getTasks(user.token),
         getEquippedTasks(user.token)
       ]);
       setTasks(allTasks);
       setEquippedTasks(equipped);
+      setCards(inventory);
       setError('');
     } catch (err) {
       console.error(err);
@@ -74,7 +75,7 @@ const TasksPage = () => {
     setShowForm(true);
   };
 
-  // 完成任务并卸下已完成任务
+  // 完成任务
   const handleComplete = async (id) => {
     try {
       setLoading(true);
@@ -109,12 +110,11 @@ const TasksPage = () => {
 
   // 装备任务
   const handleEquip = async (task) => {
-    // 不允许装备已完成任务
-    if (task.status === '已完成') {
-      setError('无法装备已完成的任务');
-      return;
-    }
-    try {
+      if (task.status === '已完成') {
+          setError('无法装备已完成的任务');
+          return;
+      }
+      try {
       const occupied = equippedTasks.map(t => t.slotPosition);
       let freeSlot = -1;
       for (let i = 0; i < 3; i++) {
@@ -253,6 +253,7 @@ const TasksPage = () => {
 
             <RepositoryPanel
                 tasks={tasks}
+                cards={cards} // ✅ 传入卡片数组
                 onComplete={handleComplete}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
@@ -262,116 +263,6 @@ const TasksPage = () => {
         </div>
       </div>
   );
-
-  // // 渲染对应 tab
-  // const renderActiveTabContent = () => {
-  //   if (loading) {
-  //     return <p className="text-center py-8 text-gray-500">加载中...</p>;
-  //   }
-  //   switch (activeTab) {
-  //     case 'daily':
-  //       return (
-  //           <DailyTaskPanel
-  //               equippedTasks={equippedTasks}
-  //               onComplete={handleComplete}
-  //               onDelete={handleDelete}
-  //               onEdit={handleEdit}
-  //               onUnequip={handleUnequip}
-  //               onDrop={handleDropToSlot}
-  //               onCreateTask={handleCreateFromSlot}
-  //           />
-  //       );
-  //     case 'repository':
-  //       return (
-  //           <RepositoryPanel
-  //               tasks={tasks}
-  //               onComplete={handleComplete}
-  //               onDelete={handleDelete}
-  //               onEdit={handleEdit}
-  //               onEquip={handleEquip}
-  //           />
-  //       );
-  //     case 'timetable':
-  //       return (
-  //           <TimetablePanel
-  //               tasks={tasks}
-  //               onComplete={handleComplete}
-  //               onDelete={handleDelete}
-  //               onEdit={handleEdit}
-  //           />
-  //       );
-  //     default:
-  //       return null;
-  //   }
-  // };
-  //
-  // return (
-  //     <div>
-  //       <Navbar />
-  //       <div className="max-w-7xl mx-auto p-4">
-  //         <div className="flex justify-between items-center mb-6">
-  //           <h1 className="text-2xl font-bold">我的任务</h1>
-  //           <button
-  //               onClick={() => setShowForm(true)}
-  //               className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-  //           >
-  //             创建新任务
-  //           </button>
-  //         </div>
-  //
-  //         {error && <div className="text-red-600 mb-2">{error}</div>}
-  //         {successMessage && <div className="text-green-600 mb-2">{successMessage}</div>}
-  //
-  //         <CreateTaskModal
-  //             isOpen={showForm}
-  //             onClose={() => {
-  //               setShowForm(false);
-  //               setEditingTask(null);
-  //               setCreateSlotIndex(-1);
-  //             }}
-  //             onSubmit={handleSubmit}
-  //             loading={loading}
-  //             initialData={editingTask}
-  //             slotIndex={createSlotIndex}
-  //         />
-  //
-  //         <div className="border-b mb-4 flex space-x-6">
-  //           <button
-  //               onClick={() => setActiveTab('daily')}
-  //               className={
-  //                 activeTab === 'daily'
-  //                     ? 'text-indigo-600 border-b-2 border-indigo-600'
-  //                     : 'text-gray-500'
-  //               }
-  //           >
-  //             每日任务
-  //           </button>
-  //           <button
-  //               onClick={() => setActiveTab('repository')}
-  //               className={
-  //                 activeTab === 'repository'
-  //                     ? 'text-indigo-600 border-b-2 border-indigo-600'
-  //                     : 'text-gray-500'
-  //               }
-  //           >
-  //             任务仓库
-  //           </button>
-  //           <button
-  //               onClick={() => setActiveTab('timetable')}
-  //               className={
-  //                 activeTab === 'timetable'
-  //                     ? 'text-indigo-600 border-b-2 border-indigo-600'
-  //                     : 'text-gray-500'
-  //               }
-  //           >
-  //             Timetable
-  //           </button>
-  //         </div>
-  //
-  //         {renderActiveTabContent()}
-  //       </div>
-  //     </div>
-  // );
 };
 
 export default TasksPage;
