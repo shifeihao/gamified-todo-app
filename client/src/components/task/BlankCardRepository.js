@@ -63,7 +63,7 @@ export const BlankCardRepository = ({ cards }) => {
                     <p className="text-gray-500">没有符合条件的奖励卡片</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-6">
                     {filtered.map(card => (
                         <RewardCardTile key={card._id} card={card} readOnly={true} />
                     ))}

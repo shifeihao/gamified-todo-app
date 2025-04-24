@@ -159,13 +159,15 @@ export const TaskRepository = ({
               <p className="text-gray-500">没有找到匹配的任务</p>
             </div>
         ) : (
-            <div className="flex flex-col space-y-4">
+            <div className="grid grid-cols-2 gap-6 justify-items-center">
               {filtered.map(task => (
                   <div
                       key={task._id}
                       draggable
                       onDragStart={e => handleDragStart(e, task)}
                       onDragEnd={handleDragEnd}
+                      className="w-full max-w-sm"
+
                   >
                     <TaskCard
                         task={task}
