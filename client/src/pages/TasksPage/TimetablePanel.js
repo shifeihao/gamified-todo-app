@@ -6,9 +6,8 @@ const TimetablePanel = ({ tasks, onComplete, onDelete, onEdit, onCreateTask, onD
 
     return (
         <div className="mb-8">
-            {/* 标题与二级标签同一行 */}
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">长期任务槽 Quest Chains</h2>
+                <h2 className="text-xl font-bold">Quest Chains</h2>
                 <div className="flex space-x-4">
                     <button
                         onClick={() => setActiveTab('list')}

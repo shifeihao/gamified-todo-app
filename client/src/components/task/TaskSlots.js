@@ -1,12 +1,10 @@
 import React, { useMemo } from 'react';
-import {TaskCard} from './TaskCard';
+import { TaskCard } from './TaskCard';
 
 export const TaskSlots = ({
   items = [],
   totalSlots = 5,
   activeCount = 2,
-  slotHeight = 'h-28',
-  renderCreateContent,
   onCreate,
   onDrop,
   onComplete,
@@ -14,7 +12,7 @@ export const TaskSlots = ({
   onEdit,
   onUnequip,
 }) => {
-  // 生成插槽数组：如果 items 包含 slotPosition，则按 slotPosition 填充；否则按顺序填充前 activeCount 个
+
   const slots = useMemo(() => {
     const arr = Array(totalSlots).fill(null);
     if (items.length > 0 && items[0].slotPosition != null) {
@@ -55,7 +53,7 @@ export const TaskSlots = ({
   const renderSlot = (task, idx) => (
     <div
       key={idx}
-      className={`border-2 border-dashed border-gray-300 rounded-lg ${slotHeight} overflow-visible relative`}
+      className="border-2 border-dashed border-gray-300 rounded-lg h-28 overflow-visible relative w-full"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={e => handleDrop(e, idx)}
@@ -75,7 +73,16 @@ export const TaskSlots = ({
           onClick={() => onCreate && onCreate(idx)}
           className="absolute inset-0 w-full h-full flex flex-col items-center justify-center text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
         >
-          {renderCreateContent(idx)}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-10 w-10 mb-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <p>点击创建新任务</p>
         </button>
       )}
     </div>
@@ -84,7 +91,7 @@ export const TaskSlots = ({
   const renderLocked = (idx) => (
     <div
       key={idx}
-      className={`border-2 border-dashed border-gray-300 rounded-lg p-4 ${slotHeight} flex items-center justify-center bg-gray-50`}
+      className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-28 flex items-center justify-center bg-gray-50 w-full"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -106,15 +113,17 @@ export const TaskSlots = ({
           d="M5 11h14a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2z"
         />
       </svg>
-      <span className="ml-2 text-gray-400">锁定</span>
+      <p className="ml-2 text-gray-400">锁定</p>
     </div>
   );
 
   return (
-    <div className="flex flex-col flex-1 overflow-y-auto space-y-4">
-      {slots.map((task, idx) =>
-        idx < activeCount ? renderSlot(task, idx) : renderLocked(idx)
-      )}
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col flex-1 overflow-y-auto space-y-4">
+        {slots.map((task, idx) =>
+          idx < activeCount ? renderSlot(task, idx) : renderLocked(idx)
+        )}
+      </div>
     </div>
   );
 };

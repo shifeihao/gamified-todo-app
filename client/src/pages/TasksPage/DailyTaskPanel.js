@@ -12,7 +12,7 @@ const DailyTaskPanel = ({
 }) => {
   return (
     <div className="mb-8 flex flex-col h-screen">
-      <h2 className="text-xl font-bold mb-4">短期任务槽 Quick Quests</h2>
+      <h2 className="text-xl font-bold mb-4">Quick Quests</h2>
       <TaskSlots
         items={equippedTasks}
         totalSlots={5}
