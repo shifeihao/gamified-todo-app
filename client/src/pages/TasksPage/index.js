@@ -8,6 +8,7 @@ import AuthContext from '../../context/AuthContext';
 import DailyTaskPanel from './DailyTaskPanel';
 import TimetablePanel from './TimetablePanel';
 import RepositoryPanel from './RepositoryPanel';
+import { getCardInventory } from '../../services/cardService'; // ✅ 卡片接口
 
 import {
   getTasks,
@@ -24,6 +25,7 @@ const TasksPage = () => {
   const { user } = useContext(AuthContext);
 
   const [tasks, setTasks] = useState([]);
+  const [cards, setCards] = useState([]); // ✅ 卡片 state
   const [equippedTasks, setEquippedTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,12 +41,14 @@ const TasksPage = () => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const [allTasks, equipped] = await Promise.all([
+        const [allTasks, equipped, inventory] = await Promise.all([
         getTasks(user.token),
-        getEquippedTasks(user.token)
+        getEquippedTasks(user.token),
+          getCardInventory(user.token),
       ]);
       setTasks(allTasks);
       setEquippedTasks(equipped);
+      setCards(inventory);
       setError('');
     } catch (err) {
       console.error(err);
@@ -261,6 +265,7 @@ const TasksPage = () => {
             <div>
               <RepositoryPanel
                   tasks={tasks}
+                  cards={cards} // 传入卡片数组
                   onComplete={handleComplete}
                   onDelete={handleDelete}
                   onEdit={handleEdit}
