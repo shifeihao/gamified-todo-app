@@ -1,6 +1,6 @@
 import React from 'react';
 
-const RewardCardTile = ({ card, isSelected = false, onClick = null, readOnly = false }) => {
+export const RewardCardTile = ({ card, isSelected = false, onClick = null, readOnly = false }) => {
     return (
         <div
             className={`rounded-xl p-4 cursor-pointer border-2 transition-all
@@ -21,4 +21,4 @@ const RewardCardTile = ({ card, isSelected = false, onClick = null, readOnly = f
     );
 };
 
-export default RewardCardTile;
+

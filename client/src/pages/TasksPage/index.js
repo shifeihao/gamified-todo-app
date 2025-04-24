@@ -41,7 +41,8 @@ const TasksPage = () => {
       setLoading(true);
         const [allTasks, equipped, inventory] = await Promise.all([
         getTasks(user.token),
-        getEquippedTasks(user.token)
+        getEquippedTasks(user.token),
+          getCardInventory(user.token),
       ]);
       setTasks(allTasks);
       setEquippedTasks(equipped);

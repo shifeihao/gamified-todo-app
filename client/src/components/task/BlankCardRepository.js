@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import RewardCardTile from './RewardCardTile'; // ✅ 新增引用
+import {RewardCardTile} from './RewardCardTile'; // ✅ 新增引用
 
 
-const BlankCardRepository = ({ cards }) => {
+export const BlankCardRepository = ({ cards }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedType, setSelectedType] = useState('全部');
 
@@ -74,4 +74,3 @@ const BlankCardRepository = ({ cards }) => {
     );
 };
 
-export default BlankCardRepository;

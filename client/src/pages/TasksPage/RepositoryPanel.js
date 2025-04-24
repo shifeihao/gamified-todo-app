@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {TaskRepository} from '../../components';
 import {TemplateList} from '../../components'; // 后续实现
-import BlankCardRepository from '../../components/BlankCardRepository';
+import {BlankCardRepository} from '../../components';
 
 const RepositoryPanel = ({
                              tasks,
