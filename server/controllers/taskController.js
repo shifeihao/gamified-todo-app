@@ -196,6 +196,7 @@ const equipTask = async (req, res) => {
 
     // 查找要装备的任务
     const task = await Task.findById(req.params.id);
+    // 检查任务是否存在
     if (!task) {
       return res.status(404).json({ message: '任务不存在' });
     }
@@ -217,11 +218,8 @@ const equipTask = async (req, res) => {
       type: expectedType
     });
 
-    // 如果该槽位已有任务，则将其卸下
-    if (existingTask) {
-      existingTask.equipped = false;
-      existingTask.slotPosition = -1;
-      await existingTask.save();
+    if (existingTask && existingTask._id.toString() !== task._id.toString()) {
+      return res.status(400).json({ message: '该槽位已被同类型任务占用' });
     }
     // 装备新任务
     task.equipped = true;
