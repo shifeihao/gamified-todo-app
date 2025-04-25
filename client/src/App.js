@@ -2,16 +2,7 @@ import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 // 导入页面组件
-<<<<<<< HEAD
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
-import TasksPage from './pages/TasksPage';
-import ProfilePage from './pages/ProfilePage';
-import NotFoundPage from './pages/NotFoundPage';
-import InventoryShopPage from './pages/InventoryShopPage';
-=======
+
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -19,12 +10,11 @@ import DashboardPage from "./pages/DashboardPage";
 import TasksPage from "./pages/TasksPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
+import InventoryShopPage from "./pages/InventoryShopPage";
 import AchievementPage from "./pages/AchievementPage";
 
->>>>>>> Branch_Alex
 // 导入上下文
 import { AuthProvider } from "./context/AuthContext";
-
 
 // 受保护的路由组件
 const ProtectedRoute = ({ children }) => {
@@ -50,13 +40,10 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-<<<<<<< HEAD
+
           <Route path="/inventoryShopTest" element={<InventoryShopPage />} />
           <Route path="/inventory" element={<InventoryShopPage />} />
-          
-=======
 
->>>>>>> Branch_Alex
           {/* 受保护的路由 */}
           <Route
             path="/dashboard"
@@ -70,7 +57,7 @@ function App() {
             path="/tasks"
             element={
               <ProtectedRoute>
-                <TasksPage/>
+                <TasksPage />
               </ProtectedRoute>
             }
           />
