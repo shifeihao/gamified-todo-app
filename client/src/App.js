@@ -9,9 +9,10 @@ import DashboardPage from './pages/DashboardPage';
 import TasksPage from './pages/TasksPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
-
+import InventoryShopPage from './pages/InventoryShopPage';
 // 导入上下文
 import { AuthProvider } from './context/AuthContext';
+
 
 // 受保护的路由组件
 const ProtectedRoute = ({ children }) => {
@@ -37,6 +38,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/inventoryShopTest" element={<InventoryShopPage />} />
+          <Route path="/inventory" element={<InventoryShopPage />} />
           
           {/* 受保护的路由 */}
           <Route

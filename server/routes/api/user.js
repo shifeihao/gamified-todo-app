@@ -6,6 +6,8 @@ import {
     getUserProfile,
     updateUserProfile
 } from '../../controllers/userController.js';
+
+import{getUserInventory} from '../../controllers/inventoryController.js';
   
 import { protect } from '../../middleware/auth.js';
   
@@ -18,4 +20,9 @@ router.route('/profile')
     .get(protect, getUserProfile)
     .put(protect, updateUserProfile);
 
+
+router.route('/inventory')
+    .get(protect,getUserInventory);
+
 export default router;
+
