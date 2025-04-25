@@ -43,14 +43,18 @@ export const handleTaskCompletion = async (req, res) => {
     }
 
     const newExp = userLevel.exp + expGained;
+    console.log('新的经验值：', newExp);
 
+   
     // 7. 查等级表中的当前等级
     const currentLevel = await Level.findOne({ expRequired: { $lte: newExp } }).sort({ level: -1 });
+    console.log('当前等级数据：', currentLevel);
 
     // 8. 查下一级等级的数据（用于确定经验门槛）
     const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
+    console.log('下一级等级数据：', nextLevel);
     const nextLevelExp = nextLevel ? nextLevel.expRequired : currentLevel.expRequired;
-
+    console.log('下一级经验门槛：', nextLevelExp);
     // 9. 计算经验条相关字段
     const expProgress = newExp - currentLevel.expRequired;
     const expRemaining = nextLevelExp - newExp;
