@@ -7,8 +7,8 @@ import {
   scheduleDailyCardReset,
   schedulePeriodicCardCheck,
 } from "./utils/scheduler.js";
-import { loadDefaultAchievements } from "./seeds/loadDefaultAchievements.js";
-import { ensureTestUser } from "./seeds/generateTestUser.js";
+import { loadDefaultAchievements } from "./achievementTest_seeds/loadDefaultAchievements.js";
+import { ensureTestUser } from "./achievementTest_seeds/generateTestUser.js";
 
 // 加载环境变量
 dotenv.config();
