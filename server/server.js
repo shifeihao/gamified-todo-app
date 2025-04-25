@@ -44,17 +44,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
   console.log(`服务器运行在端口 ${PORT}`);
 
-  // 👇 初始化默认成就
-  try {
-    // 加载默认成就
-    await loadDefaultAchievements();
-    // 创建测试用户/确保用户存在/创建用户行为记录表（填充数据）
-    await ensureTestUser();
-    console.log("默认成就同步完成");
-  } catch (e) {
-    console.error("成就导入失败:", e);
-  }
-
   // 👇 初始化定时任务
   try {
     scheduleDailyCardReset();
