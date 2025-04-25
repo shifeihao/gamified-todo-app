@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 import { scheduleDailyCardReset, schedulePeriodicCardCheck } from './utils/scheduler.js';
+import { ensureTestUserWithLevel } from './seeds/generateTestUsers.js';
+
 
 // 加载环境变量
 dotenv.config();
@@ -40,8 +42,16 @@ app.use("/", routes);
 
 // 设置端口并启动服务器
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT,async  () => {
   console.log(`服务器运行在端口 ${PORT}`);
+
+  // 👇 初始化等级测试用户
+  try {
+    await ensureTestUserWithLevel();
+    console.log('🎯 测试等级用户初始化完成');
+  } catch (e) {
+    console.error('❌ 初始化等级用户失败:', e);
+  }
   
   // 初始化定时任务
   try {
