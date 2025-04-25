@@ -1,18 +1,19 @@
-import asyncHandler from 'express-async-handler';
-import mongoose from 'mongoose';
-import Card from '../models/Card.js';
-import User from '../models/User.js';
+import asyncHandler from "express-async-handler";
+import Card from "../models/Card.js";
+import User from "../models/User.js";
+import mongoose from "mongoose";
 
 // @desc    获取用户卡片库存
 // @route   GET /api/cards/inventory
 // @access  Private
 const getCardInventory = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id).populate('cardInventory');
-  
+  const user = await User.findById(req.user.id).populate("cardInventory");
+
   // 检查并重置每日卡片配额
   const today = new Date().setHours(0, 0, 0, 0);
-  const lastIssued = user.dailyCards.lastIssued ? 
-    new Date(user.dailyCards.lastIssued).setHours(0, 0, 0, 0) : null;
+  const lastIssued = user.dailyCards.lastIssued
+    ? new Date(user.dailyCards.lastIssued).setHours(0, 0, 0, 0)
+    : null;
 
   if (lastIssued !== today) {
     user.dailyCards.blank = 3; // 重置为每日3张空白卡
@@ -21,10 +22,13 @@ const getCardInventory = asyncHandler(async (req, res) => {
   }
 
   // 检查周期性卡片冷却
-  const periodicCards = user.cardInventory.filter(card => 
-    card.type === 'periodic' && card.cooldownUntil && card.cooldownUntil < new Date()
+  const periodicCards = user.cardInventory.filter(
+    (card) =>
+      card.type === "periodic" &&
+      card.cooldownUntil &&
+      card.cooldownUntil < new Date()
   );
-  
+
   for (const card of periodicCards) {
     card.cooldownUntil = null;
     await card.save();
@@ -32,7 +36,7 @@ const getCardInventory = asyncHandler(async (req, res) => {
 
   res.json({
     dailyCards: user.dailyCards,
-    inventory: user.cardInventory
+    inventory: user.cardInventory,
   });
 });
 
@@ -41,37 +45,40 @@ const getCardInventory = asyncHandler(async (req, res) => {
 // @access  Private
 const issueDailyCards = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
-  
+
   // 检查是否已发放
   const today = new Date().setHours(0, 0, 0, 0);
-  const lastIssued = user.dailyCards.lastIssued ? 
-    new Date(user.dailyCards.lastIssued).setHours(0, 0, 0, 0) : null;
+  const lastIssued = user.dailyCards.lastIssued
+    ? new Date(user.dailyCards.lastIssued).setHours(0, 0, 0, 0)
+    : null;
 
   if (lastIssued === today) {
     res.status(400);
-    throw new Error('今日卡片已发放');
+    throw new Error("今日卡片已发放");
   }
 
   // 创建3张空白卡片
-  const blankCards = await Promise.all([...Array(3)].map(() => 
-    Card.create({
-      user: user._id,
-      type: 'blank',
-      title: '空白卡片',
-      description: '可用于创建任意类型的任务',
-      issuedAt: new Date()
-    })
-  ));
+  const blankCards = await Promise.all(
+    [...Array(3)].map(() =>
+      Card.create({
+        user: user._id,
+        type: "blank",
+        title: "空白卡片",
+        description: "可用于创建任意类型的任务",
+        issuedAt: new Date(),
+      })
+    )
+  );
 
   // 更新用户卡片库存
-  user.cardInventory.push(...blankCards.map(card => card._id));
+  user.cardInventory.push(...blankCards.map((card) => card._id));
   user.dailyCards.blank = 3;
   user.dailyCards.lastIssued = new Date();
   await user.save();
 
   res.status(201).json({
-    message: '每日卡片发放成功',
-    cards: blankCards
+    message: "每日卡片发放成功",
+    cards: blankCards,
   });
 });
 
@@ -80,25 +87,25 @@ const issueDailyCards = asyncHandler(async (req, res) => {
 // @access  Private
 const issueRewardCard = asyncHandler(async (req, res) => {
   const { type, title, description, bonus } = req.body;
-  
+
   // 创建奖励卡片
   const rewardCard = await Card.create({
     user: req.user.id,
-    type: 'special',
+    type: "special",
     title,
     description,
     bonus,
-    issuedAt: new Date()
+    issuedAt: new Date(),
   });
 
   // 更新用户卡片库存
   await User.findByIdAndUpdate(req.user.id, {
-    $push: { cardInventory: rewardCard._id }
+    $push: { cardInventory: rewardCard._id },
   });
 
   res.status(201).json({
-    message: '奖励卡片发放成功',
-    card: rewardCard
+    message: "奖励卡片发放成功",
+    card: rewardCard,
   });
 });
 
@@ -111,7 +118,7 @@ const consumeCard = asyncHandler(async (req, res) => {
   // 校验 cardId 是否有效
   if (!cardId || !mongoose.Types.ObjectId.isValid(cardId)) {
     res.status(400);
-    throw new Error('无效的卡片ID');
+    throw new Error("无效的卡片ID");
   }
 
   const user = await User.findById(req.user.id);
@@ -119,35 +126,37 @@ const consumeCard = asyncHandler(async (req, res) => {
   // 1. 验证卡片
   const card = await Card.findOne({
     _id: cardId,
-    user: req.user.id
+    user: req.user.id,
+    used: false,
+    user: req.user.id,
   });
   // console.log("Card: ", card);
 
   if (!card) {
     res.status(400);
-    throw new Error('无效的卡片');
+    throw new Error("无效的卡片");
   }
 
   // 检查卡片是否已使用
-  if (card.type !== 'periodic' && card.used) {
+  if (card.type !== "periodic" && card.used) {
     res.status(400);
-    throw new Error('卡片已被使用');
+    throw new Error("卡片已被使用");
   }
 
   // 2. 处理不同类型卡片
   let remainingCards = user.dailyCards.blank;
-  
-  if (card.type === 'blank') {
+
+  if (card.type === "blank") {
     // 检查每日配额
     if (remainingCards < 1) {
       res.status(400);
-      throw new Error('今日空白卡片配额已用完');
+      throw new Error("今日空白卡片配额已用完");
     }
     remainingCards--;
   }
 
   // 3. 更新卡片状态
-  if (card.type !== 'periodic') {
+  if (card.type !== "periodic") {
     card.used = true;
     await card.save();
   } else {
@@ -157,16 +166,20 @@ const consumeCard = asyncHandler(async (req, res) => {
   }
 
   // 4. 更新用户数据
-  if (card.type === 'periodic') {
+  await User.findByIdAndUpdate(req.user.id, {
+    $inc: { "dailyCards.blank": card.type === "blank" ? -1 : 0 },
+    $pull: { cardInventory: card.type !== "periodic" ? cardId : null },
+  });
+  if (card.type === "periodic") {
     // 周期性卡片只更新冷却时间，不从库存中移除
     await User.findByIdAndUpdate(req.user.id, {
-      $inc: { 'dailyCards.blank': 0 }
+      $inc: { "dailyCards.blank": 0 },
     });
   } else {
     // 非周期性卡片从库存中移除
     await User.findByIdAndUpdate(req.user.id, {
-      $inc: { 'dailyCards.blank': card.type === 'blank' ? -1 : 0 },
-      $pull: { cardInventory: cardId }
+      $inc: { "dailyCards.blank": card.type === "blank" ? -1 : 0 },
+      $pull: { cardInventory: cardId },
     });
   }
 
@@ -178,17 +191,13 @@ const consumeCard = asyncHandler(async (req, res) => {
     success: true,
     processedTask: {
       ...taskData,
-      experienceReward: taskData.baseExperience * card.bonus.experienceMultiplier,
+      experienceReward:
+        taskData.baseExperience * card.bonus.experienceMultiplier,
       goldReward: taskData.baseGold * card.bonus.goldMultiplier,
-      cardUsed: cardId
+      cardUsed: cardId,
     },
-    remainingCards
+    remainingCards,
   });
 });
 
-export {
-  consumeCard,
-  getCardInventory,
-  issueDailyCards,
-  issueRewardCard
-};
+export { consumeCard, getCardInventory, issueDailyCards, issueRewardCard };
