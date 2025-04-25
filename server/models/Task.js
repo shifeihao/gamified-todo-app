@@ -91,6 +91,11 @@ const taskSchema = new mongoose.Schema(
       type: Number,
       default: -1,
     },
+    // 装备到槽位的时间
+    slotEquippedAt: {
+      type: Date,
+      default: null
+    },
     subTasks: [subTaskSchema], // 长期任务的子任务
   },
   {

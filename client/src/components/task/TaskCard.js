@@ -16,6 +16,8 @@ export const TaskCard = ({
                          }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef();
+    // 短期任务超时标记
+    const isExpired = isEquipped && task.expired === true;
 
     // 点击空白关闭菜单
     useEffect(() => {
@@ -70,7 +72,7 @@ export const TaskCard = ({
             <div
                 className={`card equipped-card hover:shadow-lg transition-shadow duration-300
                     border-2 border-blue-500 p-2 text-xs flex flex-col justify-between h-full
-                    ${className}`}
+                    ${isExpired?'opacity-50 cursor-not-allowed ':''}${className}`}
                 draggable={draggable}
                 onDragStart={onDragStart ? e => onDragStart(e, task) : undefined}
             >
@@ -85,9 +87,11 @@ export const TaskCard = ({
                     <span>剩余 {timeLeft}</span>
                 </div>
                 <div className="flex justify-between space-x-2">
-                    <button onClick={() => onComplete(task._id)} className="btn-primary text-xs py-1 px-2">
-                        完成
-                    </button>
+                    {!isExpired && (
+                        <button onClick={() => onComplete(task._id)} className="btn-primary text-xs py-1 px-2">
+                            完成
+                        </button>
+                    )}
                     <button onClick={() => onViewDetail(task)} className="btn-secondary text-xs py-1 px-2">
                         查看详情
                     </button>

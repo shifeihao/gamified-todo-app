@@ -112,8 +112,15 @@ const updateTask = async (req, res) => {
       task.slotPosition = req.body.slotPosition;
     }
 
-    // 如果任务状态变为已完成，记录完成时间并奖励用户
+    // 如果任务状态变为已完成，先校验短期任务是否已过期
     if (req.body.status === '已完成' && task.status !== '已完成') {
+      if (task.type === '短期' && task.slotEquippedAt && Date.now() - new Date(task.slotEquippedAt).getTime() > 24 * 60 * 60 * 1000) {
+        // 标记为过期
+        task.status = '过期';
+        await task.save();
+        return res.status(400).json({ message: '短期任务已过期，无法完成' });
+      }
+      // 正常完成任务
       task.completedAt = Date.now();
       
       // 奖励用户经验和金币
@@ -177,30 +184,37 @@ const getEquippedTasks = async (req, res) => {
 // @access  Private
 const equipTask = async (req, res) => {
   try {
-    const { slotPosition } = req.body;
-    
+    const { slotPosition, slotType } = req.body;
+    // 验证槽位位置
     if (slotPosition === undefined || slotPosition < 0 || slotPosition > 2) {
       return res.status(400).json({ message: '无效的任务槽位置' });
+    }
+    // 验证槽位类型
+    if (!['short', 'long'].includes(slotType)) {
+      return res.status(400).json({ message: '无效的槽位类型' });
     }
 
     // 查找要装备的任务
     const task = await Task.findById(req.params.id);
-    
-    // 检查任务是否存在
     if (!task) {
       return res.status(404).json({ message: '任务不存在' });
     }
-
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: '没有权限' });
     }
+    // 检查任务类型是否匹配槽位类型
+    const expectedType = slotType === 'long' ? '长期' : '短期';
+    if (task.type !== expectedType) {
+      return res.status(400).json({ message: `只能装备${expectedType}任务到该槽位` });
+    }
 
-    // 检查该槽位是否已有任务
+    // 检查该槽位是否已有同类型任务
     const existingTask = await Task.findOne({
       user: req.user._id,
       equipped: true,
-      slotPosition
+      slotPosition,
+      type: expectedType
     });
 
     // 如果该槽位已有任务，则将其卸下
@@ -209,11 +223,11 @@ const equipTask = async (req, res) => {
       existingTask.slotPosition = -1;
       await existingTask.save();
     }
-
     // 装备新任务
     task.equipped = true;
     task.slotPosition = slotPosition;
-    
+    // 记录装备时间
+    task.slotEquippedAt = Date.now();
     const updatedTask = await task.save();
     res.json(updatedTask);
   } catch (error) {

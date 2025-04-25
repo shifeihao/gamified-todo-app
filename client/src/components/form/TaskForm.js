@@ -7,7 +7,9 @@ export const TaskForm = ({
   initialData = null,
   onCancel,
   loading = false,
-  taskType
+  taskType,
+  defaultDueDate,      // 新增：默认截止日期（YYYY-MM-DD）
+  defaultDueDateTime   // 新增：默认截止日期时间（YYYY-MM-DDTHH:mm）
 }) => {
   const { user } = useContext(AuthContext);
 
@@ -15,7 +17,7 @@ export const TaskForm = ({
     category: initialData?.category || '默认',
     dueDate: initialData?.dueDate
       ? new Date(initialData.dueDate).toISOString().split('T')[0]
-      : '',
+      : (defaultDueDate || ''),  // 默认使用 defaultDueDate
     baseExperience: 10,
     baseGold: 5,
     description: initialData?.description || '',
@@ -31,6 +33,13 @@ export const TaskForm = ({
       setFormData(prev => ({ ...prev, subTasks: initialData.subTasks }));
     }
   }, [initialData]);
+
+  // 如果没有 initialData 且 defaultDueDate 提供，设置截止日期
+  useEffect(() => {
+    if (!initialData && defaultDueDate) {
+      setFormData(prev => ({ ...prev, dueDate: defaultDueDate }));
+    }
+  }, [defaultDueDate, initialData]);
 
   // 通用字段变更
   const handleChange = e => {
@@ -84,6 +93,10 @@ export const TaskForm = ({
   const handleSubmit = e => {
     e.preventDefault();
     if (!validate()) return;
+    // 如果存在默认截止日期时间，覆盖表单值
+    if (defaultDueDateTime) {
+      formData.dueDate = defaultDueDateTime;
+    }
     onSubmit(formData);
   };
 
@@ -102,13 +115,23 @@ export const TaskForm = ({
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">截止日期</label>
-          <input
-            type="date"
-            name="dueDate"
-            value={formData.dueDate}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-          />
+          {defaultDueDateTime ? (
+            <input
+              type="datetime-local"
+              step="1"
+              value={defaultDueDateTime}
+              disabled
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+            />
+          ) : (
+            <input
+              type="date"
+              name="dueDate"
+              value={formData.dueDate}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+            />
+          )}
         </div>
       </div>
 

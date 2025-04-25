@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {TaskSlots} from '../../components';
 
-const TimetablePanel = ({ tasks, onComplete, onDelete, onEdit, onCreateTask, onDrop }) => {
+const TimetablePanel = ({ equippedTasks, onComplete, onDelete, onEdit, onCreateTask, onDrop }) => {
     const [activeTab, setActiveTab] = useState('list');
 
     return (
@@ -34,7 +34,7 @@ const TimetablePanel = ({ tasks, onComplete, onDelete, onEdit, onCreateTask, onD
 
             {activeTab === 'list' ? (
                 <TaskSlots
-                    items={tasks.filter(task => task.type === '长期')}
+                    items={equippedTasks}
                     totalSlots={5}
                     activeCount={2}
                     slotHeight="h-40"

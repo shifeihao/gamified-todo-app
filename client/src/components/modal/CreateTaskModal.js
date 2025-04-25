@@ -12,11 +12,18 @@ export const CreateTaskModal = ({
   onSubmit,
   loading = false,
   slotIndex = -1,
-  initialData = null
+  initialData = null,
+  defaultType = '短期',       // 新增：默认任务类型
+  defaultDueDateTime         // 新增：默认截止日期时间（YYYY-MM-DDTHH:mm）
 }) => {
   const { user } = useContext(AuthContext);
   const [title, setTitle] = useState(initialData?.title || '');
-  const [taskType, setTaskType] = useState(initialData?.type || '短期');
+  const [taskType, setTaskType] = useState(initialData?.type || defaultType);
+  
+  // 当initialData或defaultType变化时，重置任务类型
+  useEffect(() => {
+    setTaskType(initialData?.type || defaultType);
+  }, [initialData, defaultType]);
   const [useReward, setUseReward] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [cardError, setCardError] = useState('');
@@ -155,9 +162,9 @@ export const CreateTaskModal = ({
           loading={loading}
           initialData={initialData}
           taskType={taskType}
+          defaultDueDateTime={defaultDueDateTime}
         />
       </div>
     </Modal>
   );
 };
-
