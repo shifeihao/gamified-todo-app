@@ -4,6 +4,7 @@ import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
+import mongoose from "mongoose";
 import {
   scheduleDailyCardReset,
   schedulePeriodicCardCheck,

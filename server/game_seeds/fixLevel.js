@@ -1,7 +1,7 @@
 // tools/fixLevelTypes.js
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import Level from '../models/Level.js';
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import Level from "../models/Level.js";
 
 dotenv.config();
 await mongoose.connect(process.env.MONGO_URI);
@@ -20,5 +20,5 @@ for (const level of levels) {
   console.log(`✅ 修复等级 ${level.level}`);
 }
 
-console.log('✨ 所有等级字段类型已修复完毕');
+console.log("✨ 所有等级字段类型已修复完毕");
 process.exit();

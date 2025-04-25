@@ -1,13 +1,12 @@
 // 📦 Task Master Seeder Script: Initialize Items, Shop, User, Inventory
-
 import mongoose from "mongoose";
+import { generateTestUser } from "./generateTestUser.js";
 
 import {
   ShopItem,
   WeaponItem,
   ArmorItem,
   ConsumableItem,
-  MaterialItem,
 } from "../models/ShopItem.js";
 
 import {
@@ -18,16 +17,20 @@ import {
 
 import User from "../models/User.js";
 
+// 连接到 MongoDB 数据库
 await mongoose.connect(
   `mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
 );
+
+await generateTestUser();
+const user = await User.findOne({ username: "testuser" });
+const userId = user._id;
 
 await Promise.all([
   ShopItem.deleteMany({}),
   ShopInventory.deleteMany({}),
   UserInventory.deleteMany({}),
   UserEquipment.deleteMany({}),
-  User.deleteMany({ username: "testuser" }),
 ]);
 
 const items = await ShopItem.insertMany([
@@ -105,16 +108,9 @@ await ShopInventory.insertMany(
   }))
 );
 
-const user = await User.create({
-  username: "testuser",
-  password: "123456",
-  email: "testShop@example.com",
-  gold: 9999,
-});
-
-await UserInventory.deleteMany({ userId: user._id });
+await UserInventory.deleteMany({ userId: userId });
 await UserEquipment.create({
-  userId: user._id,
+  userId: userId,
   slots: {},
   explorationConsumables: [],
 });

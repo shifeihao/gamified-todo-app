@@ -1,14 +1,13 @@
 // server/utils/loadDefaultAchievements.js
 
 import Achievement from "../models/Achievement.js";
-import defaultAchievements from "../config/defaultAchievements.js";
+import defaultAchievements from "./defaultAchievements.js";
 
 // 插入默认成就数据（先清空再插入）
 export async function loadDefaultAchievements() {
   try {
     await Achievement.deleteMany({});
     console.log("🧹 已清空原有成就数据");
-
     for (const ach of defaultAchievements) {
       // ✅ 跳过缺失 logic 的成就（容错处理）
       if (
