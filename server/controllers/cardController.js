@@ -86,7 +86,12 @@ const issueDailyCards = asyncHandler(async (req, res) => {
 // @route   POST /api/cards/issue-reward
 // @access  Private
 const issueRewardCard = asyncHandler(async (req, res) => {
-  const { type, title, description, bonus } = req.body;
+  const { type, title, description, bonus, taskDuration } = req.body;
+  // 验证 taskDuration 是否有效
+  if (!['短期','长期','通用'].includes(taskDuration)) {
+    res.status(400);
+    throw new Error('无效的任务持续时长：taskDuration 必须为 短期、长期 或 通用');
+  }
 
   // 创建奖励卡片
   const rewardCard = await Card.create({
@@ -95,6 +100,7 @@ const issueRewardCard = asyncHandler(async (req, res) => {
     title,
     description,
     bonus,
+    taskDuration,
     issuedAt: new Date(),
   });
 
@@ -126,7 +132,6 @@ const consumeCard = asyncHandler(async (req, res) => {
   // 1. 验证卡片
   const card = await Card.findOne({
     _id: cardId,
-    user: req.user.id,
     used: false,
     user: req.user.id,
   });

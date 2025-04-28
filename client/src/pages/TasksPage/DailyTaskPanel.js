@@ -1,45 +1,44 @@
+// src/pages/TasksPage/DailyTaskPanel.js
 import React from 'react';
-import DailyTaskSlots from '../../components/DailyTaskSlots';
-import TaskRepository from '../../components/TaskRepository';
+import {TaskSlots} from '../../components';
 
 const DailyTaskPanel = ({
                             equippedTasks,
-                            tasks,
                             onComplete,
                             onDelete,
                             onEdit,
                             onUnequip,
                             onDrop,
-                            onCreateTask,
-                            onEquip
+                            onCreateTask
                         }) => {
-    // 仅展示未装备的任务（仓库内容）
-    const unequippedTasks = tasks.filter(task => !task.equipped);
+    // 只展示短期任务
+    const shortTasks = equippedTasks.filter(t => t.type === '短期');
 
     return (
-        <div className="space-y-8">
-            {/* 每日任务槽 */}
-            <DailyTaskSlots
-                equippedTasks={equippedTasks}
+        <div className="mb-8 flex flex-col">
+            <h2 className="text-xl font-bold mb-4">Quick Quests</h2>
+            <TaskSlots
+                items={shortTasks}
+                totalSlots={5}
+                activeCount={2}
+                slotHeight="h-28"
+                renderCreateContent={() => (
+                    <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2"
+                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                  d="M12 4v16m8-8H4" />
+                        </svg>
+                        <p>点击创建短期任务</p>
+                    </>
+                )}
+                onCreate={onCreateTask}
+                onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, '短期')}
                 onComplete={onComplete}
                 onDelete={onDelete}
                 onEdit={onEdit}
                 onUnequip={onUnequip}
-                onDrop={onDrop}
-                onCreateTask={onCreateTask}
             />
-
-            {/* 仓库任务 - 用于拖拽到槽 */}
-            <div>
-                <h2 className="text-lg font-semibold text-gray-800 mb-2">任务仓库</h2>
-                <TaskRepository
-                    tasks={unequippedTasks}
-                    onComplete={onComplete}
-                    onDelete={onDelete}
-                    onEdit={onEdit}
-                    onEquip={onEquip}  // 拖拽成功后调用
-                />
-            </div>
         </div>
     );
 };

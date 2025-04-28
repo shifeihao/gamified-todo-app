@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Modal = ({ isOpen, onClose, children, title }) => {
+export const Modal = ({ isOpen, onClose, children, title }) => {
   // 按ESC键关闭模态框
   useEffect(() => {
     const handleEsc = (e) => {
@@ -60,4 +60,3 @@ const Modal = ({ isOpen, onClose, children, title }) => {
   );
 };
 
-export default Modal;
