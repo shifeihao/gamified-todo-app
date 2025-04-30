@@ -3,12 +3,7 @@ const router = express.Router();
 
 import { protect } from '../../middleware/auth.js';
 
-import {
-  consumeCard,
-  getCardInventory,
-  issueDailyCards,
-  issueRewardCard
-} from '../../controllers/cardController.js';
+import {consumeCard, getCardInventory, issueDailyCards, issueRewardCard, issueBlankCard,} from '../../controllers/cardController.js';
 
 // 获取卡片库存
 router.route('/inventory')
@@ -25,5 +20,10 @@ router.route('/issue-reward')
 // 卡片消耗接口
 router.route('/consume')
   .post(protect, consumeCard);
+
+// 发放空白卡片（用于postman测试）
+router.route('/issue-blank')
+    .post(protect, issueBlankCard);
+
 
 export default router;

@@ -126,28 +126,33 @@ export const TaskCard = ({
                     </button>
                     {menuOpen && (
                         <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                            {/* 仅允许未完成任务使用功能 */}
                             {task.status !== '已完成' && (
-                                <button
-                                    onClick={() => { setMenuOpen(false); onComplete(task._id); }}
-                                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                >
-                                    完成
-                                </button>
+                                <>
+                                    <button
+                                        onClick={() => { setMenuOpen(false); onComplete(task._id); }}
+                                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                    >
+                                        完成
+                                    </button>
+                                    {onEquip && (
+                                        <button
+                                            onClick={() => { setMenuOpen(false); onEquip(task); }}
+                                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                        >
+                                            装备
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => { setMenuOpen(false); onEdit(task); }}
+                                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                    >
+                                        编辑
+                                    </button>
+                                </>
                             )}
-                            {onEquip && (
-                                <button
-                                    onClick={() => { setMenuOpen(false); onEquip(task); }}
-                                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                >
-                                    装备
-                                </button>
-                            )}
-                            <button
-                                onClick={() => { setMenuOpen(false); onEdit(task); }}
-                                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                            >
-                                编辑
-                            </button>
+
+                            {/* 删除按钮始终允许 */}
                             <button
                                 onClick={() => { setMenuOpen(false); onDelete(task._id); }}
                                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
@@ -156,6 +161,7 @@ export const TaskCard = ({
                             </button>
                         </div>
                     )}
+
                 </div>
             </div>
 

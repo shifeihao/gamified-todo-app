@@ -44,9 +44,12 @@ export const CardSelector = ({
 
   return (
     <div className="mb-4">
-      <div className="text-sm font-medium mb-2">
-        可用空白卡片: {dailyCards}
-      </div>
+      {/* 仅在未开启奖励卡模式时显示空白卡数量 */}
+      {!showRewards && (
+          <div className="text-sm font-medium mb-2">
+            可用空白卡片: {dailyCards}
+          </div>
+      )}
       {showRewards && (
         <div className="grid grid-cols-3 gap-4">
           {rewardCards.map(card => (

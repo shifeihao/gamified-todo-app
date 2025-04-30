@@ -40,7 +40,7 @@ const getCardInventory = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    发放每日卡片
+// @desc    定时发放每日卡片
 // @route   POST /api/cards/issue-daily
 // @access  Private
 const issueDailyCards = asyncHandler(async (req, res) => {
@@ -64,7 +64,8 @@ const issueDailyCards = asyncHandler(async (req, res) => {
         user: user._id,
         type: "blank",
         title: "空白卡片",
-        description: "可用于创建任意类型的任务",
+        description: "限定为短期类型的任务",
+        taskDuration: "短期", //  限定为短期卡片
         issuedAt: new Date(),
       })
     )
@@ -114,6 +115,35 @@ const issueRewardCard = asyncHandler(async (req, res) => {
     card: rewardCard,
   });
 });
+
+
+// @desc    发放短期空白卡片（用于postman测试）
+// @route   POST /api/cards/issue-blank
+// @access  Private
+const issueBlankCard = asyncHandler(async (req, res) => {
+  const { title = "空白卡片", description = "" } = req.body;
+
+  const blankCard = await Card.create({
+    user: req.user.id,
+    type: "blank",
+    title,
+    description,
+    taskDuration: "短期", //  限定为短期卡片
+    issuedAt: new Date(),
+  });
+
+  await User.findByIdAndUpdate(req.user.id, {
+    $push: { cardInventory: blankCard._id },
+    $inc: { "dailyCards.blank": 1 }  //  增加每日空白卡计数
+  });
+
+  res.status(201).json({
+    message: "短期空白卡片发放成功",
+    card: blankCard,
+  });
+});
+
+
 
 // @desc    消耗卡片创建任务
 // @route   POST /api/cards/consume
@@ -175,18 +205,18 @@ const consumeCard = asyncHandler(async (req, res) => {
     $inc: { "dailyCards.blank": card.type === "blank" ? -1 : 0 },
     $pull: { cardInventory: card.type !== "periodic" ? cardId : null },
   });
-  if (card.type === "periodic") {
-    // 周期性卡片只更新冷却时间，不从库存中移除
-    await User.findByIdAndUpdate(req.user.id, {
-      $inc: { "dailyCards.blank": 0 },
-    });
-  } else {
-    // 非周期性卡片从库存中移除
-    await User.findByIdAndUpdate(req.user.id, {
-      $inc: { "dailyCards.blank": card.type === "blank" ? -1 : 0 },
-      $pull: { cardInventory: cardId },
-    });
-  }
+  // if (card.type === "periodic") {
+  //   // 周期性卡片只更新冷却时间，不从库存中移除
+  //   await User.findByIdAndUpdate(req.user.id, {
+  //     $inc: { "dailyCards.blank": 0 },
+  //   });
+  // } else {
+  //   // 非周期性卡片从库存中移除
+  //   await User.findByIdAndUpdate(req.user.id, {
+  //     $inc: { "dailyCards.blank": card.type === "blank" ? -1 : 0 },
+  //     $pull: { cardInventory: cardId },
+  //   });
+  // }
 
   // ✅ 5. 安全访问加成信息（避免空白卡报错）
   const bonus = card.bonus || { experienceMultiplier: 1, goldMultiplier: 1 };
@@ -203,6 +233,13 @@ const consumeCard = asyncHandler(async (req, res) => {
     },
     remainingCards,
   });
+
+  // 卡片和任务类型匹配性校验
+  if (card.taskDuration !== '通用' && card.taskDuration !== taskData.type) {
+    res.status(400);
+    throw new Error(`该卡片仅支持${card.taskDuration}任务，无法用于${taskData.type}任务`);
+  }
+
 });
 
-export { consumeCard, getCardInventory, issueDailyCards, issueRewardCard };
+export { consumeCard, getCardInventory, issueDailyCards, issueRewardCard,issueBlankCard };

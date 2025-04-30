@@ -22,8 +22,9 @@ export function useApiAction(actionFn, { onSuccess, onError, refresh } = {}) {
     setError('');
     try {
       const result = await actionFn(...params);
+      const input = params[0]; //  拿到第一个参数作为 input 数据
       // 成功提示 & 刷新
-      if (onSuccess) onSuccess(result);
+      if (onSuccess) onSuccess(result, input); //  透传 input
       if (refresh) await refresh();
       return result;
     } catch (err) {

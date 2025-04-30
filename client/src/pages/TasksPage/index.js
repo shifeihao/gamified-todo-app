@@ -144,9 +144,10 @@ const TasksPage = () => {
     isLoading: completing,
     error: completeError
   } = useApiAction(completeTaskService, {
-    onSuccess: async (taskId) => {
+    onSuccess: async (task) => {
       // 卸下已完成的任务，防止继续占用槽位
-      await unequipTaskService(taskId, user.token);
+      await unequipTaskService(task._id, user.token); //  只传 id 字符串
+      console.log('任务完成后返回值:', task);
       showSuccess('任务已完成');
       fetchTasks();
     },
@@ -168,13 +169,12 @@ const TasksPage = () => {
     isLoading: creating,
     error: createError
   } = useApiAction(createTaskService, {
-    onSuccess: async (res) => {
+    onSuccess: async (res, input) => {
       showSuccess('任务已创建');
-      // 如果是从槽位新建，自动装备
-      if (res.fromSlot && res.slotIndex >= 0) {
-        const isLong = res.type === '长期';
+      if (input?.fromSlot && input?.slotIndex >= 0) {
+        const isLong = input.type === '长期';
         const slotType = isLong ? 'long' : 'short';
-        await equipTaskService(res._id, res.slotIndex, user.token, slotType);
+        await equipTaskService(res._id, input.slotIndex, user.token, slotType);
         showSuccess(`已装备${isLong ? '长期' : '短期'}任务`);
       }
       fetchTasks();
@@ -321,6 +321,7 @@ const TasksPage = () => {
             setShowForm(false);
             setEditingTask(null);
             setCreateSlotIndex(-1);
+            setCreateSlotType('短期'); // 每次关闭时都重置任务类型，确保下次能准确控制
           }}
           onSubmit={handleSubmit}
           loading={editingTask ? updating : creating}
