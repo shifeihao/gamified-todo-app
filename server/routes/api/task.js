@@ -9,7 +9,8 @@ import {
     deleteTask,
     getEquippedTasks,
     equipTask,
-    unequipTask
+    unequipTask,
+    getTaskHistory
   } from '../../controllers/taskController.js';
   
 import { protect } from '../../middleware/auth.js';
@@ -42,4 +43,7 @@ router.route('/:id/equip')
 router.route('/:id/unequip')
   .put(unequipTask);
 
+// 获取历史记录（可分页）
+router.route('/history')
+    .get(getTaskHistory);
 export default router;

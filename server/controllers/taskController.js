@@ -1,5 +1,7 @@
 import Task from '../models/Task.js';
 import User from '../models/User.js';
+import asyncHandler from "express-async-handler";
+
 
 // @desc    获取当前用户的所有任务
 // @route   GET /api/tasks
@@ -75,28 +77,26 @@ const getTaskById = async (req, res) => {
 // @access  Private
 const updateTask = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
-
+    const task = await Task.findById(req.params.id).populate('cardUsed');
     // 检查任务是否存在
     if (!task) {
       return res.status(404).json({ message: '任务不存在' });
     }
-
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: '没有权限' });
     }
-
+    const oldStatus = task.status; // 记录原始状态
     // 更新任务字段
     task.title = req.body.title || task.title;
     task.description = req.body.description || task.description;
     task.type = req.body.type || task.type;
-    task.status = req.body.status || task.status;
+    task.status = req.body.status || task.status; // 提前更新 status
     task.category = req.body.category || task.category;
     task.dueDate = req.body.dueDate || task.dueDate;
     task.experienceReward = req.body.experienceReward || task.experienceReward;
     task.goldReward = req.body.goldReward || task.goldReward;
-    
+
     // 更新子任务（如果提供）
     if (req.body.subTasks) {
       task.subTasks = req.body.subTasks;
@@ -113,21 +113,45 @@ const updateTask = async (req, res) => {
     }
 
     // 如果任务状态变为已完成，先校验短期任务是否已过期
-    if (req.body.status === '已完成' && task.status !== '已完成') {
-      if (task.type === '短期' && task.slotEquippedAt && Date.now() - new Date(task.slotEquippedAt).getTime() > 24 * 60 * 60 * 1000) {
+    if (req.body.status === '已完成' && oldStatus !== '已完成') {
+      if (
+          task.type === '短期' &&
+          task.slotEquippedAt &&
+          Date.now() - new Date(task.slotEquippedAt).getTime() > 24 * 60 * 60 * 1000
+      ) {
         // 标记为过期
         task.status = '过期';
         await task.save();
         return res.status(400).json({ message: '短期任务已过期，无法完成' });
       }
-      // 正常完成任务
+
+      // 设置完成时间
       task.completedAt = Date.now();
-      
-      // 奖励用户经验和金币
+
+      // 发放奖励
       const user = await User.findById(req.user._id);
       user.experience += task.experienceReward;
       user.gold += task.goldReward;
       await user.save();
+
+      //  立即写入历史记录
+      const TaskHistory = (await import('../models/TaskHistory.js')).default;
+      const duration = task.slotEquippedAt
+          ? Math.floor((task.completedAt - new Date(task.slotEquippedAt)) / 60000)
+          : null;
+
+      await TaskHistory.create({
+        user: task.user,
+        title: task.title,
+        type: task.type,
+        status: task.status,
+        completedAt: task.completedAt,
+        duration,
+        experienceGained: task.experienceReward,
+        goldGained: task.goldReward,
+        cardType: task.cardUsed?.type || null,
+        cardBonus: task.cardUsed?.bonus || null,
+      });
     }
 
     const updatedTask = await task.save();
@@ -138,30 +162,42 @@ const updateTask = async (req, res) => {
   }
 };
 
-// @desc    删除任务
-// @route   DELETE /api/tasks/:id
-// @access  Private
+// @desc 删除任务（并归档到历史记录）
+// @route DELETE /api/tasks/:id
+// @access Private
 const deleteTask = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findById(req.params.id).populate('cardUsed');
 
-    // 检查任务是否存在
-    if (!task) {
-      return res.status(404).json({ message: '任务不存在' });
-    }
-
-    // 检查任务是否属于当前用户
-    if (task.user.toString() !== req.user._id.toString()) {
+    if (!task) return res.status(404).json({ message: '任务不存在' });
+    if (task.user.toString() !== req.user._id.toString())
       return res.status(403).json({ message: '没有权限' });
+
+    // 从用户卡片库存中移除
+    if (task.cardUsed) {
+      await User.findByIdAndUpdate(task.user, {
+        $pull: { cardInventory: task.cardUsed._id }
+      });
+      await task.cardUsed.deleteOne();
     }
 
+    // 删除任务本身
     await task.deleteOne();
-    res.json({ message: '任务已删除' });
+    res.json({ message: '任务已归档并删除' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: '服务器错误' });
   }
 };
+
+// @desc 获取用户任务历史记录
+// @route GET /api/tasks/history
+// @access Private
+const getTaskHistory = asyncHandler(async (req, res) => {
+  const TaskHistory = (await import('../models/TaskHistory.js')).default;
+  const records = await TaskHistory.find({ user: req.user.id }).sort({ completedAt: -1 });
+  res.json(records);
+});
 
 // @desc    获取已装备的任务
 // @route   GET /api/tasks/equipped
@@ -272,4 +308,5 @@ export {
   getEquippedTasks,
   equipTask,
   unequipTask,
+  getTaskHistory
 };

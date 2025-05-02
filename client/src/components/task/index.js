@@ -5,3 +5,4 @@ export { TaskSlots } from './TaskSlots';
 export { TemplateList } from './TemplateList';
 export { BlankCardRepository } from './BlankCardRepository';
 export {RewardCardTile} from './RewardCardTile';
+export {TaskCalendar} from './TaskCalendar';

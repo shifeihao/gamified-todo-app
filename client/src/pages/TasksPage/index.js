@@ -145,10 +145,10 @@ const TasksPage = () => {
     error: completeError
   } = useApiAction(completeTaskService, {
     onSuccess: async (task) => {
-      // 卸下已完成的任务，防止继续占用槽位
+      // // 先记录任务完成,再卸下已完成的任务，防止继续占用槽位
+      showSuccess('任务已完成');
       await unequipTaskService(task._id, user.token); //  只传 id 字符串
       console.log('任务完成后返回值:', task);
-      showSuccess('任务已完成');
       fetchTasks();
     },
     onError: (err) => {

@@ -1,6 +1,9 @@
 // src/pages/TasksPage/TimetablePanel.js
 import React, { useState } from 'react';
 import { TaskSlots } from '../../components';
+import { TaskCalendar } from '../../components';
+import 'react-calendar/dist/Calendar.css';
+
 
 const TimetablePanel = ({ equippedTasks, onComplete, onDelete, onEdit, onCreateTask, onDrop }) => {
     const [activeTab, setActiveTab] = useState('list');
@@ -59,8 +62,8 @@ const TimetablePanel = ({ equippedTasks, onComplete, onDelete, onEdit, onCreateT
                     onEdit={onEdit}
                 />
             ) : (
-                <p className="text-gray-500">日历视图待开发……</p>
-            )}
+                <TaskCalendar tasks={equippedTasks} /> // ✅ 替换为真正的日历视图
+    )}
         </div>
     );
 };

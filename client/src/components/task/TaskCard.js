@@ -105,7 +105,14 @@ export const TaskCard = ({
         <div
             className={`card hover:shadow-lg transition-shadow duration-300 relative ${className}`}
             draggable={draggable}
-            onDragStart={onDragStart ? e => onDragStart(e, task) : undefined}
+            onDragStart={onDragStart ? e => {
+                if (task.status === '已完成') {
+                    e.preventDefault(); // 禁止拖拽
+                    return;
+                }
+                onDragStart(e, task);
+            } : undefined}
+
         >
             {/* 顶部：标题 + 标签 + 菜单 */}
             <div className="flex justify-between items-start mb-2">

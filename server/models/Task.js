@@ -9,7 +9,7 @@ const subTaskSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['待完成', '进行中', '已完成'],
+    enum: ['待完成', '已完成'],
     default: '待完成',
   },
   dueDate: {
