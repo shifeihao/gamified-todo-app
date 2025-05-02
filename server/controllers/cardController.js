@@ -1,7 +1,7 @@
-import asyncHandler from "express-async-handler";
-import Card from "../models/Card.js";
-import User from "../models/User.js";
-import mongoose from "mongoose";
+import asyncHandler from 'express-async-handler';
+import mongoose from 'mongoose';
+import Card from '../models/Card.js';
+import User from '../models/User.js';
 
 // @desc    获取用户卡片库存
 // @route   GET /api/cards/inventory
@@ -60,14 +60,14 @@ const issueDailyCards = asyncHandler(async (req, res) => {
   // 创建3张空白卡片
   const blankCards = await Promise.all(
     [...Array(3)].map(() =>
-      Card.create({
-        user: user._id,
+    Card.create({
+      user: user._id,
         type: "blank",
         title: "空白卡片",
         description: "限定为短期类型的任务",
         taskDuration: "短期", //  限定为短期卡片
         issuedAt: new Date(),
-      })
+    })
     )
   );
 
@@ -107,7 +107,7 @@ const issueRewardCard = asyncHandler(async (req, res) => {
 
   // 更新用户卡片库存
   await User.findByIdAndUpdate(req.user.id, {
-    $push: { cardInventory: rewardCard._id },
+    $push: { cardInventory: rewardCard._id }
   });
 
   res.status(201).json({
@@ -162,8 +162,8 @@ const consumeCard = asyncHandler(async (req, res) => {
   // 1. 验证卡片
   const card = await Card.findOne({
     _id: cardId,
-    used: false,
     user: req.user.id,
+    used: false,
   });
   // console.log("Card: ", card);
 
