@@ -1,82 +1,77 @@
 import React, { useState, useEffect, useContext } from 'react';
 
-import {Modal} from '../base';
-import {TaskForm} from '../form';
-import {CardSelector} from '../base';
+import { Modal } from '../base';
+import { TaskForm } from '../form';
+import { CardSelector } from '../base';
 import axios from 'axios';
 import AuthContext from '../../context/AuthContext';
 
 export const CreateTaskModal = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  loading = false,
-  slotIndex = -1,
-  initialData = null,
-  defaultType = '短期',       // 新增：默认任务类型
-  defaultDueDateTime         // 新增：默认截止日期时间（YYYY-MM-DDTHH:mm）
-}) => {
+                                  isOpen,
+                                  onClose,
+                                  onSubmit,
+                                  loading = false,
+                                  slotIndex = -1,
+                                  initialData = null,
+                                  defaultType = '短期',
+                                  defaultDueDateTime
+                                }) => {
   const { user } = useContext(AuthContext);
   const [title, setTitle] = useState(initialData?.title || '');
   const [taskType, setTaskType] = useState(initialData?.type || defaultType);
-  
-  // 当initialData或defaultType变化时，重置任务类型
-  useEffect(() => {
-    setTaskType(initialData?.type || defaultType);
-  }, [initialData, defaultType]);
+  const [dueDate, setDueDate] = useState('');
   const [useReward, setUseReward] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [cardError, setCardError] = useState('');
   const [dailyCards, setDailyCards] = useState(0);
-  const [rewardCardCount, setRewardCardCount] = useState(0); //新增一个奖励卡片数量状态字段
-  const [dueDate, setDueDate] = useState(defaultDueDateTime || '');  // 在 CreateTaskModal 中添加 dueDate 状态
-  // 1. 是否使用奖励卡
-  // const isBlankCardOnlyShort = !useReward && selectedCard == null;
-  // 2. 槽位是否锁定任务类型（非 -1 表示是从槽位创建的任务）
-  const isFromSlot = slotIndex >= 0;
-  // ✅ 总逻辑：从槽位进来 || 使用普通空白卡（不能让用户自由改类型）
-  const isTypeLocked = isFromSlot;
+  const [rewardCardCount, setRewardCardCount] = useState(0);
 
+  // 将 Date 转为本地 'YYYY-MM-DDTHH:mm' 格式
+  const getLocalDateTimeString = date => {
+    const offsetMs = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+  };
+
+  // 使用 initialData 或 defaultDueDateTime 初始化
+  useEffect(() => {
+    setTitle(initialData?.title || '');
+    setTaskType(initialData?.type || defaultType);
+  }, [initialData, defaultType]);
+
+  // taskType 改变时，短期任务设置为当前本地时间 +24h
+  useEffect(() => {
+    if (taskType === '短期') {
+      const now = new Date();
+      now.setDate(now.getDate() + 1);
+      setDueDate(getLocalDateTimeString(now));
+    } else {
+      setDueDate('');
+    }
+  }, [taskType]);
+
+  // 每次打开弹窗或切换类型时拉取库存
   useEffect(() => {
     const fetchInventory = async () => {
       try {
         const res = await axios.get('/api/cards/inventory', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
-        // 实时更新空白卡片数量
-        // 根据任务类型筛选空白卡数量（短期或长期）
-        const actualBlankCards = res.data.inventory.filter(c =>
-            c.type === 'blank' &&
-            (taskType === '短期'
-                ? (c.taskDuration === '短期' || c.taskDuration === '通用')
-                : (c.taskDuration === '长期' || c.taskDuration === '通用'))
+        const blanks = res.data.inventory.filter(c => c.type === 'blank')
+            .filter(c => taskType === '短期'
+                ? ['短期','通用'].includes(c.taskDuration)
+                : ['长期','通用'].includes(c.taskDuration)
+            ).length;
+        setDailyCards(blanks);
+        const rewards = res.data.inventory.filter(card =>
+            card.type === 'special' && ['通用', taskType].includes(card.taskDuration)
         ).length;
-
-        setDailyCards(actualBlankCards);
-        // 新增：奖励卡数量（分长期短期）通过 inventory 过滤
-        const rewardCount = res.data.inventory.filter(card =>
-            card.type === 'special' &&
-            (card.taskDuration === taskType || card.taskDuration === '通用')
-        ).length;
-        setRewardCardCount(rewardCount);
+        setRewardCardCount(rewards);
       } catch (err) {
         console.error('获取卡片库存失败:', err);
       }
     };
-    if (user) fetchInventory();
-  }, [user, taskType]);
-
-  useEffect(() => {
-    if (taskType === '长期') {
-      setDueDate('');
-    } else if (taskType === '短期' && !dueDate) {
-      const defaultShortDue = new Date(Date.now() + 24 * 60 * 60 * 1000)
-          .toISOString()
-          .slice(0, 19);
-      setDueDate(defaultShortDue);
-    }
-  }, [taskType]);
-
+    if (isOpen && user) fetchInventory();
+  }, [isOpen, user, taskType]);
 
   const getFirstBlankCardId = async () => {
     try {
@@ -85,46 +80,39 @@ export const CreateTaskModal = ({
       });
       const blank = res.data.inventory.find(c => c.type === 'blank');
       return blank?._id || '';
-    } catch (err) {
-      console.error('获取空白卡片失败:', err);
+    } catch {
       return '';
     }
   };
 
-  const handleSubmit = async (formFields) => {
+  const handleSubmit = async formFields => {
     try {
-      if (!title.trim()) {
-        return alert('请输入任务标题');
-      }
-      if (useReward && !selectedCard) {
-        setCardError('请先选择一张奖励卡片');
-        return;
-      }
+      if (!title.trim()) return alert('请输入任务标题');
       setCardError('');
       const cardId = useReward ? selectedCard._id : await getFirstBlankCardId();
-      //捕捉到异常状态，说明此时没有可用空白卡片
-      if (!cardId) {
-        alert('没有可用的空白卡片，请先领取卡片或更换为奖励卡片');
-        return;
-      }
+      if (!cardId) return alert('没有可用的卡片');
+
+      // 转换为完整 ISO 字符串
+      const isoDueDate = dueDate ? new Date(dueDate).toISOString() : '';
+
       const taskData = {
         title,
         type: taskType,
+        dueDate: isoDueDate,
         ...formFields,
         fromSlot: slotIndex >= 0,
         slotIndex,
         cardId
       };
       await onSubmit(taskData);
-      // reset
       setTitle('');
       setTaskType('短期');
       setUseReward(false);
       setSelectedCard(null);
-      setCardError('');
       onClose();
     } catch (err) {
       console.error('创建任务失败:', err);
+      alert('创建任务失败，请重试');
     }
   };
 
@@ -133,94 +121,96 @@ export const CreateTaskModal = ({
     setTaskType('短期');
     setUseReward(false);
     setSelectedCard(null);
-    setCardError('');
     onClose();
   };
 
+  const isFromSlot = slotIndex >= 0;
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title={slotIndex >= 0 ? `创建任务到槽位 ${slotIndex+1}` : '创建新任务'}
-    >
-      <div className="py-4 space-y-4">
-        {/* 标题与类型 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">任务标题 *</label>
-            <input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              placeholder="请输入任务标题"
-            />
+      <Modal
+          isOpen={isOpen}
+          onClose={handleClose}
+          title={
+            isFromSlot ? `创建任务到槽位 ${slotIndex + 1}` : '创建新任务'
+          }
+      >
+        <div className="py-4 space-y-4">
+          {/* 标题与类型 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                任务标题 *
+              </label>
+              <input
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="请输入任务标题"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                任务类型
+              </label>
+              <select
+                  value={taskType}
+                  onChange={e => setTaskType(e.target.value)}
+                  disabled={isFromSlot}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="短期">短期</option>
+                <option value="长期">长期</option>
+              </select>
+              {isFromSlot && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    任务类型由任务槽位决定，无法修改
+                  </p>
+              )}
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">任务类型</label>
-            <select
-              value={taskType}
-              onChange={e => setTaskType(e.target.value)}
-              disabled={isTypeLocked}  // ✅ 综合判断是否禁用任务类型选择
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="短期">短期</option>
-              <option value="长期">长期</option>
-            </select>
-            {/* 提示任务类型栏固定的信息插入在这里 */}
-            {isFromSlot && (
-                <p className="text-sm text-gray-500 mt-1">任务类型由任务槽位确定，无法修改</p>
-            )}
-            {/*{!isFromSlot && (*/}
-            {/*    <p className="text-sm text-gray-500 mt-1">该任务类型由任务槽限定</p>*/}
-            {/*)}*/}
-          </div>
-        </div>
-        {/* 奖励卡/空白卡行 */}
-        {/* 卡片选择状态栏（奖励 vs 普通） */}
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            {useReward
-              // 新增奖励卡片数量显示字段
-                ? `可用奖励卡片（${taskType}）: ${rewardCardCount}`
-                : `可用空白卡片（${taskType}）: ${dailyCards}`}
-          </div>
-          <label className="flex items-center space-x-2 text-sm text-gray-700">
-            <input
-                type="checkbox"
-                checked={useReward}
-                onChange={e => setUseReward(e.target.checked)}
-                className="h-4 w-4 text-purple-600 border-gray-300 rounded"
-            />
-            <span>是否使用奖励卡片</span>
-          </label>
-        </div>
 
+          {/* 奖励卡 / 空白卡 */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              {useReward
+                  ? `可用奖励卡片（${taskType}）: ${rewardCardCount}`
+                  : `可用空白卡片（${taskType}）: ${dailyCards}`}
+            </div>
+            <label className="flex items-center space-x-2 text-sm text-gray-700">
+              <input
+                  type="checkbox"
+                  checked={useReward}
+                  onChange={e => setUseReward(e.target.checked)}
+                  className="h-4 w-4 text-purple-600 border-gray-300 rounded"
+              />
+              <span>是否使用奖励卡片</span>
+            </label>
+          </div>
 
-        {/* 奖励卡列表 */}
-        {useReward && (
-          <div>
-            <CardSelector
-              onSelect={setSelectedCard}
-              selectedCard={selectedCard}
-              showRewards={true}
+          {/* 奖励卡列表 */}
+          {useReward && (
+              <div>
+                <CardSelector
+                    onSelect={setSelectedCard}
+                    selectedCard={selectedCard}
+                    showRewards
+                    taskType={taskType}
+                />
+                {cardError && <p className="text-red-500 text-sm">{cardError}</p>}
+              </div>
+          )}
+
+          {/* 其他字段 */}
+          <TaskForm
+              onSubmit={handleSubmit}
+              onCancel={handleClose}
+              loading={loading}
+              initialData={initialData}
               taskType={taskType}
-            />
-            {cardError && <p className="text-red-500 text-sm">{cardError}</p>}
-          </div>
-        )}
-
-        {/* 其他字段 */}
-        <TaskForm
-          onSubmit={handleSubmit}
-          onCancel={handleClose}
-          loading={loading}
-          initialData={initialData}
-          taskType={taskType}
-          // defaultDueDateTime={defaultDueDateTime}
-          defaultDueDateTime={dueDate}           // 改为受控变量
-          onDueDateChange={setDueDate}           // 用于 TaskForm 内部触发更新
-        />
-      </div>
-    </Modal>
+              defaultDueDateTime={dueDate}
+              onDueDateChange={setDueDate}
+          />
+        </div>
+      </Modal>
   );
 };
