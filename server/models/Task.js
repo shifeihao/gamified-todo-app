@@ -18,6 +18,15 @@ const subTaskSchema = new mongoose.Schema({
   completedAt: {
     type: Date,
   },
+    // 子任务经验 + 金币
+    experience: {
+        type: Number,
+        default: 5,
+    },
+    gold: {
+        type: Number,
+        default: 3,
+    },
 });
 
 // 任务模型架构
@@ -41,7 +50,16 @@ const taskSchema = new mongoose.Schema(
       type: Number,
       default: 5
     },
-    title: {
+      // 新增主任务额外奖励（只针对长期任务）
+      finalBonusExperience: {
+          type: Number,
+          default: 10,
+      },
+      finalBonusGold: {
+          type: Number,
+          default: 5,
+      },
+      title: {
       type: String,
       required: [true, '请提供任务标题'],
       trim: true,

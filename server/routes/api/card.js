@@ -3,15 +3,19 @@ const router = express.Router();
 
 import { protect } from '../../middleware/auth.js';
 
-import {consumeCard, getCardInventory, issueDailyCards, issueRewardCard, issueBlankCard,} from '../../controllers/cardController.js';
+import {consumeCard, getCardInventory, issueDailyCards, issueWeeklyCards, issueRewardCard, issueBlankCard,} from '../../controllers/cardController.js';
 
 // 获取卡片库存
 router.route('/inventory')
   .get(protect, getCardInventory);
 
-// 发放每日卡片
+// 定时发放短期普通卡片
 router.route('/issue-daily')
   .post(protect, issueDailyCards);
+
+// 定时发放长期普通卡片
+router.route('/issue-weekly')
+    .post(protect, issueWeeklyCards);
 
 // 发放奖励卡片
 router.route('/issue-reward')

@@ -50,31 +50,6 @@ const TasksPage = () => {
   // 当前激活的 tab: 'daily' | 'repository' | 'timetable'
   const [activeTab, setActiveTab] = useState('daily');
 
-  // // 拉取任务数据
-  // const fetchTasks = async () => {
-  //   try {
-  //     setLoading(true);
-  //       const [allTasks, equipped, shortTasks, longTasks, inventory] = await Promise.all([
-  //       getTasks(user.token),
-  //       getEquippedTasks(user.token),
-  //       getEquippedShortTasks(user.token),
-  //       getEquippedLongTasks(user.token),
-  //       getCardInventory(user.token),
-  //     ]);
-  //     setTasks(allTasks);
-  //     setEquippedTasks(equipped);
-  //     setEquippedShortTasks(shortTasks);
-  //     setEquippedLongTasks(longTasks);
-  //     setCards(inventory);
-  //     setError('');
-  //   } catch (err) {
-  //     console.error(err);
-  //     setError('获取任务数据失败');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   // 拉取任务与卡片库存
   const fetchTasks = async () => {
     try {

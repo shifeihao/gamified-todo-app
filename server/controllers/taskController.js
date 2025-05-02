@@ -1,7 +1,7 @@
 import Task from '../models/Task.js';
 import User from '../models/User.js';
 import asyncHandler from "express-async-handler";
-
+import { calculateReward } from '../utils/TaskRewardCalcultor.js';
 
 // @desc    获取当前用户的所有任务
 // @route   GET /api/tasks
@@ -130,8 +130,35 @@ const updateTask = async (req, res) => {
 
       // 发放奖励
       const user = await User.findById(req.user._id);
-      user.experience += task.experienceReward;
-      user.gold += task.goldReward;
+      let totalExp = 0;
+      let totalGold = 0;
+
+      if (task.type === '长期') {
+        const subExp = task.subTasks.reduce((sum, s) => sum + (s.experience || 0), 0);
+        const subGold = task.subTasks.reduce((sum, s) => sum + (s.gold || 0), 0);
+        const bonusExp = task.finalBonusExperience || 0;
+        const bonusGold = task.finalBonusGold || 0;
+        const baseExp = subExp + bonusExp;
+        const baseGold = subGold + bonusGold;
+        const { experience, gold } = calculateReward(baseExp, baseGold, task.cardUsed?.bonus);
+
+        totalExp = experience;
+        totalGold = gold;
+      } else {
+        // 短期没有finalBonus
+        task.finalBonusExperience = 0;
+        task.finalBonusGold = 0;
+        const { experience, gold } = calculateReward(
+            task.experienceReward || 0,
+            task.goldReward || 0,
+            task.cardUsed?.bonus
+        );
+        totalExp = experience;
+        totalGold = gold;
+      }
+      //获取总经验，总金币
+      user.experience += totalExp;
+      user.gold += totalGold;
       await user.save();
 
       //  立即写入历史记录
@@ -147,13 +174,12 @@ const updateTask = async (req, res) => {
         status: task.status,
         completedAt: task.completedAt,
         duration,
-        experienceGained: task.experienceReward,
-        goldGained: task.goldReward,
+        experienceGained: totalExp, //  修复记录为加成后数值
+        goldGained: totalGold,      //  修复记录为加成后数值,
         cardType: task.cardUsed?.type || null,
         cardBonus: task.cardUsed?.bonus || null,
       });
     }
-
     const updatedTask = await task.save();
     res.json(updatedTask);
   } catch (error) {
