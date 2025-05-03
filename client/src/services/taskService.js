@@ -79,39 +79,20 @@ export const getEquippedLongTasks = async (token) => {
 // 创建新任务
 export const createTask = async (taskData, token) => {
   try {
-    // 先调用卡片消耗接口
-    const consumeResponse = await axios.post(
-      '/api/cards/consume',
-      {
-        cardId: taskData.cardId,
-        taskData: taskData
-      },
-      getConfig(token)
-    );
-
-    if (!consumeResponse.data.success) {
-      throw new Error(consumeResponse.data.error || '卡片消耗失败');
-    }
-
-    // 使用处理后的任务数据创建任务
+    // ✅ 不再调用 /api/cards/consume
     const { data } = await axios.post(
-      '/api/tasks', 
-      {
-        ...consumeResponse.data.processedTask,
-        cardUsed: taskData.cardId  // 添加使用的卡片ID
-      },
-      getConfig(token)
+        '/api/tasks',
+        taskData,  // taskData 已含经验奖励、卡片 ID 等
+        getConfig(token)
     );
-    
     return data;
   } catch (error) {
     throw new Error(
-      error.response && error.response.data.message
-        ? error.response.data.message
-        : '创建任务失败'
+        error.response?.data?.message || '创建任务失败'
     );
   }
 };
+
 
 // 获取单个任务
 export const getTaskById = async (id, token) => {

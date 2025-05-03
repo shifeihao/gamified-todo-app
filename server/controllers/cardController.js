@@ -90,7 +90,7 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
   // 只在周一发放
   const today = new Date();
-  const isMonday = today.getDay() === 5;
+  const isMonday = today.getDay() === 1;
   if (!isMonday) {
     res.status(400);
     throw new Error("今天不是发放长期卡片的时间（仅限周一）");
@@ -265,7 +265,7 @@ const consumeCard = asyncHandler(async (req, res) => {
       ...taskData,
       experienceReward: experience,
       goldReward: gold,
-      cardUsed: card._id,
+      cardUsed: card._id.toString(),// ✅ 确保是字符串
     },
   });
 });

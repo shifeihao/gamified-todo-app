@@ -56,14 +56,20 @@ export const CreateTaskModal = ({
         const res = await axios.get('/api/cards/inventory', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
-        const blanks = res.data.inventory.filter(c => c.type === 'blank')
-            .filter(c => taskType === '短期'
-                ? ['短期','通用'].includes(c.taskDuration)
-                : ['长期','通用'].includes(c.taskDuration)
-            ).length;
+        // ✅ 从 cardInventory 中筛选 blank 卡，区分长/短期
+        const blanks = res.data.inventory.filter(c =>
+            c.type === 'blank' &&
+            !c.used && // ✅ 只统计未使用的
+            (taskType === '短期'
+                ? ['短期', '通用'].includes(c.taskDuration)
+                : ['长期', '通用'].includes(c.taskDuration))
+        ).length;
         setDailyCards(blanks);
+
         const rewards = res.data.inventory.filter(card =>
-            card.type === 'special' && ['通用', taskType].includes(card.taskDuration)
+            card.type === 'special' &&
+            !card.used && // ✅ 只统计未使用的
+            ['通用', taskType].includes(card.taskDuration)
         ).length;
         setRewardCardCount(rewards);
       } catch (err) {
@@ -73,38 +79,45 @@ export const CreateTaskModal = ({
     if (isOpen && user) fetchInventory();
   }, [isOpen, user, taskType]);
 
-  const getFirstBlankCardId = async () => {
-    try {
-      const res = await axios.get('/api/cards/inventory', {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-      const blank = res.data.inventory.find(c => c.type === 'blank');
-      return blank?._id || '';
-    } catch {
-      return '';
-    }
-  };
-
   const handleSubmit = async formFields => {
     try {
       if (!title.trim()) return alert('请输入任务标题');
       setCardError('');
-      const cardId = useReward ? selectedCard._id : await getFirstBlankCardId();
-      if (!cardId) return alert('没有可用的卡片');
 
-      // 转换为完整 ISO 字符串
+      let cardId;
+      if (useReward) {
+        if (!selectedCard?._id) return alert('请选择一张奖励卡片');
+        cardId = selectedCard._id;
+      }
+
       const isoDueDate = dueDate ? new Date(dueDate).toISOString() : '';
-
-      const taskData = {
+      const rawTaskData = {
         title,
         type: taskType,
         dueDate: isoDueDate,
         ...formFields,
         fromSlot: slotIndex >= 0,
         slotIndex,
-        cardId
+        ...(useReward ? { cardId } : {})
       };
-      await onSubmit(taskData);
+
+      // ✅ 发起卡片消耗请求，包含奖励或空白卡片的逻辑
+      const res = await axios.post('/api/cards/consume', {
+        taskData: rawTaskData,
+        ...(useReward ? { cardId } : {})
+      }, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+
+      const processedTask = res.data.processedTask;
+
+      // ✅ 确保 cardUsed 字段存在
+      if (!processedTask.cardUsed) {
+        return alert('任务未绑定卡片，请重试');
+      }
+      await onSubmit(processedTask);  // ✅ 传入包含 cardUsed 的任务数据
+
+      // 清空表单状态
       setTitle('');
       setTaskType('短期');
       setUseReward(false);
@@ -115,6 +128,7 @@ export const CreateTaskModal = ({
       alert('创建任务失败，请重试');
     }
   };
+
 
   const handleClose = () => {
     setTitle('');

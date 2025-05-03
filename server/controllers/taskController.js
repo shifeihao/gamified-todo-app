@@ -26,6 +26,9 @@ const createTask = async (req, res) => {
     if (!req.body.title || !req.body.experienceReward || !req.body.goldReward) {
       return res.status(400).json({ message: '缺少必要的任务信息' });
     }
+    if (!req.body.cardUsed) {
+      return res.status(400).json({ message: '必须指定使用的卡片（cardUsed）' });
+    }
 
     // 使用前端传来的任务数据创建任务
     const task = await Task.create({
