@@ -122,7 +122,7 @@ const TasksPage = () => {
     onSuccess: async (task) => {
       // // 先记录任务完成,再卸下已完成的任务，防止继续占用槽位
       showSuccess('任务已完成');
-      await unequipTaskService(task._id, user.token); //  只传 id 字符串
+      await unequipTaskService(task.task._id, user.token); //因为 task 是后端响应对象中 res.task
       console.log('任务完成后返回值:', task);
       fetchTasks();
     },
