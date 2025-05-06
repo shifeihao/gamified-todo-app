@@ -1,10 +1,10 @@
 // server/controllers/levelController.js
 
 import User from "../models/User.js";
-import UserStats from "../models/UserStats.js";
 import Level from "../models/Level.js";
 import Task from "../models/Task.js";
 import { calculateReward } from "../utils/TaskRewardCalcultor.js";
+import { SyncUser, SyncTaskHistory } from "../utils/userStatsSync.js";
 
 export const handleTaskCompletion = async (req) => {
   try {
@@ -103,6 +103,10 @@ export const handleTaskCompletion = async (req) => {
       cardType: task.cardUsed?.type || null,
       cardBonus: task.cardUsed?.bonus || null,
     });
+
+    //完成任务，将User自己的经验、等级等情况同步到UserStats里面去
+    await SyncUser(userId);
+    await SyncTaskHistory(userId);
 
     // ✅ 返回结果对象，由调用者决定是否发送给前端
     return {

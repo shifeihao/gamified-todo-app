@@ -1,43 +1,5 @@
 const defaultAchievements = [
   {
-    name: "卡槽空空如也",
-    description: "今天也没做任何计划，反正还有明天。",
-    condition: "某日无任何任务被放入卡槽",
-    points: 3,
-    category: "探索型",
-    isHidden: true,
-    reward: {
-      exp: 0,
-      coins: 0,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "UNKNOWN",
-      value: null,
-    },
-  },
-  {
-    name: "拖延王者",
-    description: "你不是没时间，只是选择再等等。",
-    condition: "累计任务失败 5 次",
-    points: 5,
-    category: "累计型",
-    isHidden: true,
-    reward: {
-      exp: 0,
-      coins: 0,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "task_failed_total",
-      value: 5,
-    },
-  },
-  {
     name: "第一滴血",
     description: "你删了第一个任务，任务失败并不是终点。",
     condition: "删除卡槽里的一个任务",
@@ -52,8 +14,9 @@ const defaultAchievements = [
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
-      type: "task_deleted_single",
+      type: "task_deleted_total",
       value: 1,
+      op: "gte",
     },
   },
   {
@@ -71,8 +34,9 @@ const defaultAchievements = [
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
-      type: "task_failed_days_in_row",
+      type: "task_uncompleted_days_in_row",
       value: 3,
+      op: "gte",
     },
   },
   {
@@ -92,6 +56,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_total",
       value: 1,
+      op: "gte",
     },
   },
   {
@@ -109,8 +74,9 @@ const defaultAchievements = [
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
-      type: "task_modified_total",
+      type: "task_edited_total",
       value: 10,
+      op: "gte",
     },
   },
   {
@@ -130,46 +96,10 @@ const defaultAchievements = [
     logic: {
       type: "task_deleted_total",
       value: 10,
+      op: "gte",
     },
   },
-  {
-    name: "删到无影",
-    description: "你是极简主义者，删掉了所有任务。",
-    condition: "当日内删除卡槽和仓库里的所有任务",
-    points: 10,
-    category: "探索型",
-    isHidden: true,
-    reward: {
-      exp: 0,
-      coins: 0,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "task_deleted_all_in_day",
-      value: 1,
-    },
-  },
-  {
-    name: "绝不拖延",
-    description: "提前1小时完成任务，你和拖延症说了再见。",
-    condition: "提前1小时完成任务",
-    points: 10,
-    category: "探索型",
-    isHidden: false,
-    reward: {
-      exp: 0,
-      coins: 0,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "task_completed_early_hour",
-      value: 1,
-    },
-  },
+
   {
     name: "效率机器",
     description: "连续3天不间断，习惯从来都是一点点养成的。",
@@ -187,6 +117,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_days_in_row",
       value: 3,
+      op: "gte",
     },
   },
   {
@@ -206,6 +137,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_days_in_row",
       value: 7,
+      op: "gte",
     },
   },
   {
@@ -223,29 +155,12 @@ const defaultAchievements = [
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
-      type: "task_completed_after_11pm",
-      value: 1,
+      type: "task_created_latest_time",
+      value: "23:00:00",
+      op: "gte",
     },
   },
-  {
-    name: "任务黑洞",
-    description: "失败10个任务，反思是你成长的一部分。",
-    condition: "累计失败 10 个任务",
-    points: 10,
-    category: "累计型",
-    isHidden: true,
-    reward: {
-      exp: 0,
-      coins: 0,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "task_failed_total",
-      value: 10,
-    },
-  },
+
   {
     name: "等级初醒",
     description: "Lv.10，恭喜你走出新手村。",
@@ -256,13 +171,14 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: "道具：开槽卡+1",
+      task_short_slot: 1,
     },
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
       value: 10,
+      op: "gte",
     },
   },
   {
@@ -280,8 +196,9 @@ const defaultAchievements = [
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
-      type: "task_created_with_subtasks",
+      type: "task_created_max_subtasks",
       value: 5,
+      op: "gte",
     },
   },
   {
@@ -301,48 +218,12 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_total",
       value: 10,
+      op: "gte",
     },
   },
+
   {
-    name: "战术大师",
-    description: "你不是在完成任务，而是在规划人生。",
-    condition: "仓库里同时存在 5 个未装备任务",
-    points: 15,
-    category: "探索型",
-    isHidden: false,
-    reward: {
-      exp: 0,
-      coins: 0,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "task_pending_in_warehouse",
-      value: 5,
-    },
-  },
-  {
-    name: "从未缺席",
-    description: "连续一个月每日登录，你比打卡机还准时。",
-    condition: "连续登录 30 天",
-    points: 20,
-    category: "持续型",
-    isHidden: false,
-    reward: {
-      exp: 0,
-      coins: 800,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "login_days_in_row",
-      value: 30,
-    },
-  },
-  {
-    name: "最后一分钟",
+    name: "最后五分钟",
     description: "你总能踩在Deadline上跳舞。",
     condition: "在卡槽任务过期前5分钟内完成任务",
     points: 15,
@@ -356,8 +237,9 @@ const defaultAchievements = [
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
-      type: "task_completed_last_five_min",
-      value: 1,
+      type: "task_completed_short_longest_duration",
+      value: 1435,
+      op: "gte",
     },
   },
   {
@@ -370,13 +252,14 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: "道具：开槽卡+1",
+      task_long_slot: 1,
     },
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
       value: 20,
+      op: "gte",
     },
   },
   {
@@ -396,6 +279,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_days_in_row",
       value: 30,
+      op: "gte",
     },
   },
   {
@@ -413,8 +297,9 @@ const defaultAchievements = [
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
-      type: "task_completed_before_8am",
-      value: 1,
+      type: "task_completed_earliest_time",
+      value: 8,
+      op: "lt",
     },
   },
   {
@@ -432,29 +317,12 @@ const defaultAchievements = [
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
-      type: "task_completed_within_hour",
-      value: 1,
+      type: "task_completed_short_shortest_duration",
+      value: 60,
+      op: "lt",
     },
   },
-  {
-    name: "一次通过",
-    description: "你第一次尝试就完成了长期任务，没有回头路。",
-    condition: "完成一个长期任务里所有的子任务",
-    points: 20,
-    category: "探索型",
-    isHidden: false,
-    reward: {
-      exp: 0,
-      coins: 0,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "task_created_with_subtasks",
-      value: 5,
-    },
-  },
+
   {
     name: "短期专家",
     description: "多次完成短期任务？你是执行力的代名词。",
@@ -472,6 +340,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_short_total",
       value: 20,
+      op: "gte",
     },
   },
   {
@@ -491,6 +360,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_total",
       value: 50,
+      op: "gte",
     },
   },
   {
@@ -510,6 +380,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_total",
       value: 100,
+      op: "gte",
     },
   },
   {
@@ -529,6 +400,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_long_total",
       value: 10,
+      op: "gte",
     },
   },
   {
@@ -548,27 +420,10 @@ const defaultAchievements = [
     logic: {
       type: "card_slot_total",
       value: 10,
+      op: "eq",
     },
   },
-  {
-    name: "日复一日",
-    description: "使用App超过100天，你的习惯已经深植生活。",
-    condition: "连续登录 100 天",
-    points: 30,
-    category: "持续型",
-    isHidden: false,
-    reward: {
-      exp: 0,
-      coins: 2100,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "login_days_in_row",
-      value: 100,
-    },
-  },
+
   {
     name: "经验达人",
     description: "累计获得 50,000 经验值，你的努力看得见。",
@@ -586,6 +441,7 @@ const defaultAchievements = [
     logic: {
       type: "exp_total",
       value: 50000,
+      op: "gte",
     },
   },
   {
@@ -593,7 +449,7 @@ const defaultAchievements = [
     description: "90天连续不断，你快成自律图腾了。",
     condition: "连续 90 天完成任务",
     points: 40,
-    category: "持续型",
+    category: "累计型",
     isHidden: false,
     reward: {
       exp: 0,
@@ -605,10 +461,11 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_days_in_row",
       value: 90,
+      op: "gte",
     },
   },
   {
-    name: "任务之王",
+    name: "任务之神",
     description: "累计完成 1000 次任务， 你是时间的驾驭者。",
     condition: "累计完成 1000 个任务",
     points: 40,
@@ -624,6 +481,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_total",
       value: 1000,
+      op: "gte",
     },
   },
   {
@@ -636,13 +494,15 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: "道具：开槽卡+1",
+      task_short_slot: 1,
+      task_long_slot: 1,
     },
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
       value: 40,
+      op: "gte",
     },
   },
   {
@@ -655,13 +515,15 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: "道具：开槽卡+1",
+      task_short_slot: 1,
+      task_long_slot: 1,
     },
     icon: "default_icon_unlocked.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
       value: 60,
+      op: "gte",
     },
   },
   {
@@ -681,6 +543,7 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_days_in_row",
       value: 365,
+      op: "gte",
     },
   },
   {
@@ -699,7 +562,8 @@ const defaultAchievements = [
     isEnabled: true,
     logic: {
       type: "achievements_total_unlocked",
-      value: "37",
+      value: "33",
+      op: "gte",
     },
   },
 ];

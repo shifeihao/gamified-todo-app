@@ -1,18 +1,12 @@
-// utils/achievementEngine.js
 import UserStats from "../models/UserStats.js";
 import Achievement from "../models/Achievement.js";
 import UserAchievement from "../models/UserAchievement.js";
 import User from "../models/User.js";
-import { checkIfGodAchievementUnlocked } from "./godAchievement.js";
-import { SyncUserStats } from "./userStatsSync.js";
+import { checkIfGodAchievementUnlocked } from "./userStatsSync.js";
 
 export async function checkAndUnlockAchievements(userId) {
   try {
-    //同步用户和统计信息
-    await SyncUserStats(userId);
-
     // 获取UserStats表
-
     // 1. 将累计经验、等级、当前金币更新进user统计表
     const stats = await UserStats.findOne({ user_id: userId });
     if (!stats) {
@@ -46,14 +40,29 @@ export async function checkAndUnlockAchievements(userId) {
       const statValue = stats[type];
 
       // 条件判断
-      const isMet =
-        typeof value === "number"
-          ? statValue >= value
-          : typeof value === "boolean"
-          ? statValue === value
-          : typeof value === "string"
-          ? statValue === value
-          : false;
+      let isMet = false;
+      switch (op) {
+        case "gte":
+          isMet = statValue >= value;
+          break;
+        case "lte":
+          isMet = statValue <= value;
+          break;
+        case "eq":
+          isMet = statValue === value;
+          break;
+        case "lt":
+          isMet = statValue < value;
+          break;
+        case "gt":
+          isMet = statValue > value;
+          break;
+        case "ne":
+          isMet = statValue !== value;
+          break;
+        default:
+          isMet = false;
+      }
 
       if (isMet) {
         await UserAchievement.create({
@@ -70,6 +79,8 @@ export async function checkAndUnlockAchievements(userId) {
             $inc: {
               experience: ach.reward.exp || 0,
               gold: ach.reward.coins || 0,
+              shortCardSlot: ach.task_short_slot || 0,
+              longCardSlot: ach.task_long_slot || 0,
             },
           }
         );

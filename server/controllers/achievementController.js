@@ -2,7 +2,7 @@
 import Achievement from "../models/Achievement.js";
 import UserAchievement from "../models/UserAchievement.js";
 import UserStats from "../models/UserStats.js";
-import { checkAndUnlockAchievements } from "../utils/achievementEngine.js";
+import { checkAndUnlockAchievements } from "../utils/checkAchievements.js";
 
 // ✅ 获取所有成就（附加是否解锁）
 export async function getAllAchievements(req, res) {
@@ -59,7 +59,7 @@ export async function getUnlockedAchievements(req, res) {
   }
 }
 
-// ✅ 成就检查触发器
+// ✅ 成就检查触发器(测试用)
 export async function triggerAchievementCheck(req, res) {
   const userId = req.params.userId;
   if (!userId) return res.status(400).json({ message: "请提供 userId" });
