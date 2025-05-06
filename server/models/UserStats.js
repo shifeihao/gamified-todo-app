@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const UserStatsSchema = new mongoose.Schema(
   {
-    user: {
+    user_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -12,6 +12,7 @@ const UserStatsSchema = new mongoose.Schema(
     // 好计算的（累积型）
     level_reach: { type: Number, default: 0 }, // 当前等级
     exp_total: { type: Number, default: 0 }, // 累计经验值
+    max_gold: { type: Number, default: 0 }, // 累计金币
     task_completed_total: { type: Number, default: 0 }, // 累计完成任务数
     task_failed_total: { type: Number, default: 0 }, // 累计失败任务数
     task_deleted_total: { type: Number, default: 0 }, // 删除任务总数

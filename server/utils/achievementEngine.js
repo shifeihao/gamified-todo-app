@@ -4,23 +4,43 @@ import Achievement from "../models/Achievement.js";
 import UserAchievement from "../models/UserAchievement.js";
 import User from "../models/User.js";
 import { checkIfGodAchievementUnlocked } from "./godAchievement.js";
+import { SyncUserStats } from "./userStatsSync.js";
 
 export async function checkAndUnlockAchievements(userId) {
   try {
-    // 1. 获取UserStats统计
-    const stats = await UserStats.findOne({ user: userId });
-    if (!stats) return;
+    //同步用户和统计信息
+    await SyncUserStats(userId);
+
+    // 获取UserStats表
+
+    // 1. 将累计经验、等级、当前金币更新进user统计表
+    const stats = await UserStats.findOne({ user_id: userId });
+    if (!stats) {
+      console.log("Can not find the user's stats, so canceling checking");
+      return;
+    }
+    console.log("Get the user's stats, user_id is:", stats.user_id);
 
     // 2. 获取用户已解锁的成就 ID 列表
-    const unlocked = await UserAchievement.find({ user: userId });
-    const unlockedIds = unlocked.map((item) => item.achievementId.toString());
+    const unlocked = await UserAchievement.find({ user_id: userId });
+    console.log(
+      "The number of the user's unlocked achievements is:",
+      unlocked.length
+    );
+
+    // 将解锁的成就里的名字提取出来，方便后续对比
+    const unlockedName = unlocked.map((item) => item.achievementName);
 
     // 3. 获取所有启用状态的成就模板
     const allAchievements = await Achievement.find({ isEnabled: true });
+    console.log(
+      "The number of the all achievements is:",
+      allAchievements.length
+    );
 
     for (const ach of allAchievements) {
       // 跳过已解锁成就
-      if (unlockedIds.includes(ach._id.toString())) continue;
+      if (unlockedName.includes(ach.name)) continue;
 
       const { type, value } = ach.logic || {};
       const statValue = stats[type];
@@ -37,7 +57,7 @@ export async function checkAndUnlockAchievements(userId) {
 
       if (isMet) {
         await UserAchievement.create({
-          user: userId,
+          user_id: userId,
           achievementId: ach._id,
           achievementName: ach.name,
         });

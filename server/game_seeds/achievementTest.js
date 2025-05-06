@@ -2,7 +2,7 @@ import { generateTestUser } from "./generateTestUser.js";
 import { loadDefaultAchievements } from "./loadDefaultAchievements.js";
 import { createUserStat } from "./loadUserStat.js";
 import User from "../models/User.js";
-import connectDB from "../config/db.js";
+import { checkAndUnlockAchievements } from "../utils/achievementEngine.js";
 
 // 连接到 MongoDB 数据库
 import mongoose from "mongoose";
@@ -15,4 +15,10 @@ await generateTestUser();
 const user = await User.findOne({ username: "testuser" });
 await loadDefaultAchievements();
 await createUserStat(user._id);
+console.log("准备检查成就")
+await checkAndUnlockAchievements(user._id); // 触发成就检查
+
+
+//关闭连接
 await mongoose.disconnect();
+

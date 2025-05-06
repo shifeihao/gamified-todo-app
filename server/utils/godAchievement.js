@@ -5,12 +5,12 @@ import User from "../models/User.js";
 
 export async function checkIfGodAchievementUnlocked(userId) {
   // 1. 重新获取已解锁成就
-  const unlockedAchievements = await UserAchievement.find({ user: userId });
+  const unlockedAchievements = await UserAchievement.find({ user_id: userId });
   const unlockedCount = unlockedAchievements.length;
 
   // 2. 更新 UserStats 中的 achievements_total_unlocked 字段
   await UserStats.updateOne(
-    { user: userId },
+    { user_id: userId },
     { $set: { achievements_total_unlocked: unlockedCount } }
   );
 
@@ -37,7 +37,7 @@ export async function checkIfGodAchievementUnlocked(userId) {
     unlockedCount >= totalAchievementsCount - 1
   ) {
     await UserAchievement.create({
-      user: userId,
+      user_id: userId,
       achievementId: godAchievement._id,
       achievementName: godAchievement.name,
     });

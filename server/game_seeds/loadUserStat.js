@@ -1,13 +1,17 @@
 import UserStats from "../models/UserStats.js";
-import { checkAndUnlockAchievements } from "../utils/achievementEngine.js";
 
 export async function createUserStat(userId) {
+  // 删除之前的统计信息
+  await UserStats.deleteOne({ user_id: userId });
+  console.log("删除用户统计成功");
+
   // 创建行为统计 UserStats（测试触发成就）
   await UserStats.create({
-    user: userId,
+    user_id: userId,
     // 基础累计型
-    level_reach: 60, // 当前等级
-    exp_total: 50000, // 累计经验值
+    level_reach: 0, // 当前等级
+    exp_total: 0, // 累计经验值
+    max_gold: 0, // 最大金币数
     task_completed_total: 1000, // 累计完成任务数
     task_failed_total: 12, // 累计失败任务数
     task_deleted_total: 20, // 删除任务总数
@@ -37,6 +41,4 @@ export async function createUserStat(userId) {
     achievements_total_unlocked: 30, // 累计解锁成就数
   });
   console.log("✅ 测试用户 & Stats 已创建：test@example.com / 123456");
-  await checkAndUnlockAchievements(userId); // 触发成就检查
-  console.log("✅ 成就检查已触发");
 }

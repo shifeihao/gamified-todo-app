@@ -9,7 +9,7 @@ export async function getAllAchievements(req, res) {
   try {
     const userId = req.user?._id;
     const all = await Achievement.find({ isEnabled: true });
-    const unlocked = await UserAchievement.find({ user: userId }).select(
+    const unlocked = await UserAchievement.find({ user_id: userId }).select(
       "achievementId"
     );
     const unlockedSet = new Set(
@@ -41,7 +41,7 @@ export async function getAllAchievements(req, res) {
 export async function getUnlockedAchievements(req, res) {
   try {
     const userId = req.user?._id;
-    const unlocked = await UserAchievement.find({ user: userId }).populate(
+    const unlocked = await UserAchievement.find({ user_id: userId }).populate(
       "achievementId"
     );
 
@@ -76,7 +76,7 @@ export async function triggerAchievementCheck(req, res) {
 export async function resetAchievementsForUser(req, res) {
   const userId = req.params.userId;
   try {
-    const result = await UserAchievement.deleteMany({ user: userId });
+    const result = await UserAchievement.deleteMany({ user_id: userId });
     res.json({
       message: `🗑️ 用户 ${userId} 的成就记录已清空`,
       deleted: result.deletedCount,
@@ -94,7 +94,7 @@ export async function getUserStatistics(req, res) {
     if (!userId) {
       return res.status(404).json({ message: "未找到该用户的统计信息" });
     }
-    const result = await UserStats.findOne({ user: userId });
+    const result = await UserStats.findOne({ user_id: userId });
     res.json(result);
   } catch (err) {
     console.error("❌ 获取用户统计信息失败:", err);
