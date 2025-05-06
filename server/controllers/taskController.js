@@ -75,20 +75,36 @@ const getTaskById = async (req, res) => {
   }
 };
 
-// @desc    更新任务
+// @desc    更新任务或子任务状态
 // @route   PUT /api/tasks/:id
 // @access  Private
 const updateTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate('cardUsed');
+    // 检查任务是否存在
     if (!task) {
       return res.status(404).json({ message: '任务不存在' });
     }
+    // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: '没有权限' });
     }
 
-    const oldStatus = task.status;
+    // 优先处理子任务状态更新
+    const { subTaskId, status } = req.body;
+    if (subTaskId && status) {
+      const sub = task.subTasks.id(subTaskId);
+      if (!sub) {
+        return res.status(404).json({ message: '子任务未找到' });
+      }
+      sub.status = status;
+      await task.save();
+      return res.json(sub);
+    }
+
+    const oldStatus = task.status; // 记录原始状态
+    // 更新主任务字段
+
 
     // 更新任务字段
     task.title = req.body.title || task.title;
@@ -100,6 +116,7 @@ const updateTask = async (req, res) => {
     task.experienceReward = req.body.experienceReward || task.experienceReward;
     task.goldReward = req.body.goldReward || task.goldReward;
 
+    // 更新子任务列表（如果提供）
     if (req.body.subTasks) {
       task.subTasks = req.body.subTasks;
     }
@@ -114,6 +131,7 @@ const updateTask = async (req, res) => {
 
     let rewardResult = null;
 
+    // 如果主任务变为已完成，处理奖励与历史记录
     if (req.body.status === '已完成' && oldStatus !== '已完成') {
       if (
           task.type === '短期' &&
@@ -156,7 +174,6 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate('cardUsed');
-
     if (!task) return res.status(404).json({ message: '任务不存在' });
     if (task.user.toString() !== req.user._id.toString())
       return res.status(403).json({ message: '没有权限' });
