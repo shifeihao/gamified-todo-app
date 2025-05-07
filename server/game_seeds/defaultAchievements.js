@@ -20,7 +20,7 @@ const defaultAchievements = [
     },
   },
   {
-    name: "鸽子终结者",
+    name: "鸽子放飞者",
     description: "你已经连续跳票三天，是在等灵感吗？",
     condition: "连续 3 天未完成任何任务",
     points: 5,
@@ -546,6 +546,126 @@ const defaultAchievements = [
       op: "gte",
     },
   },
+  {
+    name: "卡片收纳狂",
+    description: "你囤下了整整一打空白卡，是准备开店了吗？",
+    condition: "最高持有10张以上的白卡",
+    points: 10,
+    category: "探索",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+    },
+    icon: "default_icon_unlocked.png",
+    isEnabled: true,
+    logic: {
+      type: "blank_card_max_held",
+      value: 10,
+      op: "gte",
+    },
+  },
+
+  {
+    name: "腰包鼓了鼓	",
+    description: "你身上开始有点份量了，但真正的富有还在远方。",
+    condition: "最高持有3000金币以上",
+    points: 20,
+    category: "探索",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+    },
+    icon: "default_icon_unlocked.png",
+    isEnabled: true,
+    logic: {
+      type: "max_gold",
+      value: 3000,
+      op: "gte",
+    },
+  },
+
+  {
+    name: "黄金蓄能者	",
+    description: "你用行动证明了储蓄是一种力量，金币在你手中闪闪发光。",
+    condition: "最高持有10000金币以上",
+    points: 25,
+    category: "探索",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+    },
+    icon: "default_icon_unlocked.png",
+    isEnabled: true,
+    logic: {
+      type: "max_gold",
+      value: 10000,
+      op: "gte",
+    },
+  },
+
+  {
+    name: "奇迹调度者	",
+    description: "你收集了十张特殊卡，计划背后藏着力量与野心。",
+    condition: "最高持有10张特殊卡",
+    points: 15,
+    category: "探索",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+    },
+    icon: "default_icon_unlocked.png",
+    isEnabled: true,
+    logic: {
+      type: "special_card_max_held",
+      value: 10,
+      op: "gte",
+    },
+  },
+
+  {
+    name: "晨光起步者	",
+    description: "当别人还在沉睡时，你已迈出了高效的一步。",
+    condition: "早上8点前创建一个任务",
+    points: 3,
+    category: "探索",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+    },
+    icon: "default_icon_unlocked.png",
+    isEnabled: true,
+    logic: {
+      type: "task_created_earliest_time",
+      value: "08:00:00",
+      op: "lt",
+    },
+  },
+
+  {
+    name: "熬夜生产者",
+    description: "任务不等人，灵感不等天亮",
+    condition: "晚上11点以后创建一个任务",
+    points: 3,
+    category: "探索",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+    },
+    icon: "default_icon_unlocked.png",
+    isEnabled: true,
+    logic: {
+      type: "task_created_latest_time",
+      value: "23:00:00",
+      op: "gte",
+    },
+  },
+
   {
     name: "成就之神",
     description: "你收集了全部成就，这是任务界的终极荣誉。",

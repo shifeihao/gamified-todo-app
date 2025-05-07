@@ -19,8 +19,7 @@ const UserStatsSchema = new mongoose.Schema(
     task_completed_short_total: { type: Number, default: 0 }, // 累计完成短期任务
     task_deleted_total: { type: Number, default: 0 }, // 删除任务总数
     task_edited_total: { type: Number, default: 0 }, //编辑任务总数
-    task_short_slot: { type: Number, default: 0 }, //短期任务卡槽数量
-    task_long_slot: { type: Number, default: 0 }, //长期任务卡槽数量
+    card_slot_total: { type: Number, default: 0 }, //长期任务卡槽数量
     achievements_total_unlocked: { type: Number, default: 0 }, //统计总成就数量
 
     //彩蛋型记录

@@ -29,13 +29,14 @@ export async function SyncUser(userId) {
     console.log("检查成功，用户名是：", user.username);
     // 2. 更新UserStats
     console.log("开始更新用户记录信息，用户名是：", user.username);
+
+    const allSlotNum = user.shortCardSlot + user.longCardSlot;
     await UserStats.updateOne(
       { user_id: userId },
       {
         exp_total: user.experience,
         level_reach: user.level,
-        task_short_slot: user.shortCardSlot,
-        task_long_slot: user.longCardSlot,
+        card_slot_total: allSlotNum,
         $max: { max_gold: user.gold },
       },
       { new: true }
