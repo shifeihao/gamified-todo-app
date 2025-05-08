@@ -9,7 +9,6 @@ const UserStatsSchema = new mongoose.Schema(
       unique: true,
     },
 
-    // 好计算的
     //累计型记录
     level_reach: { type: Number, default: 0 }, // 当前等级
     exp_total: { type: Number, default: 0 }, // 累计经验值
