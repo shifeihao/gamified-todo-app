@@ -32,7 +32,7 @@ export async function SyncUser(userId) {
 
     const allSlotNum = user.shortCardSlot + user.longCardSlot;
     await UserStats.updateOne(
-      { user_id: userId },
+      { user: userId },
       {
         exp_total: user.experience,
         level_reach: user.level,
@@ -54,7 +54,6 @@ export async function SyncTaskHistory(userId) {
       console.error("❌ 没有任务记录");
       return;
     }
-
     // 正确统计数量
     const completedNum = taskHistory.filter(
       (t) => t.status === "已完成"
@@ -126,11 +125,10 @@ export async function SyncTaskHistory(userId) {
         break;
       }
     }
-  
 
     // 把所有记录写入数据库
     await UserStats.updateOne(
-      { user_id: userId },
+      { user: userId },
       {
         task_completed_total: completedNum,
         task_completed_short_total: completedShortNum,
@@ -162,10 +160,9 @@ export async function checkCardNumber(userId) {
   const blanckCardNum = cardHistory.filter((t) => t.type === "blank").length;
   const specialCardNum = cardHistory.filter((t) => t.type === "special").length;
 
-
   //查看和记录里的比谁更大，选择大的记录
   await UserStats.updateOne(
-    { user_id: userId },
+    { user: userId },
     {
       $max: {
         blank_card_max_held: blanckCardNum,
@@ -190,7 +187,6 @@ export async function checkTaskNumber(userId) {
   const earlisterTimeStr = toTimeStr(sortedByTime[0].createdAt);
   const laterTimeStr = toTimeStr(sortedByTime.at(-1).createdAt);
 
-
   //记录创建过的长期任务中子任务最多的数量，只要创建就记录下来
   const longTasks = taskCreate.filter((t) => t.type === "长期");
   const maxSubtaskCount = longTasks.reduce((max, current) => {
@@ -199,7 +195,7 @@ export async function checkTaskNumber(userId) {
   }, 0);
 
   await UserStats.updateOne(
-    { user_id: userId },
+    { user: userId },
     {
       task_created_earliest_time: earlisterTimeStr,
       task_created_latest_time: laterTimeStr,
@@ -210,26 +206,26 @@ export async function checkTaskNumber(userId) {
 //删除一个任务，task_deleted_total计数器+1
 export async function addDeletedTasksNum(userId) {
   await UserStats.updateOne(
-    { user_id: userId }, // 查找条件
+    { user: userId }, // 查找条件
     { $inc: { task_deleted_total: 1 } } // 更新内容：将该字段 +1
   );
 }
 //编辑一个任务，task_edited_total计数器+1
 export async function addEditedTasksNum(userId) {
   await UserStats.updateOne(
-    { user_id: userId }, // 查找条件
+    { user: userId }, // 查找条件
     { $inc: { task_edited_total: 1 } } // 更新内容：将该字段 +1
   );
 }
 //统计个人成就数量/判断是否解锁成就之神
 export async function checkIfGodAchievementUnlocked(userId) {
   // 1. 重新获取已解锁成就
-  const unlockedAchievements = await UserAchievement.find({ user_id: userId });
+  const unlockedAchievements = await UserAchievement.find({ user: userId });
   const unlockedCount = unlockedAchievements.length;
   // 2. 更新 UserStats 中的 achievements_total_unlocked 字段
   await UserStats.updateOne(
-    { user_id: userId },
-    { $set: { achievements_total_unlocked: unlockedCount } }
+    { user: userId },
+    { achievements_total_unlocked: unlockedCount }
   );
   console.log(`🔢 用户 ${userId} 的成就总数已更新：${unlockedCount}`);
   // 3. 获取总启用成就数量（过滤掉未启用的）
@@ -250,14 +246,13 @@ export async function checkIfGodAchievementUnlocked(userId) {
     unlockedCount >= totalAchievementsCount - 1
   ) {
     await UserAchievement.create({
-      user_id: userId,
+      user: userId,
       achievementId: godAchievement._id,
       achievementName: godAchievement.name,
     });
     console.log(`🏆 用户 ${userId} 解锁成就之神：${godAchievement.name}`);
   }
 }
-
 //计算函数工具
 // 时间排序函数：最早 & 最晚时间（hh:mm:ss）
 function toSeconds(date) {

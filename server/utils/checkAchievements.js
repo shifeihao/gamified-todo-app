@@ -8,12 +8,12 @@ export async function checkAndUnlockAchievements(userId) {
   try {
     // 获取UserStats表
     // 1. 将累计经验、等级、当前金币更新进user统计表
-    const stats = await UserStats.findOne({ user_id: userId });
+    const stats = await UserStats.findOne({ user:userId });
     if (!stats) {
       console.log("Can not find the user's stats, so canceling checking");
       return;
     }
-    console.log("Get the user's stats, user_id is:", stats.user_id);
+    console.log("Get the user's stats, user_id is:", stats.user);
 
     // 2. 获取用户已解锁的成就 ID 列表
     const unlocked = await UserAchievement.find({ user: userId });

@@ -107,7 +107,7 @@ export async function getUserStatistics(req, res) {
     if (!userId) {
       return res.status(404).json({ message: "未找到该用户的统计信息" });
     }
-    const result = await UserStats.findOne({ user_id: userId });
+    const result = await UserStats.findOne({ user:userId });
     res.json(result);
   } catch (err) {
     console.error("❌ 获取用户统计信息失败:", err);
