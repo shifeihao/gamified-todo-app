@@ -126,8 +126,7 @@ export async function SyncTaskHistory(userId) {
         break;
       }
     }
-    console.log("streak", streak);
-    console.log("unStreak", unStreak);
+  
 
     // 把所有记录写入数据库
     await UserStats.updateOne(
@@ -162,8 +161,7 @@ export async function checkCardNumber(userId) {
   }
   const blanckCardNum = cardHistory.filter((t) => t.type === "blank").length;
   const specialCardNum = cardHistory.filter((t) => t.type === "special").length;
-  console.log("blanckCardNum", blanckCardNum);
-  console.log("specialCardNum", specialCardNum);
+
 
   //查看和记录里的比谁更大，选择大的记录
   await UserStats.updateOne(
@@ -189,11 +187,9 @@ export async function checkTaskNumber(userId) {
     (a, b) => toSeconds(a.createdAt) - toSeconds(b.createdAt)
   );
 
-  console.log("sortedByTime", sortedByTime);
   const earlisterTimeStr = toTimeStr(sortedByTime[0].createdAt);
   const laterTimeStr = toTimeStr(sortedByTime.at(-1).createdAt);
-  console.log("earlisterTimeStr", earlisterTimeStr);
-  console.log("laterTimeStr", laterTimeStr);
+
 
   //记录创建过的长期任务中子任务最多的数量，只要创建就记录下来
   const longTasks = taskCreate.filter((t) => t.type === "长期");
@@ -242,11 +238,11 @@ export async function checkIfGodAchievementUnlocked(userId) {
   // 4. 查找“成就之神”成就定义
   const godAchievement = await Achievement.findOne({
     logic: { type: "achievements_total_unlocked" },
-    isEnabled: true,
   });
   // 5. 判断是否需要解锁“成就之神”
+  console.log();
   const alreadyUnlocked = unlockedAchievements.some(
-    (ua) => ua.achievementId.toString() === godAchievement?._id?.toString()
+    (ua) => ua.achievementName.toString() === godAchievement?.name?.toString()
   );
   if (
     godAchievement &&

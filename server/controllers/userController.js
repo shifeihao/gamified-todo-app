@@ -1,4 +1,6 @@
 import User from "../models/User.js";
+import UserStats from "../models/UserStats.js";
+
 import { generateToken } from "../middleware/auth.js";
 
 // @desc    注册新用户
@@ -34,6 +36,9 @@ const registerUser = async (req, res) => {
     } else {
       res.status(400).json({ message: "无效的用户数据" });
     }
+
+    //创建用户的时候自动生成一个用户UserStats
+    await UserStats.create({ user_id: user._id });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "服务器错误" });

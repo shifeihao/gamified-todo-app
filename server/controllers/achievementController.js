@@ -8,27 +8,40 @@ import { checkAndUnlockAchievements } from "../utils/checkAchievements.js";
 export async function getAllAchievements(req, res) {
   try {
     const userId = req.user?._id;
+
     const all = await Achievement.find({ isEnabled: true });
-    const unlocked = await UserAchievement.find({ user_id: userId }).select(
-      "achievementId"
-    );
-    const unlockedSet = new Set(
-      unlocked.map((u) => u.achievementId?.toString()).filter(Boolean)
+
+    const unlocked = await UserAchievement.find({ user: userId }).select(
+      "achievementName unlockedAt"
     );
 
-    const result = all.map((ach) => ({
-      _id: ach._id,
-      name: ach.name,
-      description: ach.description,
-      category: ach.category,
-      isHidden: ach.isHidden && !unlockedSet.has(ach._id.toString()),
-      unlocked: unlockedSet.has(ach._id.toString()),
-      reward: ach.reward,
-      points: ach.points,
-      icon: ach.icon,
-      condition: ach.condition,
-      logic: ach.logic,
-    }));
+    // 把 unlocked 变成一个 Map，以成就名为 key，解锁时间为 value
+    const unlockedTimeMap = {};
+    for (const u of unlocked) {
+      if (u.achievementName) {
+        unlockedTimeMap[u.achievementName.toString()] = u.unlockedAt;
+      }
+    }
+
+    const result = all.map((ach) => {
+      const name = ach.name?.toString();
+      const isUnlocked = name && unlockedTimeMap[name];
+
+      return {
+        _id: ach._id,
+        name: ach.name,
+        description: ach.description,
+        category: ach.category,
+        isHidden: ach.isHidden && !isUnlocked,
+        unlocked: Boolean(isUnlocked),
+        unlockedAt: isUnlocked ? unlockedTimeMap[name] : null, // ✅ 加入解锁时间
+        reward: ach.reward,
+        points: ach.points,
+        icon: ach.icon,
+        condition: ach.condition,
+        logic: ach.logic,
+      };
+    });
 
     res.json(result);
   } catch (err) {
@@ -41,7 +54,7 @@ export async function getAllAchievements(req, res) {
 export async function getUnlockedAchievements(req, res) {
   try {
     const userId = req.user?._id;
-    const unlocked = await UserAchievement.find({ user_id: userId }).populate(
+    const unlocked = await UserAchievement.find({ user: userId }).populate(
       "achievementId"
     );
 
@@ -76,7 +89,7 @@ export async function triggerAchievementCheck(req, res) {
 export async function resetAchievementsForUser(req, res) {
   const userId = req.params.userId;
   try {
-    const result = await UserAchievement.deleteMany({ user_id: userId });
+    const result = await UserAchievement.deleteMany({ user: userId });
     res.json({
       message: `🗑️ 用户 ${userId} 的成就记录已清空`,
       deleted: result.deletedCount,

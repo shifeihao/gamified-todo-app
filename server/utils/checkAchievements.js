@@ -16,7 +16,7 @@ export async function checkAndUnlockAchievements(userId) {
     console.log("Get the user's stats, user_id is:", stats.user_id);
 
     // 2. 获取用户已解锁的成就 ID 列表
-    const unlocked = await UserAchievement.find({ user_id: userId });
+    const unlocked = await UserAchievement.find({ user: userId });
     console.log(
       "The number of the user's unlocked achievements is:",
       unlocked.length
@@ -24,6 +24,7 @@ export async function checkAndUnlockAchievements(userId) {
 
     // 将解锁的成就里的名字提取出来，方便后续对比
     const unlockedName = unlocked.map((item) => item.achievementName);
+    console.log("The unlockedName", unlockedName);
 
     // 3. 获取所有启用状态的成就模板
     const allAchievements = await Achievement.find({ isEnabled: true });
@@ -35,9 +36,9 @@ export async function checkAndUnlockAchievements(userId) {
     for (const ach of allAchievements) {
       // 跳过已解锁成就
       if (unlockedName.includes(ach.name)) continue;
-
-      const { type, value } = ach.logic || {};
+      const { type, value, op } = ach.logic || {};
       const statValue = stats[type];
+      console.log("achname", ach.name);
 
       // 条件判断
       let isMet = false;
@@ -64,15 +65,19 @@ export async function checkAndUnlockAchievements(userId) {
           isMet = false;
       }
 
+      console.log("isMet", isMet);
+      console.log("userId", userId);
+      console.log("achievementName", ach.name);
+
       if (isMet) {
         await UserAchievement.create({
-          user_id: userId,
+          user: userId,
           achievementId: ach._id,
           achievementName: ach.name,
         });
         console.log(`🏆 用户 ${userId} 解锁成就：${ach.name}`);
 
-        // 4. 奖励发放(暂时就经验和金币)
+        // 4. 奖励发放
         await User.updateOne(
           { _id: userId },
           {

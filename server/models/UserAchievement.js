@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 const UserAchievementSchema = new mongoose.Schema(
   {
-    user_id: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -25,7 +25,6 @@ const UserAchievementSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 确保同一个用户不会解锁同一个成就多次
 UserAchievementSchema.index({ user: 1, achievementId: 1 }, { unique: true });
 
 const UserAchievement = mongoose.model(

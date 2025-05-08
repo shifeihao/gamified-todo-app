@@ -2,6 +2,8 @@ import { generateTestUser } from "./generateTestUser.js";
 import { loadDefaultAchievements } from "./loadDefaultAchievements.js";
 import { createUserStat } from "./loadUserStat.js";
 import User from "../models/User.js";
+import UserAchievement from "../models/UserAchievement.js";
+
 import { checkAndUnlockAchievements } from "../utils/checkAchievements.js";
 import { SyncUserStats } from "../utils/userStatsSync.js";
 
@@ -18,13 +20,13 @@ const user = await User.findOne({ username: "testuser" });
 await loadDefaultAchievements();
 //加载默认UserStat状态
 await createUserStat(user._id);
-console.log("准备检查成就")
+console.log("准备检查成就");
 //同步UserStats
 await SyncUserStats(user._id);
+//清空个人目前成就
+await UserAchievement.deleteMany({ user: user._id });
 //检查成就是否解锁
 await checkAndUnlockAchievements(user._id); // 触发成就检查
-
-
 
 //关闭连接
 await mongoose.disconnect();

@@ -11,7 +11,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_3.png",
     isEnabled: true,
     logic: {
       type: "task_deleted_total",
@@ -31,31 +31,11 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_6.png",
     isEnabled: true,
     logic: {
       type: "task_uncompleted_days_in_row",
       value: 3,
-      op: "gte",
-    },
-  },
-  {
-    name: "初来乍到",
-    description: "万事起头难，但你已经走出了第一步。",
-    condition: "完成 1 个任务",
-    points: 5,
-    category: "探索型",
-    isHidden: false,
-    reward: {
-      exp: 0,
-      coins: 0,
-      item: null,
-    },
-    icon: "default_icon_unlocked.png",
-    isEnabled: true,
-    logic: {
-      type: "task_completed_total",
-      value: 1,
       op: "gte",
     },
   },
@@ -71,7 +51,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_13.png",
     isEnabled: true,
     logic: {
       type: "task_edited_total",
@@ -91,7 +71,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_5.png",
     isEnabled: true,
     logic: {
       type: "task_deleted_total",
@@ -112,7 +92,7 @@ const defaultAchievements = [
       coins: 200,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_9.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -132,7 +112,7 @@ const defaultAchievements = [
       coins: 400,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_16.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -143,7 +123,7 @@ const defaultAchievements = [
   {
     name: "午夜冲刺者",
     description: "别人梦里你在敲键盘，任务和夜猫子一个都不能少。",
-    condition: "晚上 11 点后完成一个任务",
+    condition: "最晚完成任务的时间超过23:00",
     points: 10,
     category: "探索型",
     isHidden: false,
@@ -152,7 +132,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_11.png",
     isEnabled: true,
     logic: {
       type: "task_created_latest_time",
@@ -173,7 +153,7 @@ const defaultAchievements = [
       coins: 0,
       task_short_slot: 1,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_8.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
@@ -193,11 +173,11 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_12.png",
     isEnabled: true,
     logic: {
       type: "task_created_max_subtasks",
-      value: 5,
+      value: 1,
       op: "gte",
     },
   },
@@ -213,7 +193,7 @@ const defaultAchievements = [
       coins: 300,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_10.png",
     isEnabled: true,
     logic: {
       type: "task_completed_total",
@@ -234,7 +214,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_18.png",
     isEnabled: true,
     logic: {
       type: "task_completed_short_longest_duration",
@@ -254,7 +234,7 @@ const defaultAchievements = [
       coins: 0,
       task_long_slot: 1,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_14.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
@@ -274,7 +254,7 @@ const defaultAchievements = [
       coins: 1200,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_26.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -285,7 +265,7 @@ const defaultAchievements = [
   {
     name: "先苦后甜",
     description: "你在一早完成所有任务，是时间管理典范。",
-    condition: "早上 8 点前完成卡槽里所有的任务",
+    condition: "最早完成任务的时间在早上8点前",
     points: 15,
     category: "探索型",
     isHidden: false,
@@ -294,11 +274,11 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_17.png",
     isEnabled: true,
     logic: {
       type: "task_completed_earliest_time",
-      value: 8,
+      value: "08:00:00",
       op: "lt",
     },
   },
@@ -314,7 +294,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_19.png",
     isEnabled: true,
     logic: {
       type: "task_completed_short_shortest_duration",
@@ -335,7 +315,7 @@ const defaultAchievements = [
       coins: 600,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_20.png",
     isEnabled: true,
     logic: {
       type: "task_completed_short_total",
@@ -355,7 +335,7 @@ const defaultAchievements = [
       coins: 1000,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_23.png",
     isEnabled: true,
     logic: {
       type: "task_completed_total",
@@ -375,7 +355,7 @@ const defaultAchievements = [
       coins: 2000,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_27.png",
     isEnabled: true,
     logic: {
       type: "task_completed_total",
@@ -395,7 +375,7 @@ const defaultAchievements = [
       coins: 1000,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_27.png",
     isEnabled: true,
     logic: {
       type: "task_completed_long_total",
@@ -415,7 +395,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_24.png",
     isEnabled: true,
     logic: {
       type: "card_slot_total",
@@ -436,7 +416,7 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_28.png",
     isEnabled: true,
     logic: {
       type: "exp_total",
@@ -456,7 +436,7 @@ const defaultAchievements = [
       coins: 4000,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_30.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -476,7 +456,7 @@ const defaultAchievements = [
       coins: 20000,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_31.png",
     isEnabled: true,
     logic: {
       type: "task_completed_total",
@@ -497,7 +477,7 @@ const defaultAchievements = [
       task_short_slot: 1,
       task_long_slot: 1,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_29.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
@@ -518,7 +498,7 @@ const defaultAchievements = [
       task_short_slot: 1,
       task_long_slot: 1,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_32.png",
     isEnabled: true,
     logic: {
       type: "level_reach",
@@ -538,7 +518,7 @@ const defaultAchievements = [
       coins: 20000,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_33.png",
     isEnabled: true,
     logic: {
       type: "task_completed_days_in_row",
@@ -551,13 +531,13 @@ const defaultAchievements = [
     description: "你囤下了整整一打空白卡，是准备开店了吗？",
     condition: "最高持有10张以上的白卡",
     points: 10,
-    category: "探索",
+    category: "探索型",
     isHidden: false,
     reward: {
       exp: 0,
       coins: 0,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_7.png",
     isEnabled: true,
     logic: {
       type: "blank_card_max_held",
@@ -571,13 +551,13 @@ const defaultAchievements = [
     description: "你身上开始有点份量了，但真正的富有还在远方。",
     condition: "最高持有3000金币以上",
     points: 20,
-    category: "探索",
+    category: "探索型",
     isHidden: false,
     reward: {
       exp: 0,
       coins: 0,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_21.png",
     isEnabled: true,
     logic: {
       type: "max_gold",
@@ -587,17 +567,17 @@ const defaultAchievements = [
   },
 
   {
-    name: "黄金蓄能者	",
+    name: "黄金蓄能者",
     description: "你用行动证明了储蓄是一种力量，金币在你手中闪闪发光。",
     condition: "最高持有10000金币以上",
     points: 25,
-    category: "探索",
+    category: "探索型",
     isHidden: false,
     reward: {
       exp: 0,
       coins: 0,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_25.png",
     isEnabled: true,
     logic: {
       type: "max_gold",
@@ -607,17 +587,17 @@ const defaultAchievements = [
   },
 
   {
-    name: "奇迹调度者	",
+    name: "奇迹调度者",
     description: "你收集了十张特殊卡，计划背后藏着力量与野心。",
     condition: "最高持有10张特殊卡",
     points: 15,
-    category: "探索",
+    category: "探索型",
     isHidden: false,
     reward: {
       exp: 0,
       coins: 0,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_15.png",
     isEnabled: true,
     logic: {
       type: "special_card_max_held",
@@ -627,17 +607,17 @@ const defaultAchievements = [
   },
 
   {
-    name: "晨光起步者	",
+    name: "晨光起步者",
     description: "当别人还在沉睡时，你已迈出了高效的一步。",
-    condition: "早上8点前创建一个任务",
+    condition: "最早创建任务的时间小于08:00:00",
     points: 3,
-    category: "探索",
+    category: "探索型",
     isHidden: false,
     reward: {
       exp: 0,
       coins: 0,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_1.png",
     isEnabled: true,
     logic: {
       type: "task_created_earliest_time",
@@ -649,15 +629,15 @@ const defaultAchievements = [
   {
     name: "熬夜生产者",
     description: "任务不等人，灵感不等天亮",
-    condition: "晚上11点以后创建一个任务",
+    condition: "最晚创建任务的时间超过23:00",
     points: 3,
-    category: "探索",
+    category: "探索型",
     isHidden: false,
     reward: {
       exp: 0,
       coins: 0,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_2.png",
     isEnabled: true,
     logic: {
       type: "task_created_latest_time",
@@ -678,11 +658,31 @@ const defaultAchievements = [
       coins: 0,
       item: null,
     },
-    icon: "default_icon_unlocked.png",
+    icon: "default_icon_unlocked_34.png",
     isEnabled: true,
     logic: {
       type: "achievements_total_unlocked",
       value: "33",
+      op: "gte",
+    },
+  },
+  {
+    name: "初来乍到",
+    description: "万事起头难，但你已经走出了第一步。",
+    condition: "完成 1 个任务",
+    points: 5,
+    category: "探索型",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+      item: null,
+    },
+    icon: "default_icon_unlocked_4.png",
+    isEnabled: true,
+    logic: {
+      type: "task_completed_total",
+      value: 1,
       op: "gte",
     },
   },
