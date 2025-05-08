@@ -95,7 +95,7 @@ export const handleTaskCompletion = async (req) => {
     return {
       success: true,
       message: '奖励与等级更新成功',
-      exp: newExp,
+      experience: newExp,
       level: currentLevel.level,
       nextLevelExp,
       expProgress,
@@ -109,5 +109,41 @@ export const handleTaskCompletion = async (req) => {
   } catch (error) {
     console.error('❌ 奖励与等级更新失败:', error);
     throw new Error('奖励与等级更新失败: ' + error.message);
+  }
+};
+
+
+
+
+
+
+
+export const getUserLevelBar = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: '用户不存在' });
+
+    const currentLevel = await Level.findOne({ expRequired: { $lte: user.experience } }).sort({ level: -1 });
+    const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
+
+    const nextLevelExp = nextLevel ? nextLevel.expRequired : currentLevel.expRequired;
+    const expProgress = user.experience - currentLevel.expRequired;
+    const expRemaining = nextLevelExp - user.experience;
+    const progressRate = currentLevel.expToNext > 0
+      ? Math.min(expProgress / currentLevel.expToNext, 1)
+      : 1;
+
+    return res.json({
+      level: currentLevel.level,
+      experience: user.experience,
+      nextLevelExp,
+      expProgress,
+      expRemaining,
+      progressRate,
+      leveledUp: false // 登录时一般不会升级，但你可以自定义逻辑
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: '获取等级信息失败' });
   }
 };
