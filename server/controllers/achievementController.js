@@ -2,33 +2,46 @@
 import Achievement from "../models/Achievement.js";
 import UserAchievement from "../models/UserAchievement.js";
 import UserStats from "../models/UserStats.js";
-import { checkAndUnlockAchievements } from "../utils/achievementEngine.js";
+import { checkAndUnlockAchievements } from "../utils/checkAchievements.js";
 
 // ✅ 获取所有成就（附加是否解锁）
 export async function getAllAchievements(req, res) {
   try {
     const userId = req.user?._id;
+
     const all = await Achievement.find({ isEnabled: true });
+
     const unlocked = await UserAchievement.find({ user: userId }).select(
-      "achievementId"
-    );
-    const unlockedSet = new Set(
-      unlocked.map((u) => u.achievementId?.toString()).filter(Boolean)
+      "achievementName unlockedAt"
     );
 
-    const result = all.map((ach) => ({
-      _id: ach._id,
-      name: ach.name,
-      description: ach.description,
-      category: ach.category,
-      isHidden: ach.isHidden && !unlockedSet.has(ach._id.toString()),
-      unlocked: unlockedSet.has(ach._id.toString()),
-      reward: ach.reward,
-      points: ach.points,
-      icon: ach.icon,
-      condition: ach.condition,
-      logic: ach.logic,
-    }));
+    // 把 unlocked 变成一个 Map，以成就名为 key，解锁时间为 value
+    const unlockedTimeMap = {};
+    for (const u of unlocked) {
+      if (u.achievementName) {
+        unlockedTimeMap[u.achievementName.toString()] = u.unlockedAt;
+      }
+    }
+
+    const result = all.map((ach) => {
+      const name = ach.name?.toString();
+      const isUnlocked = name && unlockedTimeMap[name];
+
+      return {
+        _id: ach._id,
+        name: ach.name,
+        description: ach.description,
+        category: ach.category,
+        isHidden: ach.isHidden && !isUnlocked,
+        unlocked: Boolean(isUnlocked),
+        unlockedAt: isUnlocked ? unlockedTimeMap[name] : null, // ✅ 加入解锁时间
+        reward: ach.reward,
+        points: ach.points,
+        icon: ach.icon,
+        condition: ach.condition,
+        logic: ach.logic,
+      };
+    });
 
     res.json(result);
   } catch (err) {
@@ -59,7 +72,7 @@ export async function getUnlockedAchievements(req, res) {
   }
 }
 
-// ✅ 成就检查触发器
+// ✅ 成就检查触发器(测试用)
 export async function triggerAchievementCheck(req, res) {
   const userId = req.params.userId;
   if (!userId) return res.status(400).json({ message: "请提供 userId" });
@@ -94,7 +107,7 @@ export async function getUserStatistics(req, res) {
     if (!userId) {
       return res.status(404).json({ message: "未找到该用户的统计信息" });
     }
-    const result = await UserStats.findOne({ user: userId });
+    const result = await UserStats.findOne({ user:userId });
     res.json(result);
   } catch (err) {
     console.error("❌ 获取用户统计信息失败:", err);

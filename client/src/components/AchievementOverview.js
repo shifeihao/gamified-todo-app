@@ -1,0 +1,39 @@
+// src/components/AchievementOverview.js
+import React from "react";
+
+const AchievementOverview = ({
+  recentUnlocked = [],
+  unlockedCount,
+  totalCount,
+}) => {
+  const percent =
+    totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
+
+  return (
+    <div className="mb-10">
+      {/* 标题 */}
+      <h2 className="text-xl font-semibold mb-4">成就总览</h2>
+
+      {/* 最近解锁成就 */}
+      <div className="mb-6">
+        <h3 className="text-md font-medium mb-2">最近获得</h3>
+      </div>
+
+      {/* 总体进度条 */}
+      <div>
+        <h3 className="text-md font-medium mb-2">解锁进度</h3>
+        <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden mb-1">
+          <div
+            className="h-full bg-green-500"
+            style={{ width: `${percent}%` }}
+          ></div>
+        </div>
+        <p className="text-xs text-gray-600 text-right">
+          {unlockedCount} / {totalCount}（{percent}%）
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default AchievementOverview;

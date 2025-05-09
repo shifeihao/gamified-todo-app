@@ -2,7 +2,8 @@ import asyncHandler from "express-async-handler";
 import Card from "../models/Card.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
-import { calculateReward } from '../utils/TaskRewardCalcultor.js';
+import { calculateReward } from "../utils/TaskRewardCalcultor.js";
+import { checkCardNumber } from "../utils/userStatsSync.js";
 
 // @desc    获取用户卡片库存
 // @route   GET /api/cards/inventory
@@ -61,14 +62,14 @@ const issueDailyCards = asyncHandler(async (req, res) => {
   // 创建3张空白卡片
   const blankCards = await Promise.all(
     [...Array(3)].map(() =>
-    Card.create({
-      user: user._id,
+      Card.create({
+        user: user._id,
         type: "blank",
         title: "空白卡片",
         description: "限定为短期类型的任务",
         taskDuration: "短期", //  限定为短期卡片
         issuedAt: new Date(),
-    })
+      })
     )
   );
   // 更新用户卡片库存
@@ -76,6 +77,9 @@ const issueDailyCards = asyncHandler(async (req, res) => {
   user.dailyCards.blank = 3;
   user.dailyCards.lastIssued = new Date();
   await user.save();
+
+  //发卡片后统计卡片库存总数量，记录到userstats中
+  await checkCardNumber(req.user.id);
 
   res.status(201).json({
     message: "每日卡片发放成功",
@@ -106,23 +110,26 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
   }
   // 创建3张长期空白卡片
   const blankCards = await Promise.all(
-      [...Array(3)].map(() =>
-          Card.create({
-            user: user._id,
-            type: "blank",
-            title: "长期空白卡片",
-            description: "限定为长期类型的任务",
-            taskDuration: "长期",
-            issuedAt: new Date(),
-          })
-      )
+    [...Array(3)].map(() =>
+      Card.create({
+        user: user._id,
+        type: "blank",
+        title: "长期空白卡片",
+        description: "限定为长期类型的任务",
+        taskDuration: "长期",
+        issuedAt: new Date(),
+      })
+    )
   );
   // 更新库存和记录发放时间
-  user.cardInventory.push(...blankCards.map(card => card._id));
+  user.cardInventory.push(...blankCards.map((card) => card._id));
   user.weeklyCards = {
-    lastIssued: new Date()
+    lastIssued: new Date(),
   };
   await user.save();
+
+  //发卡片后统计卡片库存总数量，记录到userstats中
+  await checkCardNumber(req.user.id);
 
   res.status(201).json({
     message: "本周长期空白卡片发放成功",
@@ -136,9 +143,11 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
 const issueRewardCard = asyncHandler(async (req, res) => {
   const { type, title, description, bonus, taskDuration } = req.body;
   // 验证 taskDuration 是否有效
-  if (!['短期','长期','通用'].includes(taskDuration)) {
+  if (!["短期", "长期", "通用"].includes(taskDuration)) {
     res.status(400);
-    throw new Error('无效的任务持续时长：taskDuration 必须为 短期、长期 或 通用');
+    throw new Error(
+      "无效的任务持续时长：taskDuration 必须为 短期、长期 或 通用"
+    );
   }
 
   // 创建奖励卡片
@@ -154,15 +163,17 @@ const issueRewardCard = asyncHandler(async (req, res) => {
 
   // 更新用户卡片库存
   await User.findByIdAndUpdate(req.user.id, {
-    $push: { cardInventory: rewardCard._id }
+    $push: { cardInventory: rewardCard._id },
   });
+
+  //发放奖励后，统计卡片库存，记录在userstats上面
+  await checkCardNumber(req.user.id);
 
   res.status(201).json({
     message: "奖励卡片发放成功",
     card: rewardCard,
   });
 });
-
 
 // @desc    发放短/长期空白卡片（用于postman测试）
 // @route   POST /api/cards/issue-blank
@@ -181,7 +192,7 @@ const issueBlankCard = asyncHandler(async (req, res) => {
 
   await User.findByIdAndUpdate(req.user.id, {
     $push: { cardInventory: blankCard._id },
-    $inc: { "dailyCards.blank": 1 }  //  增加每日空白卡计数
+    $inc: { "dailyCards.blank": 1 }, //  增加每日空白卡计数
   });
 
   res.status(201).json({
@@ -218,9 +229,11 @@ const consumeCard = asyncHandler(async (req, res) => {
     }
 
     // ✅ 校验任务类型是否匹配
-    if (card.taskDuration !== '通用' && card.taskDuration !== taskData.type) {
+    if (card.taskDuration !== "通用" && card.taskDuration !== taskData.type) {
       res.status(400);
-      throw new Error(`该卡片仅支持 ${card.taskDuration} 类型任务，无法用于 ${taskData.type} 类型任务`);
+      throw new Error(
+        `该卡片仅支持 ${card.taskDuration} 类型任务，无法用于 ${taskData.type} 类型任务`
+      );
     }
   } else {
     // ⭐ 自动分配空白卡片（blank）
@@ -228,10 +241,7 @@ const consumeCard = asyncHandler(async (req, res) => {
       user: req.user.id,
       used: false,
       type: "blank",
-      $or: [
-        { taskDuration: taskData.type },
-        { taskDuration: "通用" },
-      ],
+      $or: [{ taskDuration: taskData.type }, { taskDuration: "通用" }],
     });
 
     if (!card) {
@@ -257,7 +267,11 @@ const consumeCard = asyncHandler(async (req, res) => {
 
   // ✅ 奖励结算
   const bonus = card.bonus || {};
-  const { experience, gold } = calculateReward(taskData.baseExperience, taskData.baseGold, bonus);
+  const { experience, gold } = calculateReward(
+    taskData.baseExperience,
+    taskData.baseGold,
+    bonus
+  );
 
   res.status(200).json({
     success: true,
@@ -265,11 +279,16 @@ const consumeCard = asyncHandler(async (req, res) => {
       ...taskData,
       experienceReward: experience,
       goldReward: gold,
-      cardUsed: card._id.toString(),// ✅ 确保是字符串
+      cardUsed: card._id.toString(), // ✅ 确保是字符串
     },
   });
 });
 
-
-
-export { consumeCard, getCardInventory, issueDailyCards, issueWeeklyCards, issueRewardCard,issueBlankCard };
+export {
+  consumeCard,
+  getCardInventory,
+  issueDailyCards,
+  issueWeeklyCards,
+  issueRewardCard,
+  issueBlankCard,
+};

@@ -8,6 +8,8 @@ import DailyTaskPanel from './DailyTaskPanel';
 import TimetablePanel from './TimetablePanel';
 import RepositoryPanel from './RepositoryPanel';
 import { getCardInventory } from '../../services/cardService';
+import axios from 'axios';
+
 
 // 仅用于读数据，不纳入 useApiAction
 import {
@@ -28,12 +30,14 @@ import {
 } from '../../services/taskService';
 
 import { useApiAction } from '../../components/hooks';
+import UserLevelBar from '../../components/base/UserLevelBar';
 
 const TasksPage = () => {
   const { user } = useContext(AuthContext);
 
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
+  const [rewardInfo, setRewardInfo] = useState(null);
   const [equippedTasks, setEquippedTasks] = useState([]);
   const [equippedShortTasks, setEquippedShortTasks] = useState([]); // 短期任务槽
   const [equippedLongTasks, setEquippedLongTasks] = useState([]); // 长期任务槽
@@ -78,8 +82,29 @@ const TasksPage = () => {
   };
 
   useEffect(() => {
-    if (user?.token) fetchTasks();
+    if (user?.token) {
+      fetchTasks();
+      fetchLevelInfo(); // ✅ 新增调用
+    }
   }, [user]);
+
+  useEffect(() => {
+    console.log('当前 rewardInfo:', rewardInfo);
+  }, [rewardInfo]);
+  
+
+  const fetchLevelInfo = async () => {
+    try {
+      const res = await axios.get('/api/levels/userLevelBar', {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      setRewardInfo(res.data); // ✅ 存入状态，供 UserLevelBar 使用
+    } catch (err) {
+      console.error('获取等级信息失败:', err);
+    }
+  };
+  
+  
 
   // 显示成功信息
   const showSuccess = (msg) => {
@@ -120,12 +145,17 @@ const TasksPage = () => {
     error: completeError
   } = useApiAction(completeTaskService, {
     onSuccess: async (task) => {
-      // // 先记录任务完成,再卸下已完成的任务，防止继续占用槽位
       showSuccess('任务已完成');
-      await unequipTaskService(task.task._id, user.token); //因为 task 是后端响应对象中 res.task
-      console.log('任务完成后返回值:', task);
+    
+      // ✅ 提取 reward 数据并存入状态
+      if (task.reward) {
+        setRewardInfo(task.reward);
+      }
+    
+      await unequipTaskService(task.task._id, user.token);
       fetchTasks();
     },
+    
     onError: (err) => {
       console.error(err);
       setError('完成任务失败');
@@ -273,6 +303,7 @@ const TasksPage = () => {
       <div className="max-w-7xl mx-auto py-4 space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">我的任务</h1>
+
           <button
             onClick={() => {
               setCreateSlotType('短期');
@@ -285,6 +316,11 @@ const TasksPage = () => {
             创建新任务
           </button>
         </div>
+        {rewardInfo && (
+  <div className="mt-2">
+    <UserLevelBar data={rewardInfo} />
+  </div>
+)}
 
         {errorAny && <div className="text-red-600">{errorAny}</div>}
         {loadingAny && <div className="text-gray-600">加载中...</div>}

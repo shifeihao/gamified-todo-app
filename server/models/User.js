@@ -1,34 +1,46 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 // 用户模型架构
 const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: [true, '请提供用户名'],
+      required: [true, "请提供用户名"],
       unique: true,
       trim: true,
     },
     email: {
       type: String,
-      required: [true, '请提供邮箱'],
+      required: [true, "请提供邮箱"],
       unique: true,
       match: [
         /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        '请提供有效的邮箱地址',
+        "请提供有效的邮箱地址",
       ],
     },
     password: {
       type: String,
-      required: [true, '请提供密码'],
+      required: [true, "请提供密码"],
       minlength: 6,
       select: false, // 默认查询不返回密码
     },
+
+    shortCardSlot: {
+      type: Number,
+      default: 2,
+      set: (v) => Math.min(v, 5), // 自动裁剪为不超过5
+    },
+    longCardSlot: {
+      type: Number,
+      default: 2,
+      set: (v) => Math.min(v, 5), // 自动裁剪为不超过5
+    },
+
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ["user", "admin"],
+      default: "user",
     },
     experience: {
       type: Number,
@@ -38,16 +50,16 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-      level: {
-          type: Number,
-          required: true,
-          default: 1     // 当前等级
-      },
-      nextLevelExp: {
-          type: Number,
-          required: true,
-          default: 155   // LV1 ➜ LV2 的经验门槛
-      },
+    level: {
+      type: Number,
+      required: true,
+      default: 1, // 当前等级
+    },
+    nextLevelExp: {
+      type: Number,
+      required: true,
+      default: 155, // LV1 ➜ LV2 的经验门槛
+    },
     // 每日卡片配额
     dailyCards: {
       blank: {
@@ -63,7 +75,7 @@ const userSchema = new mongoose.Schema(
     cardInventory: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Card',
+        ref: "Card",
       },
     ],
   },
@@ -73,9 +85,9 @@ const userSchema = new mongoose.Schema(
 );
 
 // 保存前加密密码
-userSchema.pre('save', async function (next) {
+userSchema.pre("save", async function (next) {
   // 只有在密码被修改时才重新加密
-  if (!this.isModified('password')) {
+  if (!this.isModified("password")) {
     next();
   }
 
@@ -88,6 +100,6 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;

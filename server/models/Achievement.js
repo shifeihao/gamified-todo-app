@@ -30,6 +30,10 @@ const AchievementSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.Mixed,
         default: null, // 可以是数字、字符串、布尔
       },
+      op: {
+        type: String,
+        default: null, // 可以是数字、字符串、布尔
+      },
     },
   },
   { timestamps: true }
