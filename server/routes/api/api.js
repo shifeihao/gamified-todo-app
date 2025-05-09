@@ -5,6 +5,8 @@ import taskRoutes from "./task.js";
 import levelRoutes from "./level.js";
 import shopRoutes from "./shop.js";
 import achievementRoutes from "./achievement.js";
+import dungeonRoutes from "./dungeon.js"
+import characterRoutes from './character.js';
 
 const router = express.Router();
 
@@ -14,5 +16,7 @@ router.use("/tasks", taskRoutes);
 router.use("/levels", levelRoutes);
 router.use("/shop", shopRoutes);
 router.use("/achievements", achievementRoutes);
+router.use("/dungeon", dungeonRoutes); // 确保 dungeonRoutes 已经定义并导入
+router.use('/character', characterRoutes);
 
 export default router;
