@@ -117,3 +117,18 @@ await UserEquipment.create({
 
 console.log("✅ All seed data initialized successfully.");
 await mongoose.disconnect();
+
+// {
+//   name: "Codex of Clarity",
+//   slug: "codex-of-clarity",
+//   icon: "codex-of-clarity.png",
+//   description: "Reveals the true nature of the Whisper. Cancels its defensive veil.",
+//   type: "consumable",
+//   trigger: "onBossEncounter",
+//   useEffect: {
+//     target: "boss",
+//     removeStatus: ["invincible", "resistBuff"]
+//   },
+//   requiredMaterials: ["echo-fragment", "old-ink", "doubt-crystal"], // 可作为另一个种子数据扩展
+//   price: 500
+// }

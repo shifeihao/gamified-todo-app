@@ -1,0 +1,155 @@
+// seedSkills.js
+import mongoose from 'mongoose';
+import { Skill } from '../../models/Skill.js';
+
+await mongoose.connect(
+  'mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+);
+
+
+
+
+
+const withClass = (skills, classSlug) => skills.map(s => ({ ...s, allowedClasses: [classSlug] }));
+
+const warriorSkills = withClass([
+  { name: 'Smash', description: 'Deliver a heavy blow...', icon: 'smash.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 18, cooldown: 0, priority: 1 },
+  { name: 'Battle Cry', description: 'Boosts attack...', icon: 'command.png', trigger: 'onStartBattle', effect: 'buffAttack', effectValue: 5, once: true, priority: 5 },
+  { name: 'Iron Defense', description: 'Gain shield...', icon: 'iron-wall.png', trigger: 'onReceiveHit', effect: 'gainShield', effectValue: 8, cooldown: 2 },
+  { name: 'Revenge Surge', description: 'Gain attack below HP 50%', icon: 'bloodthirst.png', trigger: 'onHpBelow', effect: 'buffAttack', effectValue: 8, triggerCondition: { hpBelow: 0.5 }, cooldown: 3 },
+  { name: 'Whirlwind', description: 'Spin attack...', icon: 'whirlwind.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 14, cooldown: 2, priority: 2 },
+  { name: 'Resilience', description: 'Attack up when hit', icon: 'rage.png', trigger: 'onReceiveHit', effect: 'buffAttack', effectValue: 3, cooldown: 2 },
+  { name: 'Ultimate: Earthshatter', description: 'Massive area damage', icon: 'earthshatter.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 40, cooldown: 5, priority: 10 },
+  { name: 'Bleed Slash', description: 'Inflict bleeding', icon: 'bleed-slash.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 20, triggerCondition: { applyStatus: 'bleed' }, cooldown: 2 },
+  { name: 'Blood Rage', description: 'Stronger vs bleeding target', icon: 'blood-rage.png', trigger: 'onAttack', effect: 'buffAttack', effectValue: 6, triggerCondition: { ifTargetStatus: 'bleeding' }, cooldown: 2 },
+], 'warrior');
+
+const mageSkills = withClass([
+  { name: 'Fireball', description: 'Exploding fire projectile.', icon: 'fireball.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 22 },
+  { name: 'Ice Shield', description: 'Protective barrier.', icon: 'ice-shield.png', trigger: 'onStartBattle', effect: 'gainShield', effectValue: 12, once: true },
+  { name: 'Chain Lightning', description: 'Hits multiple targets.', icon: 'chain-lightning.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 28, cooldown: 3 },
+  { name: 'Meditation', description: 'Heals when hit.', icon: 'meditation.png', trigger: 'onReceiveHit', effect: 'heal', effectValue: 10, cooldown: 2 },
+  { name: 'Arcane Boost', description: 'Start buff.', icon: 'arcane-boost.png', trigger: 'onStartBattle', effect: 'buffAttack', effectValue: 6, once: true },
+  { name: 'Spell Reflect', description: 'Reflect magic.', icon: 'spell-reflect.png', trigger: 'onReceiveHit', effect: 'dealDamage', effectValue: 15, cooldown: 4 },
+  { name: 'Ultimate: Meteor Storm', description: 'Devastating AOE.', icon: 'meteor-storm.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 45, cooldown: 6, priority: 10 },
+  { name: 'Frost Bind', description: 'Slows enemy.', icon: 'frost-bind.png', trigger: 'onAttack', effect: 'debuffEnemy', effectValue: -4, triggerCondition: { targetStat: 'speed' }, cooldown: 3 },
+  { name: 'Arcane Drain', description: 'Lower magic resist.', icon: 'arcane-drain.png', trigger: 'onAttack', effect: 'debuffEnemy', effectValue: -3, triggerCondition: { targetStat: 'magicResist' }, cooldown: 3 },
+], 'mage');
+
+const rogueSkills = withClass([
+  { name: 'Backstab', description: 'Critical from behind.', icon: 'backstab.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 26, cooldown: 2 },
+  { name: 'Shadow Step', description: 'Evade incoming.', icon: 'shadow-step.png', trigger: 'onReceiveHit', effect: 'buffAttack', effectValue: 3, cooldown: 1 },
+  { name: 'Double Hit', description: 'Follow-up strike.', icon: 'double-hit.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 12, cooldown: 0, priority: 2 },
+  { name: 'Quickstep', description: 'Speed buff.', icon: 'quick.png', trigger: 'onStartBattle', effect: 'buffAttack', effectValue: 2, once: true },
+  { name: 'Poison Blade', description: 'Poisonous strike.', icon: 'poison-blade.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 18, cooldown: 3 },
+  { name: 'Ultimate: Phantom Strike', description: 'Lethal combo.', icon: 'phantom-strike.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 38, cooldown: 5, priority: 10 },
+  { name: 'Poison Needle', description: 'Inflicts poison.', icon: 'poison-needle.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 15, cooldown: 2, triggerCondition: { applyStatus: 'poison' }, priority: 2 },
+  { name: 'Venom Burst', description: 'Extra damage if poisoned.', icon: 'venom-burst.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 25, triggerCondition: { ifTargetStatus: 'poisoned' }, cooldown: 3 },
+], 'rogue');
+
+const archerSkills = withClass([
+  { name: 'Precise Shot', description: 'Single target damage.', icon: 'precise-shot.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 20 },
+  { name: 'Rapid Fire', description: 'Two quick shots.', icon: 'rapid-fire.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 15, cooldown: 1 },
+  { name: 'Charged Shot', description: 'Strong arrow.', icon: 'charged-shot.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 30, cooldown: 3 },
+  { name: 'Eagle Eye', description: 'Boost crit rate.', icon: 'eagle-eye.png', trigger: 'onStartBattle', effect: 'buffAttack', effectValue: 4, once: true },
+  { name: 'Roll', description: 'Dodge to reduce damage.', icon: 'roll.png', trigger: 'onReceiveHit', effect: 'gainShield', effectValue: 6, cooldown: 1 },
+  { name: 'Ultimate: Arrow Rain', description: 'Volley on all enemies.', icon: 'arrow-rain.png', trigger: 'onAttack', effect: 'dealDamage', effectValue: 35, cooldown: 5, priority: 10 },
+  { name: 'Piercing Shot', description: 'Break defense.', icon: 'piercing-shot.png', trigger: 'onAttack', effect: 'debuffEnemy', effectValue: -3, triggerCondition: { targetStat: 'defense' }, cooldown: 2 },
+  { name: 'Expose Weakness', description: 'Defense debuff.', icon: 'expose-weakness.png', trigger: 'onAttack', effect: 'debuffEnemy', effectValue: -5, triggerCondition: { targetStat: 'defense' }, cooldown: 4, priority: 1 },
+], 'archer');
+
+const bossSkills =[
+    {
+      name: "Invert Faith",
+      description: "If the player has any buffs, turns them into debuffs.",
+      icon: "invert-faith.png",
+      trigger: "onAttack",
+      triggerCondition: { ifPlayerBuffed: true },
+      effect: "debuffEnemy",
+      effectValue: 8,
+      cooldown: 3,
+      priority: 4
+    },
+    {
+      name: "Echo of Doubt",
+      description: "Inflicts confusion, causing the player to hurt themselves.",
+      icon: "echo-of-doubt.png",
+      trigger: "onAttack",
+      effect: "dealDamage",
+      triggerCondition: { applyStatus: "confusion" },
+      effectValue: 20,
+      cooldown: 2,
+      priority: 3
+    },
+    {
+      name: "Veil of Truth",
+      description: "Starts battle with high magic resistance and partial invincibility.",
+      icon: "veil-of-truth.png",
+      trigger: "onStartBattle",
+      effect: "buffAttack",
+      effectValue: 6,
+      once: true,
+      priority: 5
+    }
+  ]
+
+const neutralSkills = [
+    {
+    name: "Shadow Bind",
+    description: "Entangles the target, reducing speed drastically.",
+    icon: "shadow-bind.png",
+    trigger: "onAttack",
+    effect: "debuffEnemy",
+    effectValue: -6,
+    triggerCondition: { targetStat: "speed" },
+    cooldown: 3,
+    priority: 2
+    },
+    {
+    name: "Mind Break",
+    description: "Reduces enemy's magic resist by sheer willpower.",
+    icon: "mind-break.png",
+    trigger: "onAttack",
+    effect: "debuffEnemy",
+    effectValue: -5,
+    triggerCondition: { targetStat: "magicResist" },
+    cooldown: 2
+    },
+    {
+    name: "Instinctive Dodge",
+    description: "Grants evasion buff when HP is low.",
+    icon: "instinctive-dodge.png",
+    trigger: "onHpBelow",
+    effect: "buffAttack",
+    effectValue: 4,
+    triggerCondition: { hpBelow: 0.4 },
+    cooldown: 4
+    },
+    {
+    name: "Last Stand",
+    description: "When about to die, deals one final hit.",
+    icon: "last-stand.png",
+    trigger: "onHpBelow",
+    effect: "dealDamage",
+    effectValue: 50,
+    triggerCondition: { hpBelow: 0.1 },
+    cooldown: 6,
+    priority: 8
+    }
+];
+  
+await Promise.all([
+  Skill.deleteMany({}),
+]);
+
+await Skill.insertMany([
+  ...warriorSkills,
+  ...mageSkills,
+  ...rogueSkills,
+  ...archerSkills,
+  ...bossSkills,
+  ...neutralSkills
+]);
+
+console.log('All class skills seeded.');
+await mongoose.disconnect();

@@ -12,6 +12,7 @@ import ProfilePage from "./pages/ProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import InventoryShopPage from "./pages/InventoryShopPage";
 import AchievementPage from "./pages/AchievementPage";
+import DungeonTest from "./pages/DungeonTest";
 
 // 导入上下文
 import { AuthProvider } from "./context/AuthContext";
@@ -42,6 +43,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           <Route path="/inventoryShopTest" element={<InventoryShopPage />} />
+          <Route path="/dungeon-test" element={<DungeonTest />} />
           <Route path="/inventory" element={<InventoryShopPage />} />
 
           {/* 受保护的路由 */}

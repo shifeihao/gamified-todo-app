@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const shopItemSchema = new mongoose.Schema({
   name: String,
@@ -27,10 +28,7 @@ const WeaponItem = ShopItem.discriminator('weapon', new mongoose.Schema({
     accuracy: { type: Number, default: 0 }
   },
   slot: { type: String, enum: ['mainHand', 'offHand'], required: true },
-  allowedClasses: {
-    type: [String],
-    default: ['all']
-  },
+  allowedClasses:  [{ type: ObjectId, ref: 'CharacterClass' }],
   requiredLevel: {
     type: Number,
     default: 1
