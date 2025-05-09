@@ -1,8 +1,12 @@
 import express from "express";
 const router = express.Router();
 import { protect } from '../../middleware/auth.js';
-import { handleTaskCompletion } from '../../controllers/levelController.js';
+import {
+  handleTaskCompletion,
+  getUserLevelBar
+} from '../../controllers/levelController.js';
 
-router.post('/complete-task', protect, handleTaskCompletion); // 👈 新接口
+// ✅ 登录后查询当前用户等级信息
+router.get('/userLevelBar', protect, getUserLevelBar);
 
 export default router;
