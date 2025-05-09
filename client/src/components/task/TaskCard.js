@@ -87,14 +87,44 @@ export const TaskCard = ({
 
   // 装备态
   if (isEquipped) {
+    if (isExpired) {
+      return (
+          <div
+              className={`card equipped-card relative hover:shadow-lg transition-shadow duration-300
+                    border-2 border-red-500 p-4 text-sm flex flex-col items-center justify-center h-40
+                    ${className}`}
+              draggable={false}
+          >
+            {/* ⚠️ 已过期大徽章 */}
+            <div className="absolute top-0 right-0 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-bl">
+              已过期
+            </div>
+
+            {/* 任务标题 */}
+            <h3 className="font-bold text-base text-center mb-4 truncate">
+              {task.title}
+            </h3>
+
+            {/* 删除按钮 */}
+            <button
+                onClick={() => onDelete(task._id)}
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow"
+            >
+              删除过期任务
+            </button>
+          </div>
+      );
+    }
     return (
       <div
         className={`card equipped-card hover:shadow-lg transition-shadow duration-300
                     border-2 border-blue-500 p-2 text-xs flex flex-col justify-between h-full
-                    ${isExpired ? 'opacity-50 cursor-not-allowed ' : ''}${className}`}
+                    ${className}`}
         draggable={draggable}
         onDragStart={onDragStart ? e => onDragStart(e, task) : undefined}
       >
+
+
         <div className="flex justify-between items-center mb-1">
           <h3 className="truncate font-semibold text-sm">{task.title}</h3>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(task.status)}`}>
@@ -111,6 +141,7 @@ export const TaskCard = ({
               完成
             </button>
           )}
+
           <button
             onClick={handleViewDetail}
             className="text-blue-600 hover:text-blue-800"

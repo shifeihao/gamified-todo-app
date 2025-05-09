@@ -1,7 +1,8 @@
-import asyncHandler from 'express-async-handler';
-import mongoose from 'mongoose';
-import Card from '../models/Card.js';
-import User from '../models/User.js';
+import asyncHandler from "express-async-handler";
+import Card from "../models/Card.js";
+import User from "../models/User.js";
+import mongoose from "mongoose";
+import { calculateReward } from '../utils/TaskRewardCalcultor.js';
 
 // @desc    获取用户卡片库存
 // @route   GET /api/cards/inventory
@@ -70,7 +71,6 @@ const issueDailyCards = asyncHandler(async (req, res) => {
     })
     )
   );
-
   // 更新用户卡片库存
   user.cardInventory.push(...blankCards.map((card) => card._id));
   user.dailyCards.blank = 3;
@@ -79,6 +79,53 @@ const issueDailyCards = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     message: "每日卡片发放成功",
+    cards: blankCards,
+  });
+});
+
+// @desc    每周一发放长期空白卡片（仅长期类型）
+// @route   POST /api/cards/issue-weekly
+// @access  Private/Admin/Trigger
+const issueWeeklyCards = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  // 只在周一发放
+  const today = new Date();
+  const isMonday = today.getDay() === 1;
+  if (!isMonday) {
+    res.status(400);
+    throw new Error("今天不是发放长期卡片的时间（仅限周一）");
+  }
+  // 检查是否本周已发放
+  const lastWeek = new Date(user.weeklyCards?.lastIssued || 0);
+  const startOfThisWeek = new Date();
+  startOfThisWeek.setDate(today.getDate() - today.getDay() + 1); // 本周周一
+  startOfThisWeek.setHours(0, 0, 0, 0);
+  if (lastWeek >= startOfThisWeek) {
+    res.status(400);
+    throw new Error("本周长期卡片已发放");
+  }
+  // 创建3张长期空白卡片
+  const blankCards = await Promise.all(
+      [...Array(3)].map(() =>
+          Card.create({
+            user: user._id,
+            type: "blank",
+            title: "长期空白卡片",
+            description: "限定为长期类型的任务",
+            taskDuration: "长期",
+            issuedAt: new Date(),
+          })
+      )
+  );
+  // 更新库存和记录发放时间
+  user.cardInventory.push(...blankCards.map(card => card._id));
+  user.weeklyCards = {
+    lastIssued: new Date()
+  };
+  await user.save();
+
+  res.status(201).json({
+    message: "本周长期空白卡片发放成功",
     cards: blankCards,
   });
 });
@@ -117,7 +164,7 @@ const issueRewardCard = asyncHandler(async (req, res) => {
 });
 
 
-// @desc    发放短期空白卡片（用于postman测试）
+// @desc    发放短/长期空白卡片（用于postman测试）
 // @route   POST /api/cards/issue-blank
 // @access  Private
 const issueBlankCard = asyncHandler(async (req, res) => {
@@ -138,108 +185,91 @@ const issueBlankCard = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json({
-    message: "短期空白卡片发放成功",
+    message: "卡片发放成功",
     card: blankCard,
   });
 });
-
-
 
 // @desc    消耗卡片创建任务
 // @route   POST /api/cards/consume
 // @access  Private
 const consumeCard = asyncHandler(async (req, res) => {
   const { cardId, taskData } = req.body;
-
-  // 校验 cardId 是否有效
-  if (!cardId || !mongoose.Types.ObjectId.isValid(cardId)) {
-    res.status(400);
-    throw new Error("无效的卡片ID");
-  }
-
   const user = await User.findById(req.user.id);
 
-  // 1. 验证卡片
-  const card = await Card.findOne({
-    _id: cardId,
-    user: req.user.id,
-    used: false,
-  });
-  // console.log("Card: ", card);
+  let card;
 
-  if (!card) {
-    res.status(400);
-    throw new Error("无效的卡片");
-  }
+  if (cardId) {
+    // ⭐ 如果是奖励卡片（由用户主动选择）
+    card = await Card.findOne({
+      _id: cardId,
+      used: false,
+      user: req.user.id,
+    });
 
-  // 检查卡片是否已使用
-  if (card.type !== "periodic" && card.used) {
-    res.status(400);
-    throw new Error("卡片已被使用");
-  }
-
-  // 2. 处理不同类型卡片
-  let remainingCards = user.dailyCards.blank;
-
-  if (card.type === "blank") {
-    // 检查每日配额
-    if (remainingCards < 1) {
+    if (!card) {
       res.status(400);
-      throw new Error("今日空白卡片配额已用完");
+      throw new Error("无效的卡片");
     }
-    remainingCards--;
+
+    if (card.type !== "periodic" && card.used) {
+      res.status(400);
+      throw new Error("卡片已被使用");
+    }
+
+    // ✅ 校验任务类型是否匹配
+    if (card.taskDuration !== '通用' && card.taskDuration !== taskData.type) {
+      res.status(400);
+      throw new Error(`该卡片仅支持 ${card.taskDuration} 类型任务，无法用于 ${taskData.type} 类型任务`);
+    }
+  } else {
+    // ⭐ 自动分配空白卡片（blank）
+    card = await Card.findOne({
+      user: req.user.id,
+      used: false,
+      type: "blank",
+      $or: [
+        { taskDuration: taskData.type },
+        { taskDuration: "通用" },
+      ],
+    });
+
+    if (!card) {
+      res.status(400);
+      throw new Error(`你没有可用于 ${taskData.type} 类型任务的空白卡片`);
+    }
   }
 
-  // 3. 更新卡片状态
+  // ✅ 更新卡片状态
   if (card.type !== "periodic") {
     card.used = true;
     await card.save();
   } else {
-    // 处理周期性卡片冷却
     card.cooldownUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24小时冷却
     await card.save();
   }
 
-  // 4. 更新用户数据
+  // ✅ 更新用户卡片状态（扣除空白卡库存、移出inventory）
   await User.findByIdAndUpdate(req.user.id, {
     $inc: { "dailyCards.blank": card.type === "blank" ? -1 : 0 },
-    $pull: { cardInventory: card.type !== "periodic" ? cardId : null },
+    $pull: { cardInventory: card.type !== "periodic" ? card._id : null },
   });
-  // if (card.type === "periodic") {
-  //   // 周期性卡片只更新冷却时间，不从库存中移除
-  //   await User.findByIdAndUpdate(req.user.id, {
-  //     $inc: { "dailyCards.blank": 0 },
-  //   });
-  // } else {
-  //   // 非周期性卡片从库存中移除
-  //   await User.findByIdAndUpdate(req.user.id, {
-  //     $inc: { "dailyCards.blank": card.type === "blank" ? -1 : 0 },
-  //     $pull: { cardInventory: cardId },
-  //   });
-  // }
 
-  // ✅ 5. 安全访问加成信息（避免空白卡报错）
-  const bonus = card.bonus || { experienceMultiplier: 1, goldMultiplier: 1 };
+  // ✅ 奖励结算
+  const bonus = card.bonus || {};
+  const { experience, gold } = calculateReward(taskData.baseExperience, taskData.baseGold, bonus);
 
-  // 6. 返回处理后的任务数据（包含加成）
   res.status(200).json({
     success: true,
     processedTask: {
       ...taskData,
-      experienceReward:
-        taskData.baseExperience * card.bonus.experienceMultiplier,
-      goldReward: taskData.baseGold * card.bonus.goldMultiplier,
-      cardUsed: cardId,
+      experienceReward: experience,
+      goldReward: gold,
+      cardUsed: card._id.toString(),// ✅ 确保是字符串
     },
-    remainingCards,
   });
-
-  // 卡片和任务类型匹配性校验
-  if (card.taskDuration !== '通用' && card.taskDuration !== taskData.type) {
-    res.status(400);
-    throw new Error(`该卡片仅支持${card.taskDuration}任务，无法用于${taskData.type}任务`);
-  }
-
 });
 
-export { consumeCard, getCardInventory, issueDailyCards, issueRewardCard,issueBlankCard };
+
+
+export { consumeCard, getCardInventory, issueDailyCards, issueWeeklyCards, issueRewardCard,issueBlankCard };

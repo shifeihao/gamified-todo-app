@@ -14,16 +14,6 @@ const userLevelSchema = new mongoose.Schema({
     required: true,
     default: 0     // 当前总经验
   },
-  level: {
-    type: Number,
-    required: true,
-    default: 1     // 当前等级
-  },
-  nextLevelExp: {
-    type: Number,
-    required: true,
-    default: 155   // LV1 ➜ LV2 的经验门槛
-  },
   lastUpdate: {
     type: Date,
     default: Date.now  // 上次经验更新时间

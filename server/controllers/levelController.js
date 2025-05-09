@@ -1,80 +1,100 @@
 // server/controllers/levelController.js
 
-import UserLevel from '../models/UserLevel.js';
+import User from '../models/User.js';
 import Level from '../models/Level.js';
 import Task from '../models/Task.js';
+import { calculateReward } from '../utils/TaskRewardCalcultor.js';
 
-export const handleTaskCompletion = async (req, res) => {
+export const handleTaskCompletion = async (req) => {
   try {
-    const userId = req.user._id;            // 从 token 中获取的用户 ID
-    const { taskId } = req.body;            // 从请求体中获取前端传回的任务 ID
-    console.log('收到任务 ID：', taskId);
+    const userId = req.user._id;
+    const { taskId } = req.body;
 
-    // 1. 基本校验：是否提供任务 ID
-    if (!taskId) {
-      return res.status(400).json({ message: '缺少任务ID' });
+    const task = await Task.findById(taskId).populate('cardUsed');
+    if (!task || task.user.toString() !== userId.toString()) {
+      throw new Error('任务无效或不属于当前用户');
     }
-
-    // 2. 查询任务
-    const task = await Task.findById(taskId);
-    console.log('查询到的任务：', task);
-    if (!task) {
-      return res.status(404).json({ message: '任务不存在' });
-    }
-
-    // 3. 校验任务归属
-    if (task.user.toString() !== userId.toString()) {
-      return res.status(403).json({ message: '无权处理该任务' });
-    }
-
-    // 4. 校验任务状态
     if (task.status !== '已完成') {
-      return res.status(400).json({ message: '任务尚未完成，无法结算奖励' });
+      throw new Error('任务尚未完成，无法结算奖励');
     }
 
-    // 5. 获取奖励值（经验与金币）
-    const expGained = task.experienceReward || 0;
-    const goldGained = task.goldReward || 0;
+    const user = await User.findById(userId);
+    if (!user) throw new Error('用户未找到');
 
-    // 6. 查询用户当前等级数据
-    const userLevel = await UserLevel.findOne({ userId });
-    if (!userLevel) {
-      return res.status(404).json({ message: '用户等级数据未找到' });
+    let totalExp = 0;
+    let totalGold = 0;
+
+    // 计算奖励（区分长期与短期）
+    if (task.type === '长期') {
+      const subExp = task.subTasks.reduce((sum, s) => sum + (s.experience || 0), 0);
+      const subGold = task.subTasks.reduce((sum, s) => sum + (s.gold || 0), 0);
+      const bonusExp = task.finalBonusExperience || 0;
+      const bonusGold = task.finalBonusGold || 0;
+      const baseExp = subExp + bonusExp;
+      const baseGold = subGold + bonusGold;
+      const { experience, gold } = calculateReward(baseExp, baseGold, task.cardUsed?.bonus);
+
+      totalExp = experience;
+      totalGold = gold;
+    } else {
+      task.finalBonusExperience = 0;
+      task.finalBonusGold = 0;
+      const { experience, gold } = calculateReward(
+          task.experienceReward || 0,
+          task.goldReward || 0,
+          task.cardUsed?.bonus
+      );
+      totalExp = experience;
+      totalGold = gold;
     }
 
-    const newExp = userLevel.exp + expGained;
-    console.log('新的经验值：', newExp);
+    // 发放奖励
+    user.experience += totalExp;
+    user.gold += totalGold;
 
-   
-    // 7. 查等级表中的当前等级
+    const newExp = user.experience;
+
+    // 查等级配置
     const currentLevel = await Level.findOne({ expRequired: { $lte: newExp } }).sort({ level: -1 });
-    console.log('当前等级数据：', currentLevel);
-
-    // 8. 查下一级等级的数据（用于确定经验门槛）
     const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
-    console.log('下一级等级数据：', nextLevel);
+
     const nextLevelExp = nextLevel ? nextLevel.expRequired : currentLevel.expRequired;
-    console.log('下一级经验门槛：', nextLevelExp);
-    // 9. 计算经验条相关字段
     const expProgress = newExp - currentLevel.expRequired;
     const expRemaining = nextLevelExp - newExp;
     const progressRate = currentLevel.expToNext > 0
-      ? Math.min(expProgress / currentLevel.expToNext, 1)
-      : 1;
+        ? Math.min(expProgress / currentLevel.expToNext, 1)
+        : 1;
+    const leveledUp = currentLevel.level > user.level;
 
-    // 10. 判断是否升级
-    const leveledUp = currentLevel.level > userLevel.level;
+    user.level = currentLevel.level;
+    user.nextLevelExp = nextLevelExp;
 
-    // 11. 更新数据库中的 userLevel 数据
-    userLevel.exp = newExp;
-    userLevel.level = currentLevel.level;
-    userLevel.nextLevelExp = nextLevelExp;
-    userLevel.lastUpdate = new Date();
-    await userLevel.save();
+    await user.save();
+    await task.save();
 
-    // 12. 返回等级更新后的数据给前端
-    return res.status(200).json({
-      message: '经验更新成功',
+    // 写入历史记录
+    const TaskHistory = (await import('../models/TaskHistory.js')).default;
+    const duration = task.slotEquippedAt
+        ? Math.floor((task.completedAt - new Date(task.slotEquippedAt)) / 60000)
+        : null;
+
+    await TaskHistory.create({
+      user: task.user,
+      title: task.title,
+      type: task.type,
+      status: task.status,
+      completedAt: task.completedAt,
+      duration,
+      experienceGained: totalExp,
+      goldGained: totalGold,
+      cardType: task.cardUsed?.type || null,
+      cardBonus: task.cardUsed?.bonus || null,
+    });
+
+    // ✅ 返回结果对象，由调用者决定是否发送给前端
+    return {
+      success: true,
+      message: '奖励与等级更新成功',
       exp: newExp,
       level: currentLevel.level,
       nextLevelExp,
@@ -82,12 +102,12 @@ export const handleTaskCompletion = async (req, res) => {
       expRemaining,
       progressRate,
       leveledUp,
-      expGained,
-      goldGained
-    });
+      expGained: totalExp,
+      goldGained: totalGold
+    };
 
   } catch (error) {
-    console.error('❌ 任务完成经验结算失败:', error);
-    res.status(500).json({ message: '服务器错误', error });
+    console.error('❌ 奖励与等级更新失败:', error);
+    throw new Error('奖励与等级更新失败: ' + error.message);
   }
 };
