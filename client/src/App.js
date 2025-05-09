@@ -11,7 +11,7 @@ import TasksPage from "./pages/TasksPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import InventoryShopPage from "./pages/InventoryShopPage";
-import AchievementPage from "./pages/AchievementPage";
+import AchievementCenterPage from "./pages/AchievementCenterPage.js";
 
 // 导入上下文
 import { AuthProvider } from "./context/AuthContext";
@@ -73,7 +73,7 @@ function App() {
             path="/achievements"
             element={
               <ProtectedRoute>
-                <AchievementPage />
+                <AchievementCenterPage />
               </ProtectedRoute>
             }
           />
