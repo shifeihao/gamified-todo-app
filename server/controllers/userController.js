@@ -1,4 +1,6 @@
 import User from "../models/User.js";
+import UserStats from "../models/UserStats.js";
+
 import { generateToken } from "../middleware/auth.js";
 
 // @desc    注册新用户
@@ -19,6 +21,11 @@ const registerUser = async (req, res) => {
       username,
       email,
       password,
+    });
+
+    console.log("user._id的名字是", user._id);
+    await UserStats.create({
+      user: user._id, // ✅ 正确：ObjectId 类型
     });
 
     if (user) {
