@@ -17,17 +17,17 @@ export const RegisterForm = ({ isEmbedded = false }) => {
     e.preventDefault();
     
     if (!username || !email || !password || !confirmPassword) {
-      setError('请填写所有字段');
+      setError('Please fill in all fields');
       return;
     }
     
     if (password !== confirmPassword) {
-      setError('两次输入的密码不一致');
+      setError('The passwords you entered twice do not match');
       return;
     }
     
     if (password.length < 6) {
-      setError('密码长度至少为6个字符');
+      setError('Password must be at least 6 characters long');
       return;
     }
     
@@ -40,7 +40,7 @@ export const RegisterForm = ({ isEmbedded = false }) => {
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
-          : '注册失败，请稍后再试'
+          : 'Registration failed, please try again later'
       );
     } finally {
       setIsLoading(false);
@@ -74,7 +74,7 @@ export const RegisterForm = ({ isEmbedded = false }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="username" className={labelClasses}>
-            用户名
+            Username
           </label>
           <input
             type="text"
@@ -82,14 +82,14 @@ export const RegisterForm = ({ isEmbedded = false }) => {
             className={inputClasses}
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="请输入用户名"
+            placeholder="Please enter your username"
             required
           />
         </div>
         
         <div>
           <label htmlFor="email" className={labelClasses}>
-            邮箱
+            Mail
           </label>
           <input
             type="email"
@@ -97,14 +97,14 @@ export const RegisterForm = ({ isEmbedded = false }) => {
             className={inputClasses}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="请输入邮箱"
+            placeholder="Please enter your email"
             required
           />
         </div>
         
         <div>
           <label htmlFor="password" className={labelClasses}>
-            密码
+            Password
           </label>
           <input
             type="password"
@@ -112,7 +112,7 @@ export const RegisterForm = ({ isEmbedded = false }) => {
             className={inputClasses}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="请输入密码（至少6个字符）"
+            placeholder="Please enter your password(at least 6 characters)"
             required
             minLength={6}
           />
@@ -120,7 +120,7 @@ export const RegisterForm = ({ isEmbedded = false }) => {
         
         <div>
           <label htmlFor="confirmPassword" className={labelClasses}>
-            确认密码
+            Confirm Password
           </label>
           <input
             type="password"
@@ -128,7 +128,7 @@ export const RegisterForm = ({ isEmbedded = false }) => {
             className={inputClasses}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="请再次输入密码"
+            placeholder="Please confirm your password"
             required
             minLength={6}
           />
@@ -139,7 +139,7 @@ export const RegisterForm = ({ isEmbedded = false }) => {
           className={buttonClasses}
           disabled={isLoading}
         >
-          {isLoading ? '注册中...' : '注册'}
+          {isLoading ? 'Registering...' : 'Register'}
         </button>
       </form>
     </div>

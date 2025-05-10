@@ -15,7 +15,7 @@ export const RewardCardTile = ({ card, isSelected = false, onClick = null, readO
                 <p className="text-sm text-gray-700">{card.description}</p>
             )}
             <div className="mt-2 text-xs text-purple-700">
-                经验倍率: {card.bonus.experienceMultiplier}x，金币倍率: {card.bonus.goldMultiplier}x
+                Experience Multiplier: {card.bonus.experienceMultiplier}x，Coins Multiplier: {card.bonus.goldMultiplier}x
             </div>
         </div>
     );

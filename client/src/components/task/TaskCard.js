@@ -78,7 +78,7 @@ export const TaskCard = ({
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
-      setTimeLeft(`${d}天${h}时${m}分`);
+      setTimeLeft(`${d}d${h}h${m}m`);
     };
     update();
     const timer = setInterval(update, 60000);
@@ -97,7 +97,7 @@ export const TaskCard = ({
           >
             {/* ⚠️ 已过期大徽章 */}
             <div className="absolute top-0 right-0 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-bl">
-              已过期
+              Expired
             </div>
 
             {/* 任务标题 */}
@@ -110,7 +110,7 @@ export const TaskCard = ({
                 onClick={() => onDelete(task._id)}
                 className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow"
             >
-              删除过期任务
+              Deleting Expired Tasks
             </button>
           </div>
       );
@@ -132,13 +132,17 @@ export const TaskCard = ({
           </span>
         </div>
         <div className="flex justify-between text-gray-500 text-xs mb-2">
-          {task.category && <span>分类: {task.category}</span>}
-          <span>剩余 {timeLeft}</span>
+          {task.category && <span>Tag: {task.category}</span>}
+          <span>Remain {timeLeft}</span>
         </div>
         <div className="flex justify-between space-x-2">
           {!isExpired && (
-            <button onClick={() => onComplete(task._id)} className="btn-primary text-xs py-1 px-2">
-              完成
+            <button onClick={() => {
+              onComplete(task._id);
+              // 触发等级更新事件
+              window.dispatchEvent(new CustomEvent('taskCompleted'));
+            }} className="btn-primary text-xs py-1 px-2">
+              Complete
             </button>
           )}
 
@@ -146,7 +150,7 @@ export const TaskCard = ({
             onClick={handleViewDetail}
             className="text-blue-600 hover:text-blue-800"
           >
-          查看详情
+            View Details
           </button>
           {/* 详情模态框 */}
           <TaskDetailModal
@@ -203,7 +207,7 @@ export const TaskCard = ({
                     }}
                     className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                   >
-                    完成
+                    Complete
                   </button>
                   {onEquip && (
                     <button
@@ -213,7 +217,7 @@ export const TaskCard = ({
                       }}
                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                     >
-                      装备
+                      Equip
                     </button>
                   )}
                   <button
@@ -223,7 +227,7 @@ export const TaskCard = ({
                     }}
                     className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                   >
-                    编辑
+                    Edit
                   </button>
                 </>
               )}
@@ -236,7 +240,7 @@ export const TaskCard = ({
                 }}
                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
               >
-                删除
+                Delete
               </button>
             </div>
           )}
@@ -252,17 +256,17 @@ export const TaskCard = ({
 
       {/* 截止 & 奖励 */}
       <div className="flex justify-between items-start text-xs text-gray-500 mb-4 space-x-2">
-        <div>截止日期: {formatDate(task.dueDate)}</div>
+        <div>Expired Date: {formatDate(task.dueDate)}</div>
         <div className="flex space-x-2">
-          <div>经验值: +{task.experienceReward}</div>
-          <div>金币: +{task.goldReward}</div>
+          <div>Experiences: +{task.experienceReward}</div>
+          <div>Coins: +{task.goldReward}</div>
         </div>
       </div>
 
       {/* 子任务 */}
       {task.subTasks?.length > 0 && (
         <div className="mt-3 border-t pt-3">
-          <h4 className="text-sm font-medium mb-2">子任务：</h4>
+          <h4 className="text-sm font-medium mb-2">Subtask：</h4>
           <ul className="text-sm space-y-1">
             {task.subTasks.map((st, i) => (
               <li key={i} className="flex items-center">

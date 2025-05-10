@@ -29,7 +29,7 @@ const TimetablePanel = ({
                 : "text-gray-500"
             }`}
           >
-            任务列表
+            List
           </button>
           <button
             onClick={() => setActiveTab("calendar")}
@@ -39,7 +39,7 @@ const TimetablePanel = ({
                 : "text-gray-500"
             }`}
           >
-            时刻表
+            Timetable
           </button>
         </div>
       </div>
@@ -67,7 +67,7 @@ const TimetablePanel = ({
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              <p>点击创建长期任务</p>
+              <p>Click Create Long-Term Task</p>
             </>
           )}
           onCreate={onCreateTask}

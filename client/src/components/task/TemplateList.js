@@ -5,7 +5,7 @@ export const TemplateList = ({ templates = [], onSelect }) => {
     return (
         <div className="space-y-4">
             {templates.length === 0 ? (
-                <p className="text-gray-500">暂无模板</p>
+                <p className="text-gray-500">No template yet</p>
             ) : (
                 templates.map(template => (
                     <div

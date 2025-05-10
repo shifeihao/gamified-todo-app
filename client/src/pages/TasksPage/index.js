@@ -29,18 +29,15 @@ import {
 } from "../../services/taskService";
 
 import { useApiAction } from "../../components/hooks";
-import UserLevelBar from "../../components/base/UserLevelBar";
 
 const TasksPage = () => {
   const { user } = useContext(AuthContext);
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
-  const [rewardInfo, setRewardInfo] = useState(null);
   const [equippedTasks, setEquippedTasks] = useState([]);
   const [equippedShortTasks, setEquippedShortTasks] = useState([]); // 短期任务槽
   const [equippedLongTasks, setEquippedLongTasks] = useState([]); // 长期任务槽
 
-  // const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [createSlotIndex, setCreateSlotIndex] = useState(-1);
@@ -70,31 +67,15 @@ const TasksPage = () => {
       setError("");
     } catch (err) {
       console.error(err);
-      setError("获取任务数据失败");
+      setError("Failed to obtain task data");
     }
   };
 
   useEffect(() => {
     if (user?.token) {
       fetchTasks();
-      fetchLevelInfo(); // ✅ 新增调用
     }
   }, [user]);
-
-  useEffect(() => {
-    console.log("当前 rewardInfo:", rewardInfo);
-  }, [rewardInfo]);
-
-  const fetchLevelInfo = async () => {
-    try {
-      const res = await axios.get("/api/levels/userLevelBar", {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      setRewardInfo(res.data); // ✅ 存入状态，供 UserLevelBar 使用
-    } catch (err) {
-      console.error("获取等级信息失败:", err);
-    }
-  };
 
   // 显示成功信息
   const showSuccess = (msg) => {
@@ -111,17 +92,17 @@ const TasksPage = () => {
     error: deleteError,
   } = useApiAction(deleteTaskService, {
     onSuccess: () => {
-      showSuccess("任务已删除");
+      showSuccess("Task deleted");
       fetchTasks();
     },
     onError: (err) => {
       console.error(err);
-      setError("删除任务失败");
+      setError("Failed to delete task");
     },
   });
 
   const handleDelete = (id) => {
-    if (!window.confirm("确定要删除任务吗？")) return;
+    if (!window.confirm("Are you sure you want to delete the task?")) return;
     doDeleteTask(id, user.token);
   };
 
@@ -134,20 +115,17 @@ const TasksPage = () => {
     error: completeError,
   } = useApiAction(completeTaskService, {
     onSuccess: async (task) => {
-      showSuccess("任务已完成");
+      showSuccess("Task Completed");
 
-      // ✅ 提取 reward 数据并存入状态
-      if (task.reward) {
-        setRewardInfo(task.reward);
-      }
+      // 触发等级更新事件
+      window.dispatchEvent(new CustomEvent('taskCompleted'));
 
       await unequipTaskService(task.task._id, user.token);
       fetchTasks();
     },
-
     onError: (err) => {
       console.error(err);
-      setError("完成任务失败");
+      setError("Failed to complete the task");
     },
   });
 
@@ -164,7 +142,7 @@ const TasksPage = () => {
     error: createError,
   } = useApiAction(createTaskService, {
     onSuccess: async (res, input) => {
-      showSuccess("任务已创建");
+      showSuccess("Task created");
       if (input?.fromSlot && input?.slotIndex >= 0) {
         const isLong = input.type === "长期";
         const slotType = isLong ? "long" : "short";
@@ -178,7 +156,7 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error(err);
-      setError("创建任务失败");
+      setError("Failed to create task");
     },
   });
 
@@ -191,14 +169,14 @@ const TasksPage = () => {
     error: updateError,
   } = useApiAction(updateTaskService, {
     onSuccess: () => {
-      showSuccess("任务已更新");
+      showSuccess("Mission updated");
       fetchTasks();
       setShowForm(false);
       setEditingTask(null);
     },
     onError: (err) => {
       console.error(err);
-      setError("更新任务失败");
+      setError("Update task failed");
     },
   });
 
@@ -211,18 +189,18 @@ const TasksPage = () => {
     error: equipError,
   } = useApiAction(equipTaskService, {
     onSuccess: () => {
-      showSuccess("任务已装备");
+      showSuccess("Task Equipped");
       fetchTasks();
     },
     onError: (err) => {
       console.error(err);
-      setError("装备任务失败");
+      setError("Equipment mission failed");
     },
   });
 
   const handleEquip = (task) => {
     if (task.status === "已完成") {
-      setError("无法装备已完成的任务");
+      setError("Cannot equip completed quests");
       return;
     }
     // 选择短期/长期槽
@@ -232,7 +210,7 @@ const TasksPage = () => {
     );
     let freeSlot = [...Array(3).keys()].find((i) => !occupied.includes(i));
     if (freeSlot == null) {
-      setError(isLong ? "长期任务槽已满" : "短期任务槽已满");
+      setError(isLong ? "The long-term task slot is full" : "The short-term task slot is full");
       return;
     }
     const slotType = isLong ? "long" : "short";
@@ -253,12 +231,12 @@ const TasksPage = () => {
     error: unequipError,
   } = useApiAction(unequipTaskService, {
     onSuccess: () => {
-      showSuccess("已卸下任务");
+      showSuccess("Task removed");
       fetchTasks();
     },
     onError: (err) => {
       console.error(err);
-      setError("卸下任务失败");
+      setError("Uninstall task failed");
     },
   });
 
@@ -300,7 +278,7 @@ const TasksPage = () => {
       <Navbar />
       <div className="max-w-7xl mx-auto py-4 space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">我的任务</h1>
+          <h1 className="text-2xl font-bold">My  Tasks</h1>
 
           <button
             onClick={() => {
@@ -314,14 +292,9 @@ const TasksPage = () => {
             创建新任务
           </button>
         </div>
-        {rewardInfo && (
-          <div className="mt-2">
-            <UserLevelBar data={rewardInfo} />
-          </div>
-        )}
 
         {errorAny && <div className="text-red-600">{errorAny}</div>}
-        {loadingAny && <div className="text-gray-600">加载中...</div>}
+        {loadingAny && <div className="text-gray-600">Loading...</div>}
         {successMessage && (
           <div className="text-green-600">{successMessage}</div>
         )}

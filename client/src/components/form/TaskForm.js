@@ -53,7 +53,7 @@ export const TaskForm = ({
   // 添加子任务
   const handleAddSub = () => {
     if (!subTaskTitle.trim()) {
-      setErrors(prev => ({ ...prev, subTaskTitle: '请输入子任务标题' }));
+      setErrors(prev => ({ ...prev, subTaskTitle: 'Please enter a subtask title' }));
       return;
     }
     const newSub = {
@@ -83,7 +83,7 @@ export const TaskForm = ({
   const validate = () => {
     const newErrors = {};
     if (taskType === '长期' && formData.subTasks.length === 0) {
-      newErrors.subTasks = '长期任务至少需要一个子任务';
+      newErrors.subTasks = 'A long-term task requires at least one subtask';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -105,7 +105,7 @@ export const TaskForm = ({
       {/* 分类 & 截止日期 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">分类</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tag</label>
           <input
             name="category"
             value={formData.category}
@@ -114,7 +114,7 @@ export const TaskForm = ({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">截止日期</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
           {defaultDueDateTime ? (
             <input
               type="datetime-local"
@@ -137,7 +137,7 @@ export const TaskForm = ({
 
       {/* 任务描述 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">任务描述</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Task Describe</label>
         <textarea
           name="description"
           value={formData.description}
@@ -150,7 +150,7 @@ export const TaskForm = ({
       {/* 子任务，仅长期任务 */}
       {taskType === '长期' && (
         <div className="p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-md font-medium mb-2">子任务</h3>
+          <h3 className="text-md font-medium mb-2">Subtask</h3>
           {errors.subTasks && (
             <p className="text-red-500 text-sm mb-2">{errors.subTasks}</p>
           )}
@@ -165,7 +165,7 @@ export const TaskForm = ({
                 onClick={() => handleRemoveSub(idx)}
                 className="text-red-500 hover:text-red-700"
               >
-                删除
+                Delete
               </button>
             </div>
           ))}
@@ -174,7 +174,7 @@ export const TaskForm = ({
               type="text"
               value={subTaskTitle}
               onChange={e => setSubTaskTitle(e.target.value)}
-              placeholder="输入子任务标题"
+              placeholder="Enter subtask title"
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 ${
                 errors.subTaskTitle ? 'border-red-500' : 'border-gray-300'
               }`}
@@ -190,7 +190,7 @@ export const TaskForm = ({
               onClick={handleAddSub}
               className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded"
             >
-              添加
+              Add
             </button>
           </div>
         </div>
@@ -203,14 +203,14 @@ export const TaskForm = ({
           onClick={onCancel}
           className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
         >
-          取消
+          Cancel
         </button>
         <button
           type="submit"
           className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
           disabled={loading}
         >
-          {loading ? '处理中...' : initialData ? '更新任务' : '创建任务'}
+          {loading ? 'Handling...' : initialData ? 'Update Task' : 'Create Task'}
         </button>
       </div>
     </form>

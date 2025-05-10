@@ -39,7 +39,7 @@ const DailyTaskPanel = ({
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            <p>点击创建短期任务</p>
+            <p>Click to create Short term Task</p>
           </>
         )}
         onCreate={onCreateTask}
