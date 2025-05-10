@@ -1,5 +1,6 @@
 // src/components/AchievementDetailRow.js
 import React from "react";
+import { motion } from "framer-motion";
 
 const AchievementDetailRow = ({
   achievement,
@@ -34,49 +35,64 @@ const AchievementDetailRow = ({
       : "—";
 
   return (
-    <div className="flex items-start gap-4 py-4 border-b border-gray-200">
-      <img
+    <div
+      className={`flex items-start gap-4 p-5 rounded-xl ${
+        isUnlocked ? "bg-white" : "bg-achievementPage-100"
+      } shadow-sm`}
+    >
+      <motion.img
+        whileHover={{ scale: 1.1 }}
         src={iconUrl}
         alt={achievement.name}
-        className={`w-14 h-14 flex-shrink-0 rounded-md border ${
+        className={`w-16 h-16 flex-shrink-0 rounded border ${
           isUnlocked ? "" : "grayscale opacity-50"
         }`}
       />
-      <div className="flex-1">
-        <div className="flex justify-between">
-          <h3 className="font-semibold text-base">{achievement.name}</h3>
+
+      <div className="flex-1 space-y-1">
+        {/* 标题 + 时间 */}
+        <div className="flex justify-between items-center">
+          <h3 className="text-base font-semibold text-achievementPage-600">
+            {achievement.name}
+          </h3>
           {isUnlocked && showUnlockTime && (
-            <p className="text-xs text-gray-500">
-              解锁于：{new Date(achievement.unlockedAt).toLocaleDateString()}
-            </p>
+            <span className="text-xs text-gray-500">
+              Unlocked on:{" "}
+              {new Date(achievement.unlockedAt).toLocaleDateString()}
+            </span>
           )}
         </div>
-        <p className="text-sm text-gray-600">{achievement.description}</p>
-        <p className="text-xs text-gray-500 mt-1">
-          条件：{achievement.condition || "—"}
+
+        {/* 描述 */}
+        <p className="text-sm text-gray-700">{achievement.description}</p>
+
+        {/* 条件 */}
+        <p className="text-xs text-gray-500">
+          Condition:{achievement.condition || "—"}
         </p>
 
+        {/* 未解锁：展示进度 */}
         {!isUnlocked && (
-          <div className="mt-1">
+          <div className="mt-2 space-y-1">
             {!isTimeString ? (
               <>
-                <div className="w-full h-2 bg-gray-200 rounded">
+                <div className="w-full h-2 bg-achievementPage-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-blue-400"
+                    className="h-full bg-achievementPage-500 transition-all duration-300"
                     style={{ width: `${percent}%` }}
                   ></div>
                 </div>
                 <p className="text-xs text-right text-gray-500">
-                  {current}/{total}
+                  {current} / {total}
                 </p>
               </>
             ) : (
               <>
                 <p className="text-xs text-right text-gray-500">
-                  当前记录时间：{formattedCurrent}
+                  Current recording time: {formattedCurrent}
                 </p>
                 <p className="text-xs text-right text-gray-500">
-                  要求时间：{total}
+                  Request time:{total}
                 </p>
               </>
             )}
