@@ -12,6 +12,7 @@ import {
   getUserStats
 } from '../services/characterService.js';
 import axios from 'axios';
+import StatAllocation from '../components/game/StatAllocation.js';
 
 // 游戏状态
 const GAME_STATES = {
@@ -21,7 +22,8 @@ const GAME_STATES = {
   EXPLORING: 'exploring',
   COMBAT: 'combat',
   SHOP: 'shop',
-  VICTORY: 'victory'
+  VICTORY: 'victory',
+  STATS_ALLOCATION: 'stats_allocation'
 };
 
 // 设置调试标志
@@ -288,23 +290,56 @@ const CombatAnimation = ({ monsters, playerStats, onCombatEnd }) => {
       
       {/* 战斗日志 */}
       <div className="combat-logs" style={{
-        maxHeight: '150px',
-        overflowY: 'auto',
-        backgroundColor: '#fff',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-        padding: '10px'
-      }}>
-        {combatLogs.map((log, index) => (
-          <div key={index} style={{
-            padding: '4px 0',
-            borderBottom: index < combatLogs.length - 1 ? '1px solid #eee' : 'none'
-          }}>
-            {log}
-          </div>
-        ))}
-        <div ref={logsEndRef} />
-      </div>
+  maxHeight: '150px',
+  overflowY: 'auto',
+  backgroundColor: '#fff',
+  border: '1px solid #ddd',
+  borderRadius: '4px',
+  padding: '10px'
+}}>
+  {combatLogs.map((log, index) => {
+    // 检测特殊事件标记
+    const isCritical = log.includes('CRITICAL!');
+    const isEvade = log.includes('EVADE!');
+    
+    // 移除标记文本，保留原始格式
+    const displayLog = log
+      .replace('CRITICAL! ', '')
+      .replace('EVADE! ', '');
+    
+    return (
+      <div key={index} style={{
+        padding: '4px 0',
+          borderBottom: index < combatLogs.length - 1 ? '1px solid #eee' : 'none',
+          color: isCritical ? '#ff4d4d' : isEvade ? '#4caf50' : 'inherit',
+          fontWeight: isCritical || isEvade ? 'bold' : 'normal'
+        }}>
+          {displayLog}
+          {isCritical && (
+            <span style={{ 
+              marginLeft: '5px', 
+              color: '#ff4d4d',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              暴击!
+            </span>
+          )}
+          {isEvade && (
+            <span style={{ 
+              marginLeft: '5px', 
+              color: '#4caf50',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              闪避!
+            </span>
+          )}
+        </div>
+      );
+    })}
+    <div ref={logsEndRef} />
+    </div>
       
       <style jsx>{`
         @keyframes damage-float {
@@ -458,6 +493,7 @@ const DungeonExplorer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [gold, setGold] = useState(0);
+  const [showAdvancedStats, setShowAdvancedStats] = useState(false);
   const [currentFloor, setCurrentFloor] = useState(1);
   const [shopItems, setShopItems] = useState([]);
   const [monsters, setMonsters] = useState([]);
@@ -519,7 +555,9 @@ const DungeonExplorer = () => {
         const stats = await getUserStats(token);
         console.log('收到用户统计信息:', stats);
         
-        setUserStats(stats);
+        setUserStats({
+          ...stats,
+        });
         
         // 如果用户需要选择职业
         if (!stats.hasClass) {
@@ -644,35 +682,88 @@ const DungeonExplorer = () => {
   };
 
   // 战斗结束处理
-  const handleCombatEnd = async (result) => {
-    if (DEBUG) console.log("战斗结束:", result);
+  // Frontend: Update the handleCombatEnd function
+const handleCombatEnd = async (result) => {
+  console.log("战斗结束:", result);
+  
+  if (result.result === 'victory') {
+    setLogs(prev => [...prev, '🎯 战斗胜利！继续探索...']);
+    setPlayerStats(prev => ({
+      ...prev,
+      hp: result.remainingHp
+    }));
     
-    if (result.result === 'victory') {
-      setLogs(prev => [...prev, '🎯 战斗胜利！继续探索...']);
-      setPlayerStats(prev => ({
-        ...prev,
-        hp: result.remainingHp
-      }));
+    try {
+      // 更新战斗结果
+      const updateResponse = await axios.post(
+        '/api/dungeon/update-after-combat',
+        { 
+          result: 'victory', 
+          remainingHp: result.remainingHp 
+        },
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
       
-      // 使用延迟确保状态正确更新
+      console.log('战斗后状态更新:', updateResponse.data);
+      
+      // 处理返回的日志
+      if (updateResponse.data.logs && Array.isArray(updateResponse.data.logs)) {
+        console.log('从战斗更新中添加日志:', updateResponse.data.logs);
+        setLogs(prev => [...prev, ...updateResponse.data.logs]);
+      }
+      
+      // 处理经验值
+      if (updateResponse.data.expGained) {
+        setLogs(prev => [...prev, `✨ 获得 ${updateResponse.data.expGained} 点经验`]);
+      }
+
+      // 处理等级提升
+      if (updateResponse.data.levelUp) {
+        setLogs(prev => [
+          ...prev, 
+          `🌟 升级了！从 ${updateResponse.data.prevLevel || '?'} 级到 ${updateResponse.data.currentLevel || updateResponse.data.newLevel || '?'} 级`
+        ]);
+        
+        if (updateResponse.data.statPointsGained > 0) {
+          setLogs(prev => [
+            ...prev,
+            `💪 获得了 ${updateResponse.data.statPointsGained} 点属性点`
+          ]);
+        }
+      }
+      
+      // 更新前端层数
+      if (updateResponse.data.nextFloor) {
+        console.log(`更新楼层: ${currentFloor} -> ${updateResponse.data.nextFloor}`);
+        setCurrentFloor(updateResponse.data.nextFloor);
+        // 添加进入新层的日志，即使后端没有提供
+        setLogs(prev => [...prev, `🚪 你进入了第 ${updateResponse.data.nextFloor} 层`]);
+      }
+      
+      // 继续探索
       setTimeout(() => {
-        if (DEBUG) console.log('战斗胜利后继续探索');
         continueExploration();
       }, 1000);
-    } else if (result.result === 'settlement') {
-      // HP为0时，直接结算，不显示GameOver
-      setLogs(prev => [...prev, '💀 你被击败了，自动结算...']);
-      
-      try {
-        if (DEBUG) console.log('获取结算信息');
-        const summary = await summarizeExploration(token);
-        setSummary(summary);
-        setGameState(GAME_STATES.VICTORY);
-      } catch (err) {
-        console.error('获取结算信息失败:', err);
-      }
+    } catch (err) {
+      console.error('更新战斗结果出错:', err);
+      // 即使更新失败，也尝试继续探索
+      setTimeout(() => {
+        continueExploration();
+      }, 1000);
     }
-  };
+  } else if (result.result === 'settlement') {
+    // HP为0时，直接结算，不显示GameOver
+    setLogs(prev => [...prev, '💀 你被击败了，自动结算...']);
+    
+    try {
+      const summary = await summarizeExploration(token);
+      setSummary(summary);
+      setGameState(GAME_STATES.VICTORY);
+    } catch (err) {
+      console.error('获取结算信息失败:', err);
+    }
+  }
+};
   
   // 离开商店
  // 改进的handleLeaveShop函数
@@ -700,6 +791,17 @@ const handleLeaveShop = async () => {
     );
     
     console.log('Continue after shop response:', continueResponse.data);
+    
+    // 添加这部分代码：处理返回的日志
+    if (continueResponse.data.logs && Array.isArray(continueResponse.data.logs)) {
+      console.log('Adding logs from response:', continueResponse.data.logs);
+      setLogs(prev => [...prev, ...continueResponse.data.logs]);
+    }
+    
+    // 更新当前楼层
+    if (continueResponse.data.currentFloor) {
+      setCurrentFloor(continueResponse.data.currentFloor);
+    }
     
     // 处理返回的怪物数据
     if (continueResponse.data.monsters && 
@@ -825,93 +927,45 @@ const handleLeaveShop = async () => {
   };
 
   // 开始探索
-  const startExploration = async () => {
-    setLogs([]);
-    setSummary(null);
-    setGameState(GAME_STATES.ENTERING_DUNGEON);
-  
-    try {
-      const enter = await enterDungeon(token);
-      console.log('进入地下城响应:', enter);
-      
-      if (enter.exploration) {
-        setCurrentFloor(enter.exploration.floorIndex || 1);
-      }
-      
-      if (enter.stats) {
-        setPlayerStats({
-          hp: enter.stats.hp || 100,
-          attack: enter.stats.attack || 10,
-          defense: enter.stats.defense || 5
-        });
-      }
-      
-      setLogs([`✅ 进入: ${enter.dungeon.name}`]);
-      
-      // 开始探索
-      setGameState(GAME_STATES.EXPLORING);
-      continueExploration();
-    } catch (err) {
-      console.error('开始探索时出错:', err);
-      setLogs([`❌ 错误: ${err.message}`]);
-      setGameState(GAME_STATES.IDLE);
-    }
-    // 战斗结束处理也需要改进
-const handleCombatEnd = async (result) => {
-  console.log("战斗结束:", result);
-  
-  if (result.result === 'victory') {
-    setLogs(prev => [...prev, '🎯 战斗胜利！继续探索...']);
-    setPlayerStats(prev => ({
-      ...prev,
-      hp: result.remainingHp
-    }));
+const startExploration = async () => {
+  setLogs([]);
+  setSummary(null);
+  setGameState(GAME_STATES.ENTERING_DUNGEON);
+
+  try {
+    const enter = await enterDungeon(token);
+    console.log('进入地下城响应:', enter);
     
-    // 调用后端API更新战斗结果，包括层数增加
-    try {
-      // 这个API应该处理战斗胜利后的所有逻辑，包括层数增加
-      const updateResponse = await axios.post(
-        '/api/dungeon/update-after-combat',
-        { 
-          result: 'victory', 
-          remainingHp: result.remainingHp 
-        },
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
-      
-      console.log('战斗后状态更新:', updateResponse.data);
-      
-      // 更新前端层数
-      if (updateResponse.data.nextFloor) {
-        console.log(`更新楼层: ${currentFloor} -> ${updateResponse.data.nextFloor}`);
-        setCurrentFloor(updateResponse.data.nextFloor);
-      }
-      
-      // 继续探索
-      setTimeout(() => {
-        continueExploration();
-      }, 1000);
-    } catch (err) {
-      console.error('更新战斗结果出错:', err);
-      // 即使更新失败，也尝试继续探索
-      setTimeout(() => {
-        continueExploration();
-      }, 1000);
+    // 设置初始层数
+    let initialFloor = 1;
+    if (enter.exploration) {
+      initialFloor = enter.exploration.floorIndex || 1;
+      setCurrentFloor(initialFloor);
     }
-  } else if (result.result === 'settlement') {
-    // HP为0时，直接结算，不显示GameOver
-    setLogs(prev => [...prev, '💀 你被击败了，自动结算...']);
     
-    try {
-      const summary = await summarizeExploration(token);
-      setSummary(summary);
-      setGameState(GAME_STATES.VICTORY);
-    } catch (err) {
-      console.error('获取结算信息失败:', err);
+    if (enter.stats) {
+      setPlayerStats({
+        hp: enter.stats.hp || 100,
+        attack: enter.stats.attack || 10,
+        defense: enter.stats.defense || 5
+      });
     }
+    
+    // 添加进入日志包含层数信息
+    setLogs([
+      `✅ 进入: ${enter.dungeon.name}`,
+      `🏁 从第 ${initialFloor} 层开始探索`
+    ]);
+    
+    // 开始探索
+    setGameState(GAME_STATES.EXPLORING);
+    continueExploration();
+  } catch (err) {
+    console.error('开始探索时出错:', err);
+    setLogs([`❌ 错误: ${err.message}`]);
+    setGameState(GAME_STATES.IDLE);
   }
 };
-  };
 
   // 显示加载中
   if (loading) {
@@ -1050,17 +1104,39 @@ const handleCombatEnd = async (result) => {
           borderRadius: '8px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: '0 0 10px 0' }}>你的角色</h3>
-            <div style={{ 
-              backgroundColor: '#f8d64e', 
-              padding: '8px 12px', 
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <h3 style={{ margin: '0 0 10px 0' }}>你的角色</h3>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {userStats.unspentPoints > 0 && (
+          <button
+            onClick={() => setGameState(GAME_STATES.STATS_ALLOCATION)}
+            style={{
+              backgroundColor: '#4caf50',
+              color: 'white',
+              border: 'none',
               borderRadius: '4px',
+              padding: '6px 12px',
+              fontSize: '14px',
+              marginRight: '10px',
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center'
-            }}>
-              <span style={{ marginRight: '4px' }}>💰</span>
-              <span style={{ fontWeight: 'bold' }}>{gold} 金币</span>
+            }}
+          >
+            <span style={{ marginRight: '5px' }}>💪</span>
+            分配属性点 ({userStats.unspentPoints})
+          </button>
+        )}
+          <div style={{ 
+                backgroundColor: '#f8d64e', 
+                padding: '8px 12px', 
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <span style={{ marginRight: '4px' }}>💰</span>
+                <span style={{ fontWeight: 'bold' }}>{gold} 金币</span>
+              </div>
             </div>
           </div>
           
@@ -1085,21 +1161,97 @@ const handleCombatEnd = async (result) => {
             <div>
               <div style={{ fontWeight: 'bold', fontSize: '18px' }}>{userStats.name}</div>
               <div style={{ 
-                display: 'flex', 
-                gap: '15px',
-                fontSize: '14px',
                 color: '#555',
-                marginTop: '5px'
+                marginTop: '5px',
+                fontSize: '14px'
               }}>
-                <span>HP: {playerStats.hp}</span>
-                <span>攻击: {playerStats.attack}</span>
-                <span>防御: {playerStats.defense}</span>
-                <span>当前层: {currentFloor}</span>
+                等级: {userStats.level || 1} | 经验: {userStats.exp || 0}
+                {userStats.unspentPoints > 0 && (
+                  <span style={{ 
+                    marginLeft: '10px',
+                    color: '#28a745',
+                    fontWeight: 'bold'
+                  }}>
+                    可用属性点: {userStats.unspentPoints}
+                  </span>
+                )}
               </div>
             </div>
           </div>
+    
+    {/* 属性展示 */}
+    <div style={{ 
+      display: 'grid', 
+      gridTemplateColumns: '1fr 1fr 1fr', 
+      gap: '10px',
+      marginTop: '15px'
+    }}>
+      <div style={{ backgroundColor: '#e8f5e9', padding: '8px', borderRadius: '4px' }}>
+        <div style={{ fontSize: '12px', color: '#555' }}>HP</div>
+        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.hp || playerStats.hp}</div>
+      </div>
+      <div style={{ backgroundColor: '#fff3e0', padding: '8px', borderRadius: '4px' }}>
+        <div style={{ fontSize: '12px', color: '#555' }}>攻击</div>
+        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.attack || playerStats.attack}</div>
+      </div>
+      <div style={{ backgroundColor: '#e3f2fd', padding: '8px', borderRadius: '4px' }}>
+        <div style={{ fontSize: '12px', color: '#555' }}>防御</div>
+        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.defense || playerStats.defense}</div>
+      </div>
+      <div style={{ backgroundColor: '#e8eaf6', padding: '8px', borderRadius: '4px' }}>
+        <div style={{ fontSize: '12px', color: '#555' }}>魔法</div>
+        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.magicPower || 0}</div>
+      </div>
+      <div style={{ backgroundColor: '#f3e5f5', padding: '8px', borderRadius: '4px' }}>
+        <div style={{ fontSize: '12px', color: '#555' }}>速度</div>
+        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.speed || 0}</div>
+      </div>
+      <div style={{ backgroundColor: '#fff8e1', padding: '8px', borderRadius: '4px' }}>
+        <div style={{ fontSize: '12px', color: '#555' }}>当前层</div>
+        <div style={{ fontWeight: 'bold' }}>{currentFloor}</div>
+      </div>
+    </div>
+    
+    {/* 高级属性（可展开） */}
+    <div 
+      style={{ 
+        marginTop: '10px', 
+        backgroundColor: '#f9f9f9', 
+        padding: '10px', 
+        borderRadius: '4px',
+        cursor: 'pointer'
+      }}
+      onClick={() => setShowAdvancedStats(!showAdvancedStats)}
+    >
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <span>高级属性</span>
+        <span>{showAdvancedStats ? '▲' : '▼'}</span>
+      </div>
+      
+      {showAdvancedStats && (
+        <div style={{ 
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '10px',
+          marginTop: '10px'
+        }}>
+          <div style={{ backgroundColor: '#ffebee', padding: '8px', borderRadius: '4px' }}>
+            <div style={{ fontSize: '12px', color: '#555' }}>暴击率</div>
+            <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.critRate || 0}%</div>
+          </div>
+          <div style={{ backgroundColor: '#e0f7fa', padding: '8px', borderRadius: '4px' }}>
+            <div style={{ fontSize: '12px', color: '#555' }}>闪避率</div>
+            <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.evasion || 0}%</div>
+          </div>
         </div>
       )}
+    </div>
+  </div>
+)}
       
       {/* 冒险日志 */}
       <div style={{
@@ -1213,6 +1365,56 @@ const handleCombatEnd = async (result) => {
           onLeaveShop={handleLeaveShop}
         />
       )}
+      {gameState === GAME_STATES.STATS_ALLOCATION && (
+        <StatAllocation 
+          onClose={() => setGameState(GAME_STATES.IDLE)} 
+        />
+      )}
+      {userStats?.hasClass && userStats.unspentPoints > 0 && (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: '20px', 
+          right: '20px', 
+          zIndex: 1000 
+        }}>
+          <button 
+            onClick={() => setGameState(GAME_STATES.STATS_ALLOCATION)}
+            style={{
+              backgroundColor: '#ff9800',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '60px',
+              height: '60px',
+              fontSize: '24px',
+              boxShadow: '0 3px 5px rgba(0,0,0,0.2)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            💪
+          </button>
+          <div style={{
+            position: 'absolute',
+            top: '-10px',
+            right: '-10px',
+            backgroundColor: '#e53935',
+            color: 'white',
+            borderRadius: '50%',
+            width: '25px',
+            height: '25px',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold'
+          }}>
+            {userStats.unspentPoints}
+          </div>
+        </div>
+      )}
       
       {gameState === GAME_STATES.VICTORY && summary && (
         <div style={{ 
@@ -1238,6 +1440,9 @@ const handleCombatEnd = async (result) => {
             <div style={{ marginBottom: '10px' }}>
               <span style={{ fontWeight: 'bold' }}>新等级：</span> {summary.newLevel}
             </div>
+            <div style={{ marginBottom: '10px' }}>
+              <span style={{ fontWeight: 'bold' }}>可用属性点：</span> {summary.unspentStatPoints || 0}
+             </div>
             
             {summary.levelUp && (
               <div style={{ 
@@ -1248,7 +1453,7 @@ const handleCombatEnd = async (result) => {
                 borderRadius: '4px',
                 marginTop: '10px'
               }}>
-                🎉 升级了！ +{summary.statPointsGained} 属性点
+                🎉 升级了！ +{summary.statPointsGained || 0} 属性点
               </div>
             )}
           </div>

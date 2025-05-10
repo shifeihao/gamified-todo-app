@@ -29,6 +29,7 @@ const WeaponItem = ShopItem.discriminator('weapon', new mongoose.Schema({
   },
   slot: { type: String, enum: ['mainHand', 'offHand'], required: true },
   allowedClasses:  [{ type: ObjectId, ref: 'CharacterClass' }],
+  isEquipped: {type:Boolean,default:false},
   requiredLevel: {
     type: Number,
     default: 1
@@ -59,6 +60,7 @@ const ArmorItem = ShopItem.discriminator('armor', new mongoose.Schema({
     type: [String],
     default: ['all']
   },
+  isEquipped: {type:Boolean,default:false},
   requiredLevel: {
     type: Number,
     default: 1
