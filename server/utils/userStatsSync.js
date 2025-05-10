@@ -15,7 +15,6 @@ export async function SyncUserStats(userId) {
   await checkTaskNumber(userId);
   await checkGameStats(userId);
 }
-
 //统计User
 export async function SyncUser(userId) {
   try {
@@ -219,7 +218,7 @@ export async function addEditedTasksNum(userId) {
     { $inc: { task_edited_total: 1 } } // 更新内容：将该字段 +1
   );
 }
-//统计一次最大迷宫探索层数，task_edited_total计数器+1
+//统计游戏数据，计数器+1
 export async function checkGameStats(userId) {
   console.log("✅ 开始检查游戏信息");
   const dungeonStats = await UserDungeonStats.findOne({ user: userId });
@@ -239,7 +238,6 @@ export async function checkGameStats(userId) {
   );
   console.log(`✅ 已同步 max_maze_level = ${maxFloor}`);
 }
-
 //统计个人成就数量/判断是否解锁成就之神
 export async function checkIfGodAchievementUnlocked(userId) {
   // 1. 重新获取已解锁成就
