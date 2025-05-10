@@ -56,7 +56,7 @@ const issueDailyCards = asyncHandler(async (req, res) => {
 
   if (lastIssued === today) {
     res.status(400);
-    throw new Error("今日卡片已发放");
+    throw new Error("Today's cards have been issued");
   }
 
   // 创建3张空白卡片
@@ -65,9 +65,9 @@ const issueDailyCards = asyncHandler(async (req, res) => {
       Card.create({
         user: user._id,
         type: "blank",
-        title: "空白卡片",
-        description: "限定为短期类型的任务",
-        taskDuration: "短期", //  限定为短期卡片
+        title: "Blank Cards",
+        description: "Limited to short-term tasks",
+        taskDuration: "Short", //  限定为短期卡片
         issuedAt: new Date(),
       })
     )
@@ -82,7 +82,7 @@ const issueDailyCards = asyncHandler(async (req, res) => {
   await checkCardNumber(req.user.id);
 
   res.status(201).json({
-    message: "每日卡片发放成功",
+      message: "Daily card distribution successful",
     cards: blankCards,
   });
 });
@@ -97,7 +97,7 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
   const isMonday = today.getDay() === 1;
   if (!isMonday) {
     res.status(400);
-    throw new Error("今天不是发放长期卡片的时间（仅限周一）");
+    throw new Error("Today is not the day to issue long-term cards (Monday only)");
   }
   // 检查是否本周已发放
   const lastWeek = new Date(user.weeklyCards?.lastIssued || 0);
@@ -106,7 +106,7 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
   startOfThisWeek.setHours(0, 0, 0, 0);
   if (lastWeek >= startOfThisWeek) {
     res.status(400);
-    throw new Error("本周长期卡片已发放");
+    throw new Error("Long-term cards have been issued this week");
   }
   // 创建3张长期空白卡片
   const blankCards = await Promise.all(
@@ -114,9 +114,9 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
       Card.create({
         user: user._id,
         type: "blank",
-        title: "长期空白卡片",
-        description: "限定为长期类型的任务",
-        taskDuration: "长期",
+        title: "Long-term blank card",
+        description: "Limited to long-term tasks",
+        taskDuration: "Long",
         issuedAt: new Date(),
       })
     )
@@ -132,7 +132,7 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
   await checkCardNumber(req.user.id);
 
   res.status(201).json({
-    message: "本周长期空白卡片发放成功",
+    message: "Long-term blank cards were successfully issued this week",
     cards: blankCards,
   });
 });
@@ -143,10 +143,10 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
 const issueRewardCard = asyncHandler(async (req, res) => {
   const { type, title, description, bonus, taskDuration } = req.body;
   // 验证 taskDuration 是否有效
-  if (!["短期", "长期", "通用"].includes(taskDuration)) {
+  if (!["Short", "Long", "Usual"].includes(taskDuration)) {
     res.status(400);
     throw new Error(
-      "无效的任务持续时长：taskDuration 必须为 短期、长期 或 通用"
+      "Invalid task duration: taskDuration must be short, long, or universal"
     );
   }
 
@@ -170,7 +170,7 @@ const issueRewardCard = asyncHandler(async (req, res) => {
   await checkCardNumber(req.user.id);
 
   res.status(201).json({
-    message: "奖励卡片发放成功",
+    message: "Reward card issued successfully",
     card: rewardCard,
   });
 });
@@ -179,14 +179,14 @@ const issueRewardCard = asyncHandler(async (req, res) => {
 // @route   POST /api/cards/issue-blank
 // @access  Private
 const issueBlankCard = asyncHandler(async (req, res) => {
-  const { title = "空白卡片", description = "" } = req.body;
+  const { title = "Blank Cards", description = "" } = req.body;
 
   const blankCard = await Card.create({
     user: req.user.id,
     type: "blank",
     title,
     description,
-    taskDuration: "短期", //  限定为短期卡片
+    taskDuration: "Short", //  限定为短期卡片
     issuedAt: new Date(),
   });
 
@@ -196,7 +196,7 @@ const issueBlankCard = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json({
-    message: "卡片发放成功",
+    message: "Card issued successfully",
     card: blankCard,
   });
 });
@@ -220,19 +220,19 @@ const consumeCard = asyncHandler(async (req, res) => {
 
     if (!card) {
       res.status(400);
-      throw new Error("无效的卡片");
+      throw new Error("Invalid card");
     }
 
     if (card.type !== "periodic" && card.used) {
       res.status(400);
-      throw new Error("卡片已被使用");
+      throw new Error("Card has been used");
     }
 
     // ✅ 校验任务类型是否匹配
-    if (card.taskDuration !== "通用" && card.taskDuration !== taskData.type) {
+    if (card.taskDuration !== "Usual" && card.taskDuration !== taskData.type) {
       res.status(400);
       throw new Error(
-        `该卡片仅支持 ${card.taskDuration} 类型任务，无法用于 ${taskData.type} 类型任务`
+        `This card only supports ${card.taskDuration} Type tasks, cannot be used ${taskData.type} Type tasks`
       );
     }
   } else {
@@ -241,7 +241,7 @@ const consumeCard = asyncHandler(async (req, res) => {
       user: req.user.id,
       used: false,
       type: "blank",
-      $or: [{ taskDuration: taskData.type }, { taskDuration: "通用" }],
+      $or: [{ taskDuration: taskData.type }, { taskDuration: "Usual" }],
     });
 
     if (!card) {

@@ -6,7 +6,7 @@ export const CardSelector = ({
   onSelect,
   selectedCard,
   showRewards = false,   // 是否显示奖励卡片列表
-  taskType = '短期'       // 任务类型，用于过滤奖励卡
+  taskType = 'short'       // 任务类型，用于过滤奖励卡
 }) => {
   const { user } = useContext(AuthContext);
   const [cards, setCards] = useState([]);
@@ -22,7 +22,7 @@ export const CardSelector = ({
         setCards(data.inventory);
         setDailyCards(data.dailyCards.blank || 0);
       } catch (error) {
-        console.error('获取卡片失败:', error);
+        console.error('Failed to obtain card:', error);
       }
     };
     if (user) fetchCards();
@@ -39,7 +39,7 @@ export const CardSelector = ({
   // 过滤奖励卡：special 且 duration 匹配或通用
   const rewardCards = cards.filter(card =>
     card.type === 'special' &&
-    (card.taskDuration === taskType || card.taskDuration === '通用')
+    (card.taskDuration === taskType || card.taskDuration === 'Usual')
   );
 
   return (
@@ -47,7 +47,7 @@ export const CardSelector = ({
       {/* 仅在未开启奖励卡模式时显示空白卡数量 */}
       {!showRewards && (
           <div className="text-sm font-medium mb-2">
-            可用空白卡片: {dailyCards}
+            Blank cards available: {dailyCards}
           </div>
       )}
       {showRewards && (
@@ -68,14 +68,14 @@ export const CardSelector = ({
               )}
               {card.type === 'special' && card.bonus && (
                 <div className="mt-2 text-xs text-purple-600">
-                  经验倍率: {card.bonus.experienceMultiplier}x，金币倍率: {card.bonus.goldMultiplier}x
+                  Experience Multiplier: {card.bonus.experienceMultiplier}x，Gold Coin Multiplier: {card.bonus.goldMultiplier}x
                 </div>
               )}
             </div>
           ))}
           {rewardCards.length === 0 && (
             <div className="col-span-3 text-gray-500 text-sm">
-              无可用奖励卡片
+              No rewards cards available
             </div>
           )}
         </div>

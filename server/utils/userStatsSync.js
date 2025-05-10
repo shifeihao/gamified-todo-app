@@ -58,13 +58,13 @@ export async function SyncTaskHistory(userId) {
     }
     // 正确统计数量
     const completedNum = taskHistory.filter(
-      (t) => t.status === "已完成"
+      (t) => t.status === "Finished"
     ).length;
     const completedShortNum = taskHistory.filter(
-      (t) => t.status === "已完成" && t.type === "短期"
+      (t) => t.status === "Finished" && t.type === "Short"
     ).length;
     const completedLongNum = taskHistory.filter(
-      (t) => t.status === "已完成" && t.type === "长期"
+      (t) => t.status === "Finished" && t.type === "Long"
     ).length;
     const useSpecialNum = taskHistory.filter(
       (t) => t.cardType === "special"
@@ -79,10 +79,10 @@ export async function SyncTaskHistory(userId) {
 
     // 找出持续时间 最长/最短
     const shortTasks = taskHistory.filter(
-      (t) => t.type === "短期" && t.status === "已完成"
+      (t) => t.type === "Short" && t.status === "Finished"
     );
     const longTasks = taskHistory.filter(
-      (t) => t.type === "长期" && t.status === "已完成"
+      (t) => t.type === "Long" && t.status === "Unfinished"
     );
     const shortShortestTask = getMinDuration(shortTasks);
     const shortLongestTask = getMaxDuration(shortTasks);
@@ -93,7 +93,7 @@ export async function SyncTaskHistory(userId) {
     // 获取该用户所有“已完成”的任务
     const completedTasks = await TaskHistory.find({
       user: userId,
-      status: "已完成",
+      status: "Unfinished",
       completedAt: { $exists: true },
     });
 
@@ -177,7 +177,7 @@ export async function checkCardNumber(userId) {
 export async function checkTaskNumber(userId) {
   const taskCreate = await Task.find({ user: userId });
   if (taskCreate.length === 0) {
-    console.error("❌ 没有任务记录");
+    console.error("❌ No mission record");
     return;
   }
 
@@ -190,7 +190,7 @@ export async function checkTaskNumber(userId) {
   const laterTimeStr = toTimeStr(sortedByTime.at(-1).createdAt);
 
   //记录创建过的长期任务中子任务最多的数量，只要创建就记录下来
-  const longTasks = taskCreate.filter((t) => t.type === "长期");
+  const longTasks = taskCreate.filter((t) => t.type === "Long");
   const maxSubtaskCount = longTasks.reduce((max, current) => {
     const count = current.subTasks?.length || 0;
     return count > max ? count : max;

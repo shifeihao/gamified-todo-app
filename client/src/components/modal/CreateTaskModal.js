@@ -13,7 +13,7 @@ export const CreateTaskModal = ({
                                   loading = false,
                                   slotIndex = -1,
                                   initialData = null,
-                                  defaultType = '短期',
+                                  defaultType = 'Short',
                                   defaultDueDateTime
                                 }) => {
   const { user } = useContext(AuthContext);
@@ -40,7 +40,7 @@ export const CreateTaskModal = ({
 
   // taskType 改变时，短期任务设置为当前本地时间 +24h
   useEffect(() => {
-    if (taskType === '短期') {
+    if (taskType === 'Short') {
       const now = new Date();
       now.setDate(now.getDate() + 1);
       setDueDate(getLocalDateTimeString(now));
@@ -60,20 +60,20 @@ export const CreateTaskModal = ({
         const blanks = res.data.inventory.filter(c =>
             c.type === 'blank' &&
             !c.used && // ✅ 只统计未使用的
-            (taskType === '短期'
-                ? ['短期', '通用'].includes(c.taskDuration)
-                : ['长期', '通用'].includes(c.taskDuration))
+            (taskType === 'Short'
+                ? ['Short', 'usual'].includes(c.taskDuration)
+                : ['Long', 'usual'].includes(c.taskDuration))
         ).length;
         setDailyCards(blanks);
 
         const rewards = res.data.inventory.filter(card =>
             card.type === 'special' &&
             !card.used && // ✅ 只统计未使用的
-            ['通用', taskType].includes(card.taskDuration)
+            ['usual', taskType].includes(card.taskDuration)
         ).length;
         setRewardCardCount(rewards);
       } catch (err) {
-        console.error('获取卡片库存失败:', err);
+        console.error('Failed to obtain card inventory:', err);
       }
     };
     if (isOpen && user) fetchInventory();
@@ -81,12 +81,12 @@ export const CreateTaskModal = ({
 
   const handleSubmit = async formFields => {
     try {
-      if (!title.trim()) return alert('请输入任务标题');
+      if (!title.trim()) return alert('Please enter a task title');
       setCardError('');
 
       let cardId;
       if (useReward) {
-        if (!selectedCard?._id) return alert('请选择一张奖励卡片');
+        if (!selectedCard?._id) return alert('Please select a rewards card');
         cardId = selectedCard._id;
       }
 
@@ -113,26 +113,26 @@ export const CreateTaskModal = ({
 
       // ✅ 确保 cardUsed 字段存在
       if (!processedTask.cardUsed) {
-        return alert('任务未绑定卡片，请重试');
+        return alert('The task is not bound to a card, please try again');
       }
       await onSubmit(processedTask);  // ✅ 传入包含 cardUsed 的任务数据
 
       // 清空表单状态
       setTitle('');
-      setTaskType('短期');
+      setTaskType('Short');
       setUseReward(false);
       setSelectedCard(null);
       onClose();
     } catch (err) {
-      console.error('创建任务失败:', err);
-      alert('创建任务失败，请重试');
+      console.error('Failed to create task:', err);
+      alert('Failed to create task, please try again');
     }
   };
 
 
   const handleClose = () => {
     setTitle('');
-    setTaskType('短期');
+    setTaskType('Short');
     setUseReward(false);
     setSelectedCard(null);
     onClose();
@@ -145,7 +145,7 @@ export const CreateTaskModal = ({
           isOpen={isOpen}
           onClose={handleClose}
           title={
-            isFromSlot ? `创建任务到槽位 ${slotIndex + 1}` : '创建新任务'
+            isFromSlot ? `Create a task to a slot ${slotIndex + 1}` : 'Create a new task'
           }
       >
         <div className="py-4 space-y-4">
@@ -153,18 +153,18 @@ export const CreateTaskModal = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                任务标题 *
+                Task Title *
               </label>
               <input
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="请输入任务标题"
+                  placeholder="Please enter a task title"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                任务类型
+                Task Type
               </label>
               <select
                   value={taskType}
@@ -172,12 +172,12 @@ export const CreateTaskModal = ({
                   disabled={isFromSlot}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="短期">短期</option>
-                <option value="长期">长期</option>
+                <option value="Short">Short Term</option>
+                <option value="Long">Long term</option>
               </select>
               {isFromSlot && (
                   <p className="text-sm text-gray-500 mt-1">
-                    任务类型由任务槽位决定，无法修改
+                    The task type is determined by the task slot and cannot be modified.
                   </p>
               )}
             </div>
@@ -187,8 +187,8 @@ export const CreateTaskModal = ({
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
               {useReward
-                  ? `可用奖励卡片（${taskType}）: ${rewardCardCount}`
-                  : `可用空白卡片（${taskType}）: ${dailyCards}`}
+                  ? `Available Reward Cards（${taskType}）: ${rewardCardCount}`
+                  : `Blank cards available（${taskType}）: ${dailyCards}`}
             </div>
             <label className="flex items-center space-x-2 text-sm text-gray-700">
               <input
@@ -197,7 +197,7 @@ export const CreateTaskModal = ({
                   onChange={e => setUseReward(e.target.checked)}
                   className="h-4 w-4 text-purple-600 border-gray-300 rounded"
               />
-              <span>是否使用奖励卡片</span>
+              <span>Do you use reward cards?</span>
             </label>
           </div>
 

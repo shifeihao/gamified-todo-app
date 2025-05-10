@@ -4,7 +4,7 @@ import {RewardCardTile} from './RewardCardTile'; // ✅ 新增引用
 
 export const BlankCardRepository = ({ cards }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedType, setSelectedType] = useState('全部');
+    const [selectedType, setSelectedType] = useState('All');
 
     // 过滤
     const filtered = cards.filter(card => {
@@ -13,7 +13,7 @@ export const BlankCardRepository = ({ cards }) => {
             card.description.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesType =
-            selectedType === '全部' || card.taskDuration === selectedType;
+            selectedType === 'All' || card.taskDuration === selectedType;
 
         return matchesSearch && matchesType;
     });
@@ -26,13 +26,13 @@ export const BlankCardRepository = ({ cards }) => {
                     {/* 搜索 */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            搜索卡片
+                            Search Cards
                         </label>
                         <input
                             type="text"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            placeholder="输入卡片标题或描述..."
+                            placeholder="Enter a card title or description..."
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
                         />
                     </div>
@@ -40,14 +40,14 @@ export const BlankCardRepository = ({ cards }) => {
                     {/* 类型筛选 */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            适用任务类型
+                            Applicable task types
                         </label>
                         <select
                             value={selectedType}
                             onChange={e => setSelectedType(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
                         >
-                            {['全部', '短期', '长期'].map(t => (
+                            {['All', 'Short', 'Long'].map(t => (
                                 <option key={t} value={t}>
                                     {t}
                                 </option>
@@ -60,7 +60,7 @@ export const BlankCardRepository = ({ cards }) => {
             {/* 展示卡片 */}
             {filtered.length === 0 ? (
                 <div className="text-center py-10 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500">没有符合条件的奖励卡片</p>
+                    <p className="text-gray-500">No eligible rewards cards</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-2 gap-6">

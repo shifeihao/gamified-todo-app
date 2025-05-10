@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
-          : "登录失败"
+          : 'Login Failed'
       );
       throw error;
     } finally {
@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
-          : "注册失败"
+          : 'Registration failed'
       );
       throw error;
     } finally {
@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }) => {
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
-          : "更新个人资料失败"
+          : 'Update profile failed'
       );
       throw error;
     } finally {

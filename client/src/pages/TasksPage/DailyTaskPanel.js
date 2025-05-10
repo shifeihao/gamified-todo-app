@@ -13,7 +13,7 @@ const DailyTaskPanel = ({
   user,
 }) => {
   // 只展示短期任务
-  const shortTasks = equippedTasks.filter((t) => t.type === "短期");
+  const shortTasks = equippedTasks.filter((t) => t.type === "Short");
 
   return (
     <div className="mb-8 flex flex-col">
@@ -39,11 +39,11 @@ const DailyTaskPanel = ({
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            <p>点击创建短期任务</p>
+            <p>Click Create Short-Term Task</p>
           </>
         )}
         onCreate={onCreateTask}
-        onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, "短期")}
+        onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, "Short")}
         onComplete={onComplete}
         onDelete={onDelete}
         onEdit={onEdit}

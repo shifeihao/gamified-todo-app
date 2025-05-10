@@ -10,48 +10,57 @@ import React from 'react';
  * @param {number} data.expRemaining - 距离下一级还需经验
  * @param {number} data.progressRate - 当前升级进度（0 ~ 1）
  * @param {boolean} data.leveledUp - 是否升级
+ * @param {number} data.coins - 当前金币数量
+ * @param {boolean} isNavbar - 是否在导航栏中使用
  */
-const UserLevelBar = ({ data }) => {
-  if (!data) return null;
-  console.log('等级组件接收到的数据:', data);
+const UserLevelBar = ({ data, isNavbar = false }) => {
+    if (!data) return null;
 
-  const {
-    level,
-    experience,
-    nextLevelExp,
-    expProgress,
-    expRemaining,
-    progressRate,
-    leveledUp,
-  } = data;
+    const {
+        level,
+        experience,
+        nextLevelExp,
+        expProgress,
+        expRemaining,
+        progressRate,
+        leveledUp,
+        coins = 0
+    } = data;
 
-  return (
-    <div className="bg-white p-4 rounded-xl shadow-md w-full max-w-md">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-bold">等级 {level}</h2>
-        <span className="text-sm text-gray-500">
-          {experience} / {nextLevelExp} XP
-        </span>
-      </div>
+    if (isNavbar) {
+        return (
+            <div className="w-full">
+                <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center space-x-4">
+                        <span className="text-sm font-medium text-white">Level {level}</span>
+                        <div className="flex items-center space-x-1">
+                            <span className="text-yellow-400">🪙</span>
+                            <span className="text-sm text-white">{coins}</span>
+                        </div>
+                    </div>
+                    <span className="text-sm text-primary-200">
+                        {expProgress} / {expProgress/progressRate} XP
+                    </span>
+                </div>
 
-      <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
-        <div
-          className="bg-green-500 h-full transition-all duration-500"
-          style={{ width: `${(progressRate * 100).toFixed(1)}%` }}
-        />
-      </div>
+                <div className="w-full bg-primary-700 h-2 rounded-full overflow-hidden">
+                    <div
+                        className="bg-yellow-400 h-full transition-all duration-500"
+                        style={{ width: `${(progressRate * 100).toFixed(1)}%` }}
+                    />
+                </div>
 
-      <p className="text-sm text-gray-600 mt-1">
-        距离下一级还需 <strong>{expRemaining}</strong> 经验
-      </p>
+                {leveledUp && (
+                    <p className="text-yellow-400 text-xs font-semibold mt-1 animate-pulse">
+                        🎉 Congratulations on upgrading！
+                    </p>
+                )}
+            </div>
+        );
+    }
 
-      {leveledUp && (
-        <p className="text-green-600 font-semibold mt-2 animate-pulse">
-          🎉 恭喜升级！
-        </p>
-      )}
-    </div>
-  );
+    // 如果不是在導航欄中，則不顯示任何內容
+    return null;
 };
 
 export default UserLevelBar;

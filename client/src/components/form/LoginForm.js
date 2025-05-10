@@ -15,7 +15,7 @@ export const LoginForm = ({ isEmbedded = false }) => {
     e.preventDefault();
     
     if (!email || !password) {
-      setError('请填写所有字段');
+      setError('Please fill in all fields');
       return;
     }
     
@@ -28,7 +28,7 @@ export const LoginForm = ({ isEmbedded = false }) => {
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
-          : '登录失败，请检查您的凭据'
+          : 'Login failed, please check your credentials'
       );
     } finally {
       setIsLoading(false);
@@ -62,7 +62,7 @@ export const LoginForm = ({ isEmbedded = false }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className={labelClasses}>
-            邮箱
+            Mail
           </label>
           <input
             type="email"
@@ -70,14 +70,14 @@ export const LoginForm = ({ isEmbedded = false }) => {
             className={inputClasses}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="请输入您的邮箱"
+            placeholder="Please enter your email"
             required
           />
         </div>
         
         <div>
           <label htmlFor="password" className={labelClasses}>
-            密码
+            Password
           </label>
           <input
             type="password"
@@ -85,7 +85,7 @@ export const LoginForm = ({ isEmbedded = false }) => {
             className={inputClasses}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="请输入您的密码"
+            placeholder="Please enter your password"
             required
           />
         </div>
@@ -95,13 +95,13 @@ export const LoginForm = ({ isEmbedded = false }) => {
           className={buttonClasses}
           disabled={isLoading}
         >
-          {isLoading ? '登录中...' : '登录'}
+          {isLoading ? 'Loading' : 'Load'}
         </button>
 
         {isEmbedded && (
           <div className="text-sm text-gray-400 mt-4">
-            <p>演示账号：demo@example.com</p>
-            <p>密码：password123</p>
+            <p>Demo Account：demo@example.com</p>
+            <p>Password：password123</p>
           </div>
         )}
       </form>

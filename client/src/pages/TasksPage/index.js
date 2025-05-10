@@ -40,11 +40,10 @@ const TasksPage = () => {
   const [equippedShortTasks, setEquippedShortTasks] = useState([]); // 短期任务槽
   const [equippedLongTasks, setEquippedLongTasks] = useState([]); // 长期任务槽
 
-  // const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [createSlotIndex, setCreateSlotIndex] = useState(-1);
-  const [createSlotType, setCreateSlotType] = useState("短期"); // 默认创建任务类型
+  const [createSlotType, setCreateSlotType] = useState("Short"); // 默认创建任务类型
 
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -70,7 +69,7 @@ const TasksPage = () => {
       setError("");
     } catch (err) {
       console.error(err);
-      setError("获取任务数据失败");
+      setError("Failed to obtain task data");
     }
   };
 
@@ -111,17 +110,17 @@ const TasksPage = () => {
     error: deleteError,
   } = useApiAction(deleteTaskService, {
     onSuccess: () => {
-      showSuccess("任务已删除");
+      showSuccess("Task deleted");
       fetchTasks();
     },
     onError: (err) => {
       console.error(err);
-      setError("删除任务失败");
+      setError("Failed to delete task");
     },
   });
 
   const handleDelete = (id) => {
-    if (!window.confirm("确定要删除任务吗？")) return;
+    if (!window.confirm("Are you sure you want to delete the task?")) return;
     doDeleteTask(id, user.token);
   };
 
@@ -134,7 +133,7 @@ const TasksPage = () => {
     error: completeError,
   } = useApiAction(completeTaskService, {
     onSuccess: async (task) => {
-      showSuccess("任务已完成");
+      showSuccess("Task Completed");
 
       // ✅ 提取 reward 数据并存入状态
       if (task.reward) {
@@ -147,7 +146,7 @@ const TasksPage = () => {
 
     onError: (err) => {
       console.error(err);
-      setError("完成任务失败");
+      setError("Failed to complete the task");
     },
   });
 
@@ -164,12 +163,12 @@ const TasksPage = () => {
     error: createError,
   } = useApiAction(createTaskService, {
     onSuccess: async (res, input) => {
-      showSuccess("任务已创建");
+      showSuccess("Task created");
       if (input?.fromSlot && input?.slotIndex >= 0) {
-        const isLong = input.type === "长期";
+        const isLong = input.type === "Long";
         const slotType = isLong ? "long" : "short";
         await equipTaskService(res._id, input.slotIndex, user.token, slotType);
-        showSuccess(`已装备${isLong ? "长期" : "短期"}任务`);
+        showSuccess(`Equipped${isLong ? ' long term ' : ' short term '}Task`);
       }
       fetchTasks();
       setShowForm(false);
@@ -178,7 +177,7 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error(err);
-      setError("创建任务失败");
+      setError("Failed to create task");
     },
   });
 
@@ -191,14 +190,14 @@ const TasksPage = () => {
     error: updateError,
   } = useApiAction(updateTaskService, {
     onSuccess: () => {
-      showSuccess("任务已更新");
+      showSuccess("Task updated");
       fetchTasks();
       setShowForm(false);
       setEditingTask(null);
     },
     onError: (err) => {
       console.error(err);
-      setError("更新任务失败");
+      setError("Update task failed");
     },
   });
 
@@ -211,28 +210,28 @@ const TasksPage = () => {
     error: equipError,
   } = useApiAction(equipTaskService, {
     onSuccess: () => {
-      showSuccess("任务已装备");
+      showSuccess("Task Equipped");
       fetchTasks();
     },
     onError: (err) => {
       console.error(err);
-      setError("装备任务失败");
+      setError("Task mission failed");
     },
   });
 
   const handleEquip = (task) => {
-    if (task.status === "已完成") {
-      setError("无法装备已完成的任务");
+    if (task.status === "Finished") {
+      setError("Cannot equip completed task");
       return;
     }
     // 选择短期/长期槽
-    const isLong = task.type === "长期";
+    const isLong = task.type === "Long";
     const occupied = (isLong ? equippedLongTasks : equippedShortTasks).map(
       (t) => t.slotPosition
     );
     let freeSlot = [...Array(3).keys()].find((i) => !occupied.includes(i));
     if (freeSlot == null) {
-      setError(isLong ? "长期任务槽已满" : "短期任务槽已满");
+      setError(isLong ? "The long-term task slot is full" : "The short-term task slot is full");
       return;
     }
     const slotType = isLong ? "long" : "short";
@@ -253,12 +252,12 @@ const TasksPage = () => {
     error: unequipError,
   } = useApiAction(unequipTaskService, {
     onSuccess: () => {
-      showSuccess("已卸下任务");
+      showSuccess("Task removed");
       fetchTasks();
     },
     onError: (err) => {
       console.error(err);
-      setError("卸下任务失败");
+      setError("Uninstall task failed");
     },
   });
 
@@ -275,7 +274,7 @@ const TasksPage = () => {
 
   // 8. 提交表单（新建或更新）
   const handleSubmit = (formData) => {
-    console.log("[TasksPage] handleSubmit 收到数据：", formData);
+    console.log("[TasksPage] handleSubmit Receive data：", formData);
     if (editingTask) {
       doUpdateTask(editingTask._id, formData, user.token);
     } else {
@@ -296,22 +295,22 @@ const TasksPage = () => {
     error;
 
   return (
-    <div>
-      <Navbar />
-      <div className="max-w-7xl mx-auto py-4 space-y-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">我的任务</h1>
+      <div>
+        <Navbar />
+        <div className="max-w-7xl mx-auto py-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">My Tasks</h1>
 
           <button
             onClick={() => {
-              setCreateSlotType("短期");
+              setCreateSlotType("Short");
               setCreateSlotIndex(-1);
               setShowForm(true);
             }}
             className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
             disabled={loadingAny}
           >
-            创建新任务
+              Create a new task
           </button>
         </div>
         {rewardInfo && (
@@ -321,7 +320,7 @@ const TasksPage = () => {
         )}
 
         {errorAny && <div className="text-red-600">{errorAny}</div>}
-        {loadingAny && <div className="text-gray-600">加载中...</div>}
+        {loadingAny && <div className="text-gray-600">Loading...</div>}
         {successMessage && (
           <div className="text-green-600">{successMessage}</div>
         )}
@@ -332,7 +331,7 @@ const TasksPage = () => {
             setShowForm(false);
             setEditingTask(null);
             setCreateSlotIndex(-1);
-            setCreateSlotType("短期"); // 每次关闭时都重置任务类型，确保下次能准确控制
+            setCreateSlotType("Short"); // 每次关闭时都重置任务类型，确保下次能准确控制
           }}
           onSubmit={handleSubmit}
           loading={editingTask ? updating : creating}
@@ -340,7 +339,7 @@ const TasksPage = () => {
           slotIndex={createSlotIndex}
           defaultType={createSlotType}
           defaultDueDateTime={
-            createSlotType === "短期"
+            createSlotType === "Short"
               ? new Date(Date.now() + 24 * 60 * 60 * 1000)
                   .toISOString()
                   .slice(0, 19)
@@ -360,7 +359,7 @@ const TasksPage = () => {
                 onEdit={setEditingTask}
                 onUnequip={handleUnequip}
                 onDrop={(tid, idx) => handleDropToSlot(tid, idx, "short")}
-                onCreateTask={(idx) => handleCreateFromSlot(idx, "短期")}
+                onCreateTask={(idx) => handleCreateFromSlot(idx, "Short")}
                 onEquip={handleEquip}
               />
             </div>
@@ -373,7 +372,7 @@ const TasksPage = () => {
                 onDelete={handleDelete}
                 onEdit={setEditingTask}
                 onDrop={(tid, idx) => handleDropToSlot(tid, idx, "long")}
-                onCreateTask={(idx) => handleCreateFromSlot(idx, "长期")}
+                onCreateTask={(idx) => handleCreateFromSlot(idx, "Long")}
               />
             </div>
           </div>

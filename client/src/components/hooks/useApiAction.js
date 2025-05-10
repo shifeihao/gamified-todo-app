@@ -29,7 +29,7 @@ export function useApiAction(actionFn, { onSuccess, onError, refresh } = {}) {
       return result;
     } catch (err) {
       console.error(err);
-      const msg = err.message || '操作失败';
+      const msg = err.message || 'Operation failed';
       setError(msg);
       if (onError) onError(msg);
       throw err;

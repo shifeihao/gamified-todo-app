@@ -12,27 +12,27 @@ async function main() {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     });
-    console.log('✅ 已连接到 MongoDB Atlas');
+    console.log('✅ Connect to MongoDB Atlas');
 
     // 2. 找出还没 taskDuration 的卡片
     const cards = await Card.find({ taskDuration: { $exists: false } });
-    console.log(`共找到 ${cards.length} 条需要更新的卡片`);
+    console.log(`Found ${cards.length} cards that need to be updated`);
 
     // 3. 遍历更新
     for (const card of cards) {
         // 这里按类型决定默认值，你也可以改逻辑
-        card.taskDuration = card.type === 'special' ? '长期' : '短期';
+        card.taskDuration = card.type === 'special' ? 'Long' : 'Short';
         await card.save();
-        console.log(`✔ 卡片 ${card._id} → ${card.taskDuration}`);
+        console.log(`✔ Card ${card._id} → ${card.taskDuration}`);
     }
 
     // 4. 完成并断开
-    console.log('🎉 全部更新完毕');
+    console.log('🎉 All updated');
     await mongoose.disconnect();
-    console.log('🛑 已断开数据库连接');
+    console.log('🛑 Database connection disconnected');
 }
 
 main().catch(err => {
-    console.error('❌ 更新失败:', err);
+    console.error('❌ Update failed:', err);
     process.exit(1);
 });

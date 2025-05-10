@@ -10,7 +10,7 @@ router.get("/", (req, res) => {
 router.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
-    message: "服务器错误",
+    message: "Server error",
     error: process.env.NODE_ENV === "development" ? err.message : undefined,
   });
 });

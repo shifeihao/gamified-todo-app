@@ -17,7 +17,7 @@ const RepositoryPanel = ({
         <div className="mb-8">
             {/* 标题与标签同一行 */}
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">任务卡片仓库</h2>
+                <h2 className="text-xl font-bold">Task Card Warehouse</h2>
                 <div className="flex space-x-4">
                     {['store', 'blank', 'template'].map(tab => (
                         <button
@@ -29,7 +29,7 @@ const RepositoryPanel = ({
                                     : 'text-gray-500'
                             }`}
                         >
-                            {tab === 'store' ? '存储' : tab === 'blank' ? 'blank' : '模板'}
+                            {tab === 'store' ? 'Store' : tab === 'blank' ? 'Rewards' : 'Template'}
                         </button>
                     ))}
                 </div>

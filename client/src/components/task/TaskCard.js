@@ -41,13 +41,13 @@ export const TaskCard = ({
   // 状态 & 类型样式
   const getStatusClass = status => {
     switch (status) {
-      case '待完成':
+      case 'Unfinished':
         return 'bg-yellow-100 text-yellow-800';
-      case '进行中':
+      case 'Ongoing':
         return 'bg-blue-100 text-blue-800';
-      case '已完成':
+      case 'Finished':
         return 'bg-green-100 text-green-800';
-      case '过期':
+      case 'Expired':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -55,15 +55,26 @@ export const TaskCard = ({
   };
   const getTypeClass = type => {
     switch (type) {
-      case '短期':
+      case 'Short':
         return 'bg-purple-100 text-purple-800';
-      case '长期':
+      case 'Long':
         return 'bg-indigo-100 text-indigo-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
-  const formatDate = ds => ds ? new Date(ds).toLocaleDateString('zh-CN') : '无截止日期';
+  const formatDate = ds => {
+    if (!ds) return 'No deadline';
+    const date = new Date(ds);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return task.type === 'Short'
+      ? `${day}-${month}-${year} ${hours}:${minutes}`
+      : `${day}-${month}-${year}`;
+  };
 
   // 已装备卡片倒计时
   const [timeLeft, setTimeLeft] = useState('');
@@ -72,13 +83,13 @@ export const TaskCard = ({
     const update = () => {
       const diff = new Date(task.dueDate).getTime() - Date.now();
       if (diff <= 0) {
-        setTimeLeft('已过期');
+        setTimeLeft('Expired');
         return;
       }
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
-      setTimeLeft(`${d}天${h}时${m}分`);
+      setTimeLeft(`${d}d${h}h${m}m`);
     };
     update();
     const timer = setInterval(update, 60000);
@@ -97,7 +108,7 @@ export const TaskCard = ({
           >
             {/* ⚠️ 已过期大徽章 */}
             <div className="absolute top-0 right-0 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-bl">
-              已过期
+              Expired
             </div>
 
             {/* 任务标题 */}
@@ -110,7 +121,7 @@ export const TaskCard = ({
                 onClick={() => onDelete(task._id)}
                 className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow"
             >
-              删除过期任务
+              Deleting Expired Tasks
             </button>
           </div>
       );
@@ -132,13 +143,13 @@ export const TaskCard = ({
           </span>
         </div>
         <div className="flex justify-between text-gray-500 text-xs mb-2">
-          {task.category && <span>分类: {task.category}</span>}
-          <span>剩余 {timeLeft}</span>
+          {task.category && <span>Tag: {task.category}</span>}
+          <span>Remaining {timeLeft}</span>
         </div>
         <div className="flex justify-between space-x-2">
           {!isExpired && (
             <button onClick={() => onComplete(task._id)} className="btn-primary text-xs py-1 px-2">
-              完成
+              Finish
             </button>
           )}
 
@@ -146,7 +157,7 @@ export const TaskCard = ({
             onClick={handleViewDetail}
             className="text-blue-600 hover:text-blue-800"
           >
-          查看详情
+            Check the details
           </button>
           {/* 详情模态框 */}
           <TaskDetailModal
@@ -166,7 +177,7 @@ export const TaskCard = ({
       className={`card hover:shadow-lg transition-shadow duration-300 relative ${className}`}
       draggable={draggable}
       onDragStart={onDragStart ? e => {
-        if (task.status === '已完成') {
+        if (task.status === 'Finished') {
           e.preventDefault(); // 禁止拖拽
           return;
         }
@@ -194,7 +205,7 @@ export const TaskCard = ({
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
               {/* 仅允许未完成任务使用功能 */}
-              {task.status !== '已完成' && (
+              {task.status !== 'Finished' && (
                 <>
                   <button
                     onClick={() => {
@@ -203,7 +214,7 @@ export const TaskCard = ({
                     }}
                     className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                   >
-                    完成
+                    Finish
                   </button>
                   {onEquip && (
                     <button
@@ -213,7 +224,7 @@ export const TaskCard = ({
                       }}
                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                     >
-                      装备
+                      Equipment
                     </button>
                   )}
                   <button
@@ -223,7 +234,7 @@ export const TaskCard = ({
                     }}
                     className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                   >
-                    编辑
+                    Edit
                   </button>
                 </>
               )}
@@ -236,7 +247,7 @@ export const TaskCard = ({
                 }}
                 className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
               >
-                删除
+                Delete
               </button>
             </div>
           )}
@@ -246,23 +257,23 @@ export const TaskCard = ({
 
       {/* 分类 & 描述 */}
       {task.category && (
-        <div className="text-sm text-gray-500 mb-2">分类: {task.category}</div>
+        <div className="text-sm text-gray-500 mb-2">Tag: {task.category}</div>
       )}
-      <p className="text-sm text-gray-600 mb-4 whitespace-normal">{task.description || '无描述'}</p>
+      <p className="text-sm text-gray-600 mb-4 whitespace-normal">{task.description || 'No description'}</p>
 
       {/* 截止 & 奖励 */}
       <div className="flex justify-between items-start text-xs text-gray-500 mb-4 space-x-2">
-        <div>截止日期: {formatDate(task.dueDate)}</div>
+        <div>Expiration Date: {formatDate(task.dueDate)}</div>
         <div className="flex space-x-2">
-          <div>经验值: +{task.experienceReward}</div>
-          <div>金币: +{task.goldReward}</div>
+          <div>Experiences: +{task.experienceReward}</div>
+          <div>Coins: +{task.goldReward}</div>
         </div>
       </div>
 
       {/* 子任务 */}
       {task.subTasks?.length > 0 && (
         <div className="mt-3 border-t pt-3">
-          <h4 className="text-sm font-medium mb-2">子任务：</h4>
+          <h4 className="text-sm font-medium mb-2">Subtask：</h4>
           <ul className="text-sm space-y-1">
             {task.subTasks.map((st, i) => (
               <li key={i} className="flex items-center">

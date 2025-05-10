@@ -16,7 +16,7 @@ const getTasks = async (req, res) => {
     res.json(tasks);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -28,12 +28,12 @@ const createTask = async (req, res) => {
     // 校验必要字段
     console.log(req.body);
     if (!req.body.title || !req.body.experienceReward || !req.body.goldReward) {
-      return res.status(400).json({ message: "缺少必要的任务信息" });
+      return res.status(400).json({ message: "Missing necessary task information" });
     }
     if (!req.body.cardUsed) {
       return res
         .status(400)
-        .json({ message: "必须指定使用的卡片（cardUsed）" });
+        .json({ message: "The card you must specify（cardUsed）" });
     }
 
     // 使用前端传来的任务数据创建任务
@@ -56,7 +56,7 @@ const createTask = async (req, res) => {
     checkTaskNumber(req.user._id);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -69,18 +69,18 @@ const getTaskById = async (req, res) => {
 
     // 检查任务是否存在
     if (!task) {
-      return res.status(404).json({ message: "任务不存在" });
+      return res.status(404).json({ message: "Task does not exist" });
     }
 
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "permission denied" });
     }
 
     res.json(task);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -92,11 +92,11 @@ const updateTask = async (req, res) => {
     const task = await Task.findById(req.params.id).populate("cardUsed");
     // 检查任务是否存在
     if (!task) {
-      return res.status(404).json({ message: "任务不存在" });
+      return res.status(404).json({ message: "Task does not exist" });
     }
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "permission denied" });
     }
 
     // 优先处理子任务状态更新
@@ -104,7 +104,7 @@ const updateTask = async (req, res) => {
     if (subTaskId && status) {
       const sub = task.subTasks.id(subTaskId);
       if (!sub) {
-        return res.status(404).json({ message: "子任务未找到" });
+        return res.status(404).json({ message: "Subtask not found" });
       }
       sub.status = status;
       await task.save();
@@ -139,22 +139,22 @@ const updateTask = async (req, res) => {
 
     let rewardResult = null;
 
-    if (req.body.status === "已完成" && oldStatus !== "已完成") {
+    if (req.body.status === "Finished" && oldStatus !== "Finished") {
       // 如果主任务变为已完成，处理奖励与历史记录
       if (
-        task.type === "短期" &&
+        task.type === "Short" &&
         task.slotEquippedAt &&
         Date.now() - new Date(task.slotEquippedAt).getTime() >
           24 * 60 * 60 * 1000
       ) {
-        task.status = "过期";
+        task.status = "Expired";
         await task.save();
-        return res.status(400).json({ message: "短期任务已过期，无法完成" });
+        return res.status(400).json({ message: "The short-term task has expired and cannot be completed" });
       }
 
       task.completedAt = Date.now();
       await task.save(); // ✅ 保存更新（包括 status 字段）
-      console.log("任务ID:", task._id); // 应该是 ObjectId 类型
+      console.log("Task ID:", task._id); // 应该是 ObjectId 类型
       console.log("传入 handleTaskCompletion 的 ID:", task._id?.toString());
       // ✅ 调用 handleTaskCompletion 并接收返回值
       const { handleTaskCompletion } = await import("./levelController.js");
@@ -172,13 +172,13 @@ const updateTask = async (req, res) => {
 
     // ✅ 最终统一响应
     return res.json({
-      message: "任务已更新",
+      message: "Task updated",
       task: updatedTask.toObject(), // 👈 确保 _id 是字符串存在的
       reward: rewardResult,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "服务器错误" });
+    return res.status(500).json({ message: "Server Error" });
   }
 };
 // @desc 删除任务（并归档到历史记录）
@@ -187,9 +187,9 @@ const updateTask = async (req, res) => {
 const deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate("cardUsed");
-    if (!task) return res.status(404).json({ message: "任务不存在" });
+    if (!task) return res.status(404).json({ message: "Task does not exist" });
     if (task.user.toString() !== req.user._id.toString())
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "Permission denied" });
 
     // 从用户卡片库存中移除
     if (task.cardUsed) {
@@ -201,13 +201,13 @@ const deleteTask = async (req, res) => {
 
     // 删除任务本身
     await task.deleteOne();
-    res.json({ message: "任务已归档并删除" });
+    res.json({ message: "The task has been archived and deleted" });
 
     //删除一个任务，计数一次
     await addDeletedTasksNum(req.user._id);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -234,7 +234,7 @@ const getEquippedTasks = async (req, res) => {
     res.json(tasks);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -246,29 +246,29 @@ const equipTask = async (req, res) => {
     const { slotPosition, slotType } = req.body;
     // 验证槽位位置
     if (slotPosition === undefined || slotPosition < 0 || slotPosition > 2) {
-      return res.status(400).json({ message: "无效的任务槽位置" });
+      return res.status(400).json({ message: "Invalid task slot position" });
     }
     // 验证槽位类型
     if (!["short", "long"].includes(slotType)) {
-      return res.status(400).json({ message: "无效的槽位类型" });
+      return res.status(400).json({ message: "Invalid slot type" });
     }
 
     // 查找要装备的任务
     const task = await Task.findById(req.params.id);
     // 检查任务是否存在
     if (!task) {
-      return res.status(404).json({ message: "任务不存在" });
+      return res.status(404).json({ message: "Task does not exist" });
     }
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "Permission denied" });
     }
     // 检查任务类型是否匹配槽位类型
-    const expectedType = slotType === "long" ? "长期" : "短期";
+    const expectedType = slotType === "long" ? "Long" : "Short";
     if (task.type !== expectedType) {
       return res
         .status(400)
-        .json({ message: `只能装备${expectedType}任务到该槽位` });
+        .json({ message: `You can only equip ${expectedType} tasks to this slot` });
     }
 
     // 检查该槽位是否已有同类型任务
@@ -280,7 +280,7 @@ const equipTask = async (req, res) => {
     });
 
     if (existingTask && existingTask._id.toString() !== task._id.toString()) {
-      return res.status(400).json({ message: "该槽位已被同类型任务占用" });
+      return res.status(400).json({ message: "This slot has been occupied by a task of the same type." });
     }
     // 装备新任务
     task.equipped = true;
@@ -291,7 +291,7 @@ const equipTask = async (req, res) => {
     res.json(updatedTask);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -304,12 +304,12 @@ const unequipTask = async (req, res) => {
 
     // 检查任务是否存在
     if (!task) {
-      return res.status(404).json({ message: "任务不存在" });
+        return res.status(404).json({ message: "Task does not exist" });
     }
 
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "Permission denied" });
     }
 
     // 卸下任务
@@ -320,7 +320,7 @@ const unequipTask = async (req, res) => {
     res.json(updatedTask);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 

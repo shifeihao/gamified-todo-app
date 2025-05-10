@@ -7,12 +7,12 @@ function classNames(...classes) {
 }
 
 export const ExampleHeadlessUIDropdown = () => {
-  const [selected, setSelected] = useState('选择一个选项');
+  const [selected, setSelected] = useState('Select an option');
 
   const options = [
-    { id: 1, name: '选项一' },
-    { id: 2, name: '选项二' },
-    { id: 3, name: '选项三' },
+    { id: 1, name: 'option 1' },
+    { id: 2, name: 'option 2' },
+    { id: 3, name: 'option 3' },
   ];
 
   return (
