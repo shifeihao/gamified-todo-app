@@ -8,7 +8,7 @@ const AchievementSchema = new mongoose.Schema(
     points: { type: Number, default: 0 },
     category: {
       type: String,
-      enum: ["累计型", "持续型", "成长型", "探索型", "彩蛋型"],
+      enum: ["Cumulative", "Continuous", "Growth", "Exploration", "Easter_Egg"],
       required: true,
     },
     isHidden: { type: Boolean, default: false },

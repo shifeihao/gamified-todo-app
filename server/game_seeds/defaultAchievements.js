@@ -1,10 +1,11 @@
 const defaultAchievements = [
   {
-    name: "第一滴血",
-    description: "你删了第一个任务，任务失败并不是终点。",
-    condition: "删除卡槽里的一个任务",
+    name: "First Blood",
+    description:
+      "You reached the bottom and saw the truth—your ultimate achievement.",
+    condition: "Delete a task from the slot",
     points: 3,
-    category: "探索型",
+    category: "Exploration",
     isHidden: true,
     reward: {
       exp: 0,
@@ -20,11 +21,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "鸽子放飞者",
-    description: "你已经连续跳票三天，是在等灵感吗？",
-    condition: "连续 3 天未完成任何任务",
+    name: "Chronic Procrastinator",
+    description:
+      "You have postponed tasks for three consecutive days. Waiting for inspiration?",
+    condition: "Fail to complete any task for 3 consecutive days",
     points: 5,
-    category: "持续型",
+    category: "Continuous",
     isHidden: true,
     reward: {
       exp: 0,
@@ -40,11 +42,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "生活编辑者",
-    description: "你像导演一样修改、调整、重构任务，让生活按剧本走。",
-    condition: "修改任务内容累计10次",
+    name: "Life Editor",
+    description:
+      "You edit, adjust, and restructure tasks like a director, making life follow the script.",
+    condition: "Edit task content 10 times in total",
     points: 10,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -60,11 +63,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "勇敢放弃者",
-    description: "不是不努力，只是果断删了。",
-    condition: "删除任务累计 10 个",
+    name: "Bold Quitter",
+    description: "It's not about not trying, it's about decisively deleting.",
+    condition: "Delete 10 tasks in total",
     points: 5,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: true,
     reward: {
       exp: 0,
@@ -81,11 +84,12 @@ const defaultAchievements = [
   },
 
   {
-    name: "效率机器",
-    description: "连续3天不间断，习惯从来都是一点点养成的。",
-    condition: "连续 3 天完成任务",
+    name: "Productivity Machine",
+    description:
+      "Three days of uninterrupted work. Habits are built step by step.",
+    condition: "Complete tasks for 3 consecutive days",
     points: 10,
-    category: "持续型",
+    category: "Continuous",
     isHidden: false,
     reward: {
       exp: 0,
@@ -101,11 +105,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "7日不败",
-    description: "一周坚持完成任务，值得奖励一个微笑。",
-    condition: "连续 7 天完成任务",
+    name: "Unbeaten for 7 Days",
+    description: "Complete tasks for a week straight. You deserve a smile.",
+    condition: "Complete tasks for 7 consecutive days",
     points: 15,
-    category: "持续型",
+    category: "Continuous",
     isHidden: false,
     reward: {
       exp: 0,
@@ -121,11 +125,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "午夜冲刺者",
-    description: "别人梦里你在敲键盘，任务和夜猫子一个都不能少。",
-    condition: "最晚完成任务的时间超过23:00",
+    name: "Midnight Sprinter",
+    description:
+      "While others dream, you're typing away. Tasks and night owls can't be missed.",
+    condition: "Complete a task after 23:00",
     points: 10,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -142,11 +147,11 @@ const defaultAchievements = [
   },
 
   {
-    name: "等级初醒",
-    description: "Lv.10，恭喜你走出新手村。",
-    condition: "升级到 10 级",
+    name: "Awakening Level",
+    description: "Lv.10, congratulations on leaving the beginner's village.",
+    condition: "Reach level 10",
     points: 10,
-    category: "成长型",
+    category: "Growth",
     isHidden: false,
     reward: {
       exp: 0,
@@ -162,11 +167,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "任务合体术",
-    description: "你将5个子任务完美融合，安排得明明白白。",
-    condition: "创建一个含5个以上子任务的长期任务",
+    name: "Task Fusion",
+    description:
+      "You perfectly merged 5 subtasks, making everything crystal clear.",
+    condition: "Create a long-term task with more than 5 subtasks",
     points: 10,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -182,11 +188,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "新手上路",
-    description: "完成10个任务，说明你不是随便试试。",
-    condition: "累计完成 10 个任务",
+    name: "Rookie on the Road",
+    description: "Complete 10 tasks, proving you're not just trying it out.",
+    condition: "Complete 10 tasks in total",
     points: 10,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -203,11 +209,11 @@ const defaultAchievements = [
   },
 
   {
-    name: "最后五分钟",
-    description: "你总能踩在Deadline上跳舞。",
-    condition: "在卡槽任务过期前5分钟内完成任务",
+    name: "Last Five Minutes",
+    description: "You always manage to dance on the edge of the deadline.",
+    condition: "Complete a task within 5 minutes before it expires in the slot",
     points: 15,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -223,11 +229,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "习惯成型",
-    description: "Lv.20，做事开始得心应手。",
-    condition: "升级到 20 级",
+    name: "Habit Formed",
+    description: "Lv.20, you're starting to get the hang of things.",
+    condition: "Reach level 20",
     points: 15,
-    category: "成长型",
+    category: "Growth",
     isHidden: false,
     reward: {
       exp: 0,
@@ -243,11 +249,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "月度信仰",
-    description: "30天从未放弃，这不只是打卡，这是生活方式。",
-    condition: "连续 30 天完成任务",
+    name: "Monthly Devotion",
+    description:
+      "30 days without giving up. This is more than a habit, it's a lifestyle.",
+    condition: "Complete tasks for 30 consecutive days",
     points: 25,
-    category: "持续型",
+    category: "Continuous",
     isHidden: false,
     reward: {
       exp: 0,
@@ -263,11 +270,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "先苦后甜",
-    description: "你在一早完成所有任务，是时间管理典范。",
-    condition: "最早完成任务的时间在早上8点前",
+    name: "Early Riser",
+    description:
+      "You completed all your tasks early in the morning. A true time management expert.",
+    condition: "Complete all tasks before 8:00 AM",
     points: 15,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -283,11 +291,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "速战速决",
-    description: "任务创建后 1 小时内就完成，效率令人发指。",
-    condition: "创建并在1小时内完成一个任务",
+    name: "Swift Executor",
+    description:
+      "You completed a task within 1 hour of creating it. Efficiency at its peak.",
+    condition: "Create and complete a task within 1 hour",
     points: 15,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -304,11 +313,12 @@ const defaultAchievements = [
   },
 
   {
-    name: "短期专家",
-    description: "多次完成短期任务？你是执行力的代名词。",
-    condition: "累计完成 20 个短期任务",
-    points: 15,
-    category: "累计型",
+    name: "Short Task Specialist",
+    description:
+      "You completed multiple short-term tasks. You're the definition of execution power.",
+    condition: "Complete 20 short-term tasks in total",
+    points: 1,
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -324,11 +334,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "任务养成中",
-    description: "50次记录，习惯已经开始悄悄扎根。",
-    condition: "累计完成 50 个任务",
+    name: "Task Habit Developer",
+    description: "50 tasks completed. A habit is quietly taking root.",
+    condition: "Complete 50 tasks in total",
     points: 20,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -344,11 +354,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "百战初成",
-    description: "你开始懂得什么叫时间的力量。",
-    condition: "累计完成 100 个任务",
+    name: "Veteran in the Making",
+    description: "You are beginning to understand the power of time.",
+    condition: "Complete 100 tasks in total",
     points: 20,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -364,11 +374,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "持久战士",
-    description: "长期任务的耐心让你变得格外可靠。",
-    condition: "累计完成 10 个长期任务",
+    name: "Long-term Warrior",
+    description:
+      "Your patience with long-term tasks makes you exceptionally reliable.",
+    condition: "Complete 10 long-term tasks in total",
     points: 20,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -384,11 +395,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "卡槽全开",
-    description: "满配短期和长期卡槽，工作空间爆表。",
-    condition: "解锁全部 10 个卡槽",
+    name: "Full Slot Power",
+    description:
+      "Fully equipped with short-term and long-term slots. Your workspace is maxed out.",
+    condition: "Unlock all 10 slots",
     points: 20,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -405,11 +417,12 @@ const defaultAchievements = [
   },
 
   {
-    name: "经验达人",
-    description: "累计获得 50,000 经验值，你的努力看得见。",
-    condition: "累计经验值达 50,000",
+    name: "XP Master",
+    description:
+      "Accumulate 50,000 experience points. Your efforts are visible.",
+    condition: "Accumulate 50,000 experience points",
     points: 30,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -425,11 +438,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "自律图腾",
-    description: "90天连续不断，你快成自律图腾了。",
-    condition: "连续 90 天完成任务",
+    name: "Totem of Discipline",
+    description:
+      "90 days of continuous effort. You are becoming a totem of discipline.",
+    condition: "Complete tasks for 90 consecutive days",
     points: 40,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -445,11 +459,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "任务之神",
-    description: "累计完成 1000 次任务， 你是时间的驾驭者。",
-    condition: "累计完成 1000 个任务",
+    name: "Task Deity",
+    description: "Complete 1,000 tasks in total. You are the master of time.",
+    condition: "Complete 1,000 tasks in total",
     points: 40,
-    category: "累计型",
+    category: "Cumulative",
     isHidden: false,
     reward: {
       exp: 0,
@@ -465,11 +479,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "任务大师",
-    description: "Lv.40，身经百战的老手。",
-    condition: "升级到 40 级",
+    name: "Task Master",
+    description: "Lv.40, a seasoned veteran.",
+    condition: "Reach level 40",
     points: 30,
-    category: "成长型",
+    category: "Growth",
     isHidden: false,
     reward: {
       exp: 0,
@@ -486,11 +500,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "已臻化境",
-    description: "满级？你已经是这片任务大陆的传说。",
-    condition: "升级到 60 级",
+    name: "Legendary Level",
+    description: "Max level? You are now a legend in the task world.",
+    condition: "Reach level 60",
     points: 50,
-    category: "成长型",
+    category: "Growth",
     isHidden: false,
     reward: {
       exp: 0,
@@ -507,11 +521,11 @@ const defaultAchievements = [
     },
   },
   {
-    name: "稳定如神",
-    description: "365 天不缺席，你是任务之神。",
-    condition: "连续 365 天完成任务",
+    name: "Steadfast as a God",
+    description: "365 days without missing a task. You are the god of tasks.",
+    condition: "Complete tasks for 365 consecutive days",
     points: 100,
-    category: "持续型",
+    category: "Continuous",
     isHidden: false,
     reward: {
       exp: 0,
@@ -527,11 +541,12 @@ const defaultAchievements = [
     },
   },
   {
-    name: "卡片收纳狂",
-    description: "你囤下了整整一打空白卡，是准备开店了吗？",
-    condition: "最高持有10张以上的白卡",
+    name: "Card Hoarder",
+    description:
+      "You hoarded a dozen blank cards. Are you planning to open a shop?",
+    condition: "Hold more than 10 blank cards at once",
     points: 10,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -547,11 +562,12 @@ const defaultAchievements = [
   },
 
   {
-    name: "腰包鼓了鼓	",
-    description: "你身上开始有点份量了，但真正的富有还在远方。",
-    condition: "最高持有3000金币以上",
+    name: "Wallet Gained Weight",
+    description:
+      "Your wallet is getting heavier, but true wealth is still far away.",
+    condition: "Hold more than 3,000 coins at once",
     points: 20,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -567,11 +583,12 @@ const defaultAchievements = [
   },
 
   {
-    name: "黄金蓄能者",
-    description: "你用行动证明了储蓄是一种力量，金币在你手中闪闪发光。",
-    condition: "最高持有10000金币以上",
+    name: "Gold Hoarder",
+    description:
+      "You proved that saving is a strength. Coins shine in your hands.",
+    condition: "Hold more than 10,000 coins at once",
     points: 25,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -587,11 +604,12 @@ const defaultAchievements = [
   },
 
   {
-    name: "奇迹调度者",
-    description: "你收集了十张特殊卡，计划背后藏着力量与野心。",
-    condition: "最高持有10张特殊卡",
+    name: "Miracle Planner",
+    description:
+      "You collected 10 special cards. Behind the plan lies power and ambition.",
+    condition: "Hold 10 special cards at once",
     points: 15,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -607,11 +625,12 @@ const defaultAchievements = [
   },
 
   {
-    name: "晨光起步者",
-    description: "当别人还在沉睡时，你已迈出了高效的一步。",
-    condition: "最早创建任务的时间小于08:00:00",
+    name: "Dawn Starter",
+    description:
+      "While others are still asleep, you've taken the first efficient step.",
+    condition: "Create a task before 08:00 AM",
     points: 3,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -627,11 +646,11 @@ const defaultAchievements = [
   },
 
   {
-    name: "熬夜生产者",
-    description: "任务不等人，灵感不等天亮",
-    condition: "最晚创建任务的时间超过23:00",
+    name: "Late-night Creator",
+    description: "Tasks wait for no one, and inspiration waits for no sunrise.",
+    condition: "Create a task after 23:00",
     points: 3,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -647,11 +666,12 @@ const defaultAchievements = [
   },
 
   {
-    name: "成就之神",
-    description: "你收集了全部成就，这是任务界的终极荣誉。",
-    condition: "解锁全部成就",
+    name: "Achievement God",
+    description:
+      "You unlocked all achievements. This is the ultimate honor in the task world.",
+    condition: "Unlock all achievements",
     points: 100,
-    category: "彩蛋型",
+    category: "Easter_Egg",
     isHidden: false,
     reward: {
       exp: 0,
@@ -662,16 +682,17 @@ const defaultAchievements = [
     isEnabled: true,
     logic: {
       type: "achievements_total_unlocked",
-      value: "33",
+      value: 33,
       op: "gte",
     },
   },
   {
-    name: "初来乍到",
-    description: "万事起头难，但你已经走出了第一步。",
-    condition: "完成 1 个任务",
+    name: "Newcomer",
+    description:
+      "The first step is always the hardest, but you've already taken it.",
+    condition: "Complete 1 task",
     points: 5,
-    category: "探索型",
+    category: "Exploration",
     isHidden: false,
     reward: {
       exp: 0,
@@ -683,6 +704,131 @@ const defaultAchievements = [
     logic: {
       type: "task_completed_total",
       value: 1,
+      op: "gte",
+    },
+  },
+  {
+    name: "Step into the Maze",
+    description:
+      "Your first exploration of the maze marks the beginning of your adventure.",
+    condition: "Reach a maximum maze exploration depth of 10 levels",
+    points: 10,
+    category: "Growth",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+      item: null,
+    },
+    icon: "default_icon_unlocked_35.png",
+    isEnabled: true,
+    logic: {
+      type: "max_maze_level",
+      value: 10,
+      op: "gte",
+    },
+  },
+  {
+    name: "Lost Explorer",
+    description:
+      "You've ventured deeper into the maze, still carrying confusion.",
+    condition: "Reach a maximum maze exploration depth of 20 levels",
+    points: 20,
+    category: "Growth",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+      item: null,
+    },
+    icon: "default_icon_unlocked_36.png",
+    isEnabled: true,
+    logic: {
+      type: "max_maze_level",
+      value: 20,
+      op: "gte",
+    },
+  },
+  {
+    name: "Name of the Brave",
+    description: "You are now called 'The Challenger.'",
+    condition: "Reach a maximum maze exploration depth of 30 levels",
+    points: 30,
+    category: "Growth",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+      item: null,
+    },
+    icon: "default_icon_unlocked_37.png",
+    isEnabled: true,
+    logic: {
+      type: "max_maze_level",
+      value: 30,
+      op: "gte",
+    },
+  },
+  {
+    name: "Abyss Conqueror",
+    description:
+      "You've entered the higher levels of the maze, and your strength is growing significantly.",
+    condition: "Reach a maximum maze exploration depth of 40 levels",
+    points: 40,
+    category: "Growth",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+      item: null,
+    },
+    icon: "default_icon_unlocked_38.png",
+    isEnabled: true,
+    logic: {
+      type: "max_maze_level",
+      value: 40,
+      op: "gte",
+    },
+  },
+  {
+    name: "Blade of the Boundary",
+    description:
+      "Touching the truth of the maze means breaking limits and approaching the extreme.",
+    condition: "Reach a maximum maze exploration depth of 50 levels",
+    points: 50,
+    category: "Growth",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+      item: null,
+    },
+    icon: "default_icon_unlocked_39.png",
+    isEnabled: true,
+    logic: {
+      type: "max_maze_level",
+      value: 50,
+      op: "gte",
+    },
+  },
+  {
+    name: "Maze Overlord",
+    description:
+      "Reaching the deepest part of the maze, you witnessed the truth of the world. This is your ultimate achievement.",
+    condition: "Reach a maximum maze exploration depth of 60 levels",
+    points: 60,
+    category: "Growth",
+    isHidden: false,
+    reward: {
+      exp: 0,
+      coins: 0,
+      item: null,
+    },
+    icon: "default_icon_unlocked_40.png",
+    isEnabled: true,
+    logic: {
+      type: "max_maze_level",
+      value: 60,
       op: "gte",
     },
   },
