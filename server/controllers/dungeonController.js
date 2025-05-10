@@ -248,52 +248,52 @@ export const exploreCurrentFloor = async (req, res) => {
     let hp = stats.currentExploration.currentHp ?? 100;
     console.log('Current HP:', hp);
     
-    // // 1. 事件处理 - 确保事件存在
-    // if (Array.isArray(floor.events) && floor.events.length > 0) {
-    //   console.log('Events to process:', floor.events.length);
-    //   for (const event of floor.events) {
-    //     if (!event) continue;
-    //     try {
-    //       console.log('Processing event:', event._id);
-    //       const result = await resolveEventEffects(event, stats, hp);
-    //       console.log('Event result:', result);
+    // 1. 事件处理 - 确保事件存在
+    if (Array.isArray(floor.events) && floor.events.length > 0) {
+      console.log('Events to process:', floor.events.length);
+      for (const event of floor.events) {
+        if (!event) continue;
+        try {
+          console.log('Processing event:', event._id);
+          const result = await resolveEventEffects(event, stats, hp);
+          console.log('Event result:', result);
           
-    //       if (result?.log) logs.push(result.log);
+          if (result?.log) logs.push(result.log);
           
-    //       // 确保HP不会变成NaN
-    //       if (result?.hp != null && !isNaN(result.hp)) {
-    //         hp = result.hp;
-    //       } else {
-    //         console.warn('Invalid HP value from event, keeping current HP:', hp);
-    //       }
+          // 确保HP不会变成NaN
+          if (result?.hp != null && !isNaN(result.hp)) {
+            hp = result.hp;
+          } else {
+            console.warn('Invalid HP value from event, keeping current HP:', hp);
+          }
           
-    //       if (result?.pause) {
-    //         stats.currentExploration.status = stats.currentExploration.status || {};
-    //         stats.currentExploration.status.inCombat = false;
+          if (result?.pause) {
+            stats.currentExploration.status = stats.currentExploration.status || {};
+            stats.currentExploration.status.inCombat = false;
             
-    //         // 在保存之前验证所有数值
-    //         validateUserStats(stats);
+            // 在保存之前验证所有数值
+            validateUserStats(stats);
             
-    //         try {
-    //           await stats.save();
-    //         } catch (pauseError) {
-    //           console.error('Error saving stats during pause:', pauseError);
-    //           // 继续返回结果，不中断流程
-    //         }
+            try {
+              await stats.save();
+            } catch (pauseError) {
+              console.error('Error saving stats during pause:', pauseError);
+              // 继续返回结果，不中断流程
+            }
             
-    //         return res.json({ 
-    //           logs, 
-    //           pause: true, 
-    //           eventType: result.eventType || event.type || 'unknown',
-    //           currentHp: hp
-    //         });
-    //       }
-    //     } catch (eventError) {
-    //       console.error('Event processing error:', eventError);
-    //       logs.push(`Error processing event: ${event.name || 'Unknown'}`);
-    //     }
-    //   }
-    // }
+            return res.json({ 
+              logs, 
+              pause: true, 
+              eventType: result.eventType || event.type || 'unknown',
+              currentHp: hp
+            });
+          }
+        } catch (eventError) {
+          console.error('Event processing error:', eventError);
+          logs.push(`Error processing event: ${event.name || 'Unknown'}`);
+        }
+      }
+    }
     
     // 2. 战斗处理 - 安全地收集怪物 ID
     const monsterIds = [];
@@ -560,7 +560,7 @@ export const summarizeExploration = async (req, res) => {
 };
 
 
-// 在 controllers/dungeonController.js 中添加
+// 在 controllers/dungeonController.js 中修改
 export const interactWithShopEvent = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -569,11 +569,6 @@ export const interactWithShopEvent = async (req, res) => {
     const stats = await UserDungeonStats.findOne({ user: userId });
     if (!stats || !stats.currentExploration) {
       return res.status(400).json({ error: 'Not currently in an exploration' });
-    }
-    
-    // 确保用户在商店事件中
-    if (!stats.currentExploration.status || !stats.currentExploration.status.inShop) {
-      return res.status(400).json({ error: 'Not currently in a shop event' });
     }
     
     // 处理购买行为
@@ -607,10 +602,8 @@ export const interactWithShopEvent = async (req, res) => {
         gold: stats.gold
       });
     } else if (action === 'leave') {
-      // 离开商店，继续探索
-      stats.currentExploration.status.inShop = false;
-      await stats.save();
-      
+      // 我们不再需要检查inShop状态，因为schema中没有这个字段
+      // 直接返回成功，允许继续探索
       return res.json({
         success: true,
         message: 'You left the shop.',
@@ -635,6 +628,10 @@ export const continueExploration = async (req, res) => {
       return res.status(400).json({ error: 'No active exploration to continue' });
     }
     
+    // 记录是否来自商店
+    const wasInShop = stats.currentExploration.status?.inShop === true;
+    console.log('Was in shop:', wasInShop);
+    
     // 重置事件状态
     if (stats.currentExploration.status) {
       stats.currentExploration.status.inShop = false;
@@ -642,13 +639,269 @@ export const continueExploration = async (req, res) => {
     }
     
     await stats.save();
+
+    // 如果是从商店离开，跳过事件处理直接准备战斗
+    if (wasInShop) {
+      // 这里可以添加从当前楼层直接获取怪物的逻辑
+      return await prepareCombatAfterShop(req, res);
+    }
     
-    // 继续到下一层
+    // 正常继续到下一层
     return await exploreCurrentFloor(req, res);
   } catch (err) {
     console.error('continueExploration error:', err);
     return res.status(500).json({ error: 'Failed to continue exploration' });
   }
 };
+
+// 添加一个新函数专门处理商店后战斗
+export const prepareCombatAfterShop = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // 获取用户统计
+    const stats = await UserDungeonStats.findOne({ user: userId })
+      .populate('Skills');
+    
+    if (!stats || !stats.currentExploration) {
+      return res.status(400).json({ error: 'No active exploration' });
+    }
+    
+    let dungeonSlug = stats.currentExploration.dungeonSlug || stats.dungeonSlug || 'echo-labyrinth';
+    let floorIndex = stats.currentExploration.floorIndex;
+    floorIndex = parseInt(floorIndex, 10);
+    
+    if (isNaN(floorIndex) || floorIndex < 1) {
+      floorIndex = 1;
+      stats.currentExploration.floorIndex = 1;
+      await stats.save();
+    }
+    
+    // 查找迷宫和楼层
+    const dungeon = await Dungeon.findOne({ slug: dungeonSlug })
+      .populate('floors.monsters.monster')
+      .populate('floors.boss');
+    
+    if (!dungeon) {
+      return res.status(404).json({ error: 'Dungeon not found.' });
+    }
+    
+    const floor = dungeon.floors?.find(f => f.floorIndex === floorIndex);
+    if (!floor) {
+      return res.status(404).json({ error: 'Floor not found.' });
+    }
+    
+    const logs = [];
+    let hp = stats.currentExploration.currentHp ?? 100;
+    
+    // 直接进入战斗处理 - 跳过事件处理
+    const monsterIds = [];
+    const monsterInfos = [];
+    
+    // 收集怪物信息
+    if (Array.isArray(floor.monsters)) {
+      for (const monsterInfo of floor.monsters) {
+        if (monsterInfo?.monster?._id) {
+          const count = monsterInfo.count || 1;
+          for (let i = 0; i < count; i++) {
+            monsterIds.push(monsterInfo.monster._id);
+            monsterInfos.push({
+              id: monsterInfo.monster._id,
+              name: monsterInfo.monster.name,
+              portrait: monsterInfo.monster.portrait
+            });
+          }
+        }
+      }
+    }
+    
+    // 添加BOSS (如果存在)
+    if (floor.boss?._id) {
+      monsterIds.push(floor.boss._id);
+      monsterInfos.push({
+        id: floor.boss._id,
+        name: floor.boss.name,
+        portrait: floor.boss.portrait,
+        isBoss: true
+      });
+    }
+    
+    console.log('Monsters after shop:', monsterIds.length);
+    
+    // 如果没有怪物，继续正常探索
+    if (monsterIds.length === 0) {
+      console.log('No monsters after shop, continuing exploration');
+      return await exploreCurrentFloor(req, res);
+    }
+    
+    // 返回怪物信息，前端将处理战斗
+    return res.json({
+      logs,
+      monsters: monsterInfos,
+      result: 'continue',
+      currentFloor: floorIndex,  // 当前楼层
+      nextFloor: stats.currentExploration.floorIndex,
+      currentHp: hp,
+      shopTransition: true  // 标记这是从商店过来的，前端可以据此特殊处理
+    });
+    
+  } catch (err) {
+    console.error('prepareCombatAfterShop error:', err);
+    return res.status(500).json({ 
+      error: 'Internal server error', 
+      message: err.message 
+    });
+  }
+};
+
+
+export const updateCombatResult = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { survived, remainingHp } = req.body;
+    
+    // 获取用户统计
+    const stats = await UserDungeonStats.findOne({ user: userId });
+    if (!stats || !stats.currentExploration) {
+      return res.status(400).json({ error: 'No active exploration' });
+    }
+    
+    let floorIndex = stats.currentExploration.floorIndex;
+    const dungeonSlug = stats.currentExploration.dungeonSlug || stats.dungeonSlug;
+    
+    console.log(`Combat result update - Floor before: ${floorIndex}, Survived: ${survived}`);
+    
+    // 更新HP
+    stats.currentExploration.currentHp = remainingHp;
+    
+    // 如果战斗成功，增加楼层
+    if (survived) {
+      // 获取当前探索的迷宫
+      const dungeon = await Dungeon.findOne({ slug: dungeonSlug });
+      
+      // 增加楼层
+      floorIndex = parseInt(floorIndex, 10);
+      stats.currentExploration.floorIndex = floorIndex + 1;
+      
+      // 处理经验值等其他逻辑...
+      const expGained = 10 + (floorIndex * 2); // 简化的经验计算
+      stats.dungeonExp = (stats.dungeonExp || 0) + expGained;
+      
+      console.log(`Combat result update - Floor after: ${stats.currentExploration.floorIndex}`);
+      
+      // 检查是否达到迷宫终点
+      const isEnd = dungeon && stats.currentExploration.floorIndex > (dungeon.maxFloor || 1);
+      if (isEnd) {
+        // 结束迷宫探索逻辑...
+        stats.currentExploration = undefined;
+        
+        // 保存并返回结算信息
+        await stats.save();
+        return res.json({ 
+          result: 'completed',
+          message: 'Dungeon completed!',
+          experienceGained: expGained
+        });
+      }
+    } else {
+      // 战斗失败逻辑
+      stats.currentExploration = undefined; // 清除探索状态
+      
+      await stats.save();
+      return res.json({
+        result: 'defeat',
+        message: 'You were defeated.'
+      });
+    }
+    
+    // 保存更新的状态
+    await stats.save();
+    
+    return res.json({
+      result: 'continue',
+      currentFloor: floorIndex,
+      nextFloor: stats.currentExploration.floorIndex,
+      currentHp: remainingHp,
+      experienceGained: expGained || 0
+    });
+    
+  } catch (err) {
+    console.error('Update combat result error:', err);
+    return res.status(500).json({ 
+      error: 'Failed to update combat result',
+      message: err.message
+    });
+  }
+};
+
+
+export const updateAfterCombat = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { result, remainingHp } = req.body;
+    
+    // 获取用户状态
+    const stats = await UserDungeonStats.findOne({ user: userId });
+    if (!stats || !stats.currentExploration) {
+      return res.status(400).json({ error: 'No active exploration' });
+    }
+    
+    // 获取当前楼层
+    let floorIndex = stats.currentExploration.floorIndex;
+    console.log('Current floor:', floorIndex);
+    
+    // 更新HP
+    stats.currentExploration.currentHp = remainingHp;
+    
+    // 如果战斗胜利，处理层数增加
+    if (result === 'victory') {
+      // 增加层数
+      floorIndex = parseInt(floorIndex, 10);
+      stats.currentExploration.floorIndex = floorIndex + 1;
+      console.log('Advanced to floor:', stats.currentExploration.floorIndex);
+      
+      // 处理经验获取等
+      const expGained = 10 + (floorIndex * 2);
+      stats.dungeonExp = (stats.dungeonExp || 0) + expGained;
+      
+      // 确保exploredFloors数组包含当前楼层
+      stats.exploredFloors = Array.isArray(stats.exploredFloors) ? stats.exploredFloors : [];
+      if (!stats.exploredFloors.includes(floorIndex)) {
+        stats.exploredFloors.push(floorIndex);
+      }
+      
+      // 保存更新后的状态
+      await stats.save();
+      
+      // 返回更新信息
+      return res.json({
+        success: true,
+        message: 'Combat result updated',
+        currentFloor: floorIndex,
+        nextFloor: stats.currentExploration.floorIndex,
+        currentHp: remainingHp,
+        expGained
+      });
+    }
+    
+    // 如果不是胜利，只保存HP更新
+    await stats.save();
+    
+    return res.json({
+      success: true,
+      message: 'HP updated',
+      currentFloor: floorIndex,
+      currentHp: remainingHp
+    });
+    
+  } catch (err) {
+    console.error('Update after combat error:', err);
+    return res.status(500).json({ 
+      error: 'Failed to update after combat',
+      message: err.message
+    });
+  }
+};
+
 
 // 在路由文件中添加
