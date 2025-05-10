@@ -14,7 +14,7 @@ export async function checkIfGodAchievementUnlocked(userId) {
     { $set: { achievements_total_unlocked: unlockedCount } }
   );
 
-  console.log(`🔢 Total achievements for user ${userId} updated：${unlockedCount}`);
+  console.log(`🔢 用户 ${userId} 的成就总数已更新：${unlockedCount}`);
 
   // 3. 获取总启用成就数量（过滤掉未启用的）
   const allEnabledAchievements = await Achievement.find({ isEnabled: true });
@@ -41,7 +41,7 @@ export async function checkIfGodAchievementUnlocked(userId) {
       achievementId: godAchievement._id,
       achievementName: godAchievement.name,
     });
-    console.log(`🏆 User ${userId} unlocked the God of Achievements：${godAchievement.name}`);
+    console.log(`🏆 用户 ${userId} 解锁成就之神：${godAchievement.name}`);
 
     await User.updateOne(
       { _id: userId },
@@ -53,7 +53,7 @@ export async function checkIfGodAchievementUnlocked(userId) {
       }
     );
     console.log(
-      `💰 Rewards：${godAchievement.reward.exp || 0} EXP, ${
+      `💰 奖励：${godAchievement.reward.exp || 0} EXP, ${
         godAchievement.reward.coins || 0
       } Gold`
     );

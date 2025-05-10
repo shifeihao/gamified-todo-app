@@ -15,7 +15,7 @@ const events = [
     slug: "whispering-well",
     icon: "whisper-well.png",
     type: "story",
-    description: "You hear a whisper coming from the well, as if it were the echo of your own childhood.",
+    description: "你听到井中传来低语，似乎是你童年的回声。",
     triggerCondition: "onEnter",
     chance: 1.0,
     effect: {
@@ -27,7 +27,7 @@ const events = [
     slug: "buried-parcel",
     icon: "parcel.png",
     type: "reward",
-    description: "You discover a buried cloth pouch on the ground; inside are what appear to be gold coins and various items.",
+    description: "你在地上发现一个被埋的布袋，里面似乎有金币和物品。",
     triggerCondition: "onEnter",
     chance: 0.8,
     effect: {
@@ -45,7 +45,7 @@ const events = [
     slug: "spiked-floor",
     icon: "spike.png",
     type: "trap",
-    description: "A mechanism clicks into motion, and suddenly steel spikes shoot up from the floor!",
+    description: "一阵机关声响起，地板突然升起钢刺！",
     triggerCondition: "onEnter",
     chance: 0.6,
     effect: {
@@ -57,7 +57,7 @@ const events = [
     slug: "wandering-merchant",
     icon: "merchant.png",
     type: "shop",
-    description: "A mysterious wandering merchant beckons to you, his wares seeming unlike any you’ve ever seen.",
+    description: "一位神秘的流浪商人向你招手，他的货品似乎与众不同。",
     triggerCondition: "onEnter",
     chance: 1.0,
     effect: {
@@ -69,7 +69,7 @@ const events = [
     slug: "echo-tablet",
     icon: "tablet.png",
     type: "story",
-    description: "A cracked stone stele bears the maxims of a vanished civilization",
+    description: "一块布满裂痕的石碑，记载着某个已消失文明的箴言。",
     triggerCondition: "onKill",
     chance: 1.0,
     effect: {

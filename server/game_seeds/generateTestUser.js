@@ -15,13 +15,13 @@ export async function generateTestUser() {
     if (user) {
       console.log("testuser.username", user.username);
       console.log("testuser.email", user._id);
-      console.log("✅ The test user already exists, skip creating it");
+      console.log("✅ 测试用户已存在，跳过创建");
       return;
     }
     // 创建测试用户
     const newUser = await User.create(testuser);
-    console.log("✅ Test user created：)", newUser.username);
+    console.log("✅ 测试用户已创建：)", newUser.username);
   } catch (err) {
-    console.error("❌ Failed to create test user:", err);
+    console.error("❌ 创建测试用户失败:", err);
   }
 }

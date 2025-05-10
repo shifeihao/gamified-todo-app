@@ -7,7 +7,7 @@ import defaultAchievements from "./defaultAchievements.js";
 export async function loadDefaultAchievements() {
   try {
     await Achievement.deleteMany({});
-    console.log("🧹 The original achievement data has been cleared");
+    console.log("🧹 已清空原有成就数据");
     for (const ach of defaultAchievements) {
       // ✅ 跳过缺失 logic 的成就（容错处理）
       if (
@@ -16,17 +16,17 @@ export async function loadDefaultAchievements() {
         ach.logic.type === undefined
       ) {
         console.warn(
-          `⚠️ Achievement Skip：${ach.name}，Reason: Missing logic.value Or type`
+          `⚠️ 成就跳过：${ach.name}，原因：缺少 logic.value 或 type`
         );
         continue;
       }
 
       await Achievement.create(ach);
-      console.log(`✅ Achievement inserted：${ach.name}`);
+      console.log(`✅ 成就已插入：${ach.name}`);
     }
 
-    console.log("🎉 Default achievement data re-import completed");
+    console.log("🎉 默认成就数据重新导入完成");
   } catch (error) {
-    console.error("❌ Importing default achievements failed:", error);
+    console.error("❌ 导入默认成就失败:", error);
   }
 }

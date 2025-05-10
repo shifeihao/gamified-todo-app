@@ -17,8 +17,8 @@ for (const level of levels) {
   };
 
   await Level.updateOne({ _id: level._id }, { $set: updated });
-  console.log(`✅ Repair level ${level.level}`);
+  console.log(`✅ 修复等级 ${level.level}`);
 }
 
-console.log("✨ All level field types have been fixed");
+console.log("✨ 所有等级字段类型已修复完毕");
 process.exit();

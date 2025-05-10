@@ -35,7 +35,7 @@ export const getShopItems = async (req, res) => {
       });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Server Error' });
+      res.status(500).json({ message: '服务器错误' });
     }
 };
 
@@ -45,12 +45,12 @@ export const buyItem = async (req, res) => {
   
       const shopEntry = await ShopInventory.findOne({ item: itemId });
       if (!shopEntry || shopEntry.quantity <= 0) {
-        return res.status(400).json({ message: 'The product is sold out or does not exist' });
+        return res.status(400).json({ message: '商品已售罄或不存在' });
       }
   
       const user = req.user;
       if (user.gold < shopEntry.price) {
-        return res.status(400).json({ message: 'Insufficient coins' });
+        return res.status(400).json({ message: '金币不足' });
       }
   
       // 扣金币
@@ -68,10 +68,10 @@ export const buyItem = async (req, res) => {
         { upsert: true }
       );
   
-      res.json({ message: 'Purchase Success' });
+      res.json({ message: '购买成功' });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Server Error' });
+      res.status(500).json({ message: '服务器错误' });
     }
 };
 
@@ -86,13 +86,13 @@ export const getItemByName = async (req, res) => {
     const item = await ShopItem.findOne({ name });
 
     if (!item) {
-      return res.status(404).json({ message: 'Item not found' });
+      return res.status(404).json({ message: '物品未找到' });
     }
 
     res.json(item);
   } catch (error) {
     console.error('❌ getItemByName error:', error);
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: '服务器错误' });
   }
 };
 
@@ -108,13 +108,13 @@ export const sellItem = async (req, res) => {
     });
 
     if (!inventoryEntry || inventoryEntry.quantity <= 0) {
-      return res.status(400).json({ message: 'There is no such item in the backpack' });
+      return res.status(400).json({ message: '背包中没有该物品' });
     }
 
     // 获取价格（卖出价格为原价一半）
     const shopItem = await ShopItem.findById(itemId);
     if (!shopItem) {
-      return res.status(404).json({ message: 'Item does not exist' });
+      return res.status(404).json({ message: '物品不存在' });
     }
 
     const sellPrice = Math.floor(shopItem.price / 2);
@@ -131,9 +131,9 @@ export const sellItem = async (req, res) => {
       await inventoryEntry.deleteOne();
     }
 
-    res.json({ message: `Successfully sold, obtained ${sellPrice} coins` });
+    res.json({ message: `成功售出，获得 ${sellPrice} 金币` });
   } catch (error) {
     console.error('❌ sellItem error:', error);
-    res.status(500).json({ message: 'server error' });
+    res.status(500).json({ message: '服务器错误' });
   }
 };

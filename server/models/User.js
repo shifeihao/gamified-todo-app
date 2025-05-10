@@ -6,22 +6,22 @@ const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: [true, "Please provide a username"],
+      required: [true, "请提供用户名"],
       unique: true,
       trim: true,
     },
     email: {
       type: String,
-      required: [true, "Please provide email"],
+      required: [true, "请提供邮箱"],
       unique: true,
       match: [
         /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        "Please provide a valid email address",
+        "请提供有效的邮箱地址",
       ],
     },
     password: {
       type: String,
-      required: [true, "Please provide a password"],
+      required: [true, "请提供密码"],
       minlength: 6,
       select: false, // 默认查询不返回密码
     },

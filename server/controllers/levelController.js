@@ -13,20 +13,20 @@ export const handleTaskCompletion = async (req) => {
 
     const task = await Task.findById(taskId).populate("cardUsed");
     if (!task || task.user.toString() !== userId.toString()) {
-      throw new Error("The task is invalid or does not belong to the current user");
+      throw new Error("任务无效或不属于当前用户");
     }
-    if (task.status !== "Finished") {
-      throw new Error("The task has not been completed yet, and the reward cannot be settled.");
+    if (task.status !== "已完成") {
+      throw new Error("任务尚未完成，无法结算奖励");
     }
 
     const user = await User.findById(userId);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error("用户未找到");
 
     let totalExp = 0;
     let totalGold = 0;
 
     // 计算奖励（区分长期与短期）
-    if (task.type === "Long") {
+    if (task.type === "长期") {
       const subExp = task.subTasks.reduce(
         (sum, s) => sum + (s.experience || 0),
         0
@@ -111,7 +111,7 @@ export const handleTaskCompletion = async (req) => {
     // ✅ 返回结果对象，由调用者决定是否发送给前端
     return {
       success: true,
-      message: 'Rewards and levels updated successfully',
+      message: '奖励与等级更新成功',
       experience: newExp,
 
       level: currentLevel.level,
@@ -124,8 +124,8 @@ export const handleTaskCompletion = async (req) => {
       goldGained: totalGold,
     };
   } catch (error) {
-    console.error("❌ Reward and level update failed:", error);
-    throw new Error("Reward and level update failed: " + error.message);
+    console.error("❌ 奖励与等级更新失败:", error);
+    throw new Error("奖励与等级更新失败: " + error.message);
   }
 };
 
@@ -138,7 +138,7 @@ export const handleTaskCompletion = async (req) => {
 export const getUserLevelBar = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: 'User does not exist' });
+    if (!user) return res.status(404).json({ message: '用户不存在' });
 
     const currentLevel = await Level.findOne({ expRequired: { $lte: user.experience } }).sort({ level: -1 });
     const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
@@ -147,12 +147,8 @@ export const getUserLevelBar = async (req, res) => {
     const expProgress = user.experience - currentLevel.expRequired;
     const expRemaining = nextLevelExp - user.experience;
     const progressRate = currentLevel.expToNext > 0
-        ? Math.min(expProgress / currentLevel.expToNext, 1)
-        : 1;
-
-    user.level = currentLevel.level;
-    user.nextLevelExp = nextLevelExp;
-    await user.save();
+      ? Math.min(expProgress / currentLevel.expToNext, 1)
+      : 1;
 
     return res.json({
       level: currentLevel.level,
@@ -161,11 +157,10 @@ export const getUserLevelBar = async (req, res) => {
       expProgress,
       expRemaining,
       progressRate,
-      leveledUp: false,
-      coins: user.gold  // 添加金幣數據
+      leveledUp: false // 登录时一般不会升级，但你可以自定义逻辑
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: 'Failed to obtain level information' });
+    return res.status(500).json({ message: '获取等级信息失败' });
   }
 };

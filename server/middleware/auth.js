@@ -26,12 +26,12 @@ const protect = async (req, res, next) => {
       next();
     } catch (error) {
       console.error(error);
-      res.status(401).json({ message: 'Unauthorized, token invalid' });
+      res.status(401).json({ message: '未授权，token无效' });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Unauthorized, no token' });
+    res.status(401).json({ message: '未授权，没有token' });
   }
 };
 
@@ -40,7 +40,7 @@ const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(403).json({ message: 'No permissions, administrator access only' });
+    res.status(403).json({ message: '没有权限，仅限管理员访问' });
   }
 };
 

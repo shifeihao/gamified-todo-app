@@ -9,8 +9,8 @@ const subTaskSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Unfinished', 'Finished'],
-    default: 'Unfinished',
+    enum: ['待完成', '已完成'],
+    default: '待完成',
   },
   dueDate: {
     type: Date,
@@ -40,7 +40,7 @@ const taskSchema = new mongoose.Schema(
     cardUsed: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Card',
-      required: [true, 'The card you must specify']
+      required: [true, '必须指定使用的卡片']
     },
     baseExperience: {
       type: Number,
@@ -61,7 +61,7 @@ const taskSchema = new mongoose.Schema(
       },
       title: {
       type: String,
-      required: [true, 'Please provide a task title'],
+      required: [true, '请提供任务标题'],
       trim: true,
     },
     description: {
@@ -70,18 +70,18 @@ const taskSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['Short', 'Long'],
-      default: 'Short',
+      enum: ['短期', '长期'],
+      default: '短期',
     },
     status: {
       type: String,
-      enum: ['Unfinished', 'Ongoing', 'Finished', 'Expired'],
-      default: 'Unfinished',
+      enum: ['待完成', '进行中', '已完成', '过期'],
+      default: '待完成',
     },
     category: {
       type: String,
       trim: true,
-      default: 'Default',
+      default: '默认',
     },
     dueDate: {
       type: Date,

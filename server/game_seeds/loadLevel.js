@@ -6,11 +6,11 @@ export async function creatLevel(userId) {
   try {
     // 1. 清空旧的 UserLevel
     await UserLevel.deleteOne({ userId: userId });
-    console.log("✅ Clear the old UserLevel");
+    console.log("✅ 清空旧的 UserLevel");
 
     // 2. 获取等级表中的 LV2 门槛经验
     const level2 = await Level.findOne({ level: 2 });
-    console.log("✅ Get Success");
+    console.log("✅ 获取成功");
     const nextLevelExp = level2?.expRequired || 155;
 
     // 3. 写入默认等级记录
@@ -21,8 +21,8 @@ export async function creatLevel(userId) {
       nextLevelExp,
     });
 
-    console.log("✅ UserLevel Level record writing completed");
+    console.log("✅ UserLevel 等级记录写入完成");
   } catch (err) {
-    console.error("❌ Failed to initialize test user level:", err);
+    console.error("❌ 初始化测试用户等级失败:", err);
   }
 }

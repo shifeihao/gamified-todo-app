@@ -43,14 +43,14 @@ app.use("/", routes);
 // 设置端口并启动服务器
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
-  console.log(`The server runs on port ${PORT}`);
+  console.log(`服务器运行在端口 ${PORT}`);
 
   // 👇 初始化定时任务
   try {
     scheduleDailyCardReset();
     schedulePeriodicCardCheck();
-    console.log("Scheduled task initialization successful");
+    console.log("定时任务初始化成功");
   } catch (error) {
-    console.error("Scheduled task initialization failed:", error);
+    console.error("定时任务初始化失败:", error);
   }
 });

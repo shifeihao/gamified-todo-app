@@ -20,7 +20,7 @@ const user = await User.findOne({ username: "testuser" });
 await loadDefaultAchievements();
 //加载默认UserStat状态
 await createUserStat(user._id);
-console.log("Ready to check achievements");
+console.log("准备检查成就");
 //同步UserStats
 await SyncUserStats(user._id);
 //清空个人目前成就
