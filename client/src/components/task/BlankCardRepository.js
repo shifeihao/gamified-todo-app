@@ -4,7 +4,7 @@ import {RewardCardTile} from './RewardCardTile'; // ✅ 新增引用
 
 export const BlankCardRepository = ({ cards }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedType, setSelectedType] = useState('全部');
+    const [selectedType, setSelectedType] = useState('All');
 
     // 过滤
     const filtered = cards.filter(card => {
@@ -13,7 +13,7 @@ export const BlankCardRepository = ({ cards }) => {
             card.description.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesType =
-            selectedType === '全部' || card.taskDuration === selectedType;
+            selectedType === 'All' || card.taskDuration === selectedType;
 
         return matchesSearch && matchesType;
     });
@@ -47,7 +47,7 @@ export const BlankCardRepository = ({ cards }) => {
                             onChange={e => setSelectedType(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
                         >
-                            {['全部', '短期', '长期'].map(t => (
+                            {['All', 'Short', 'Long'].map(t => (
                                 <option key={t} value={t}>
                                     {t}
                                 </option>

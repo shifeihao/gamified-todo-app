@@ -30,12 +30,12 @@ const scheduleDailyCardReset = () => {
         await user.save();
       }
       
-      console.log('每日卡片重置完成');
+      console.log('Daily card reset completed');
     } catch (error) {
-      console.error('每日卡片重置失败:', error);
+      console.error('Daily card reset failed:', error);
     }
   }, {
-    timezone: "Asia/Shanghai" // 使用中国时区
+    timezone: "Pacific/Auckland" // 使用中国时区
   });
 };
 
@@ -43,7 +43,7 @@ const scheduleDailyCardReset = () => {
 const schedulePeriodicCardCheck = () => {
   cron.schedule('0 * * * *', async () => {
     try {
-      console.log('开始检查周期性卡片冷却...');
+      console.log('Start checking periodic card cooling...');
       
       // 获取所有冷却中的周期性卡片
       const cards = await Card.find({
@@ -56,9 +56,9 @@ const schedulePeriodicCardCheck = () => {
         await card.save();
       }
       
-      console.log('周期性卡片检查完成');
+      console.log('Periodic card check completed');
     } catch (error) {
-      console.error('周期性卡片检查失败:', error);
+      console.error('Periodic card check failed:', error);
     }
   });
 };

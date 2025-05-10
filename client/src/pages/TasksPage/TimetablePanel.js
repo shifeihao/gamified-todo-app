@@ -14,7 +14,7 @@ const TimetablePanel = ({
   user,
 }) => {
   const [activeTab, setActiveTab] = useState("list");
-  const longTasks = equippedTasks.filter((t) => t.type === "长期");
+  const longTasks = equippedTasks.filter((t) => t.type === "Long");
 
   return (
     <div className="mb-8">
@@ -71,7 +71,7 @@ const TimetablePanel = ({
             </>
           )}
           onCreate={onCreateTask}
-          onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, "长期")} // ✅ 明确类型
+          onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, "Long")} // ✅ 明确类型
           onComplete={onComplete}
           onDelete={onDelete}
           onEdit={onEdit}

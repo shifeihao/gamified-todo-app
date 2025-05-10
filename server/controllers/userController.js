@@ -13,7 +13,7 @@ const registerUser = async (req, res) => {
     // 检查用户是否已存在
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: "用户已存在" });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     // 创建新用户
@@ -23,7 +23,7 @@ const registerUser = async (req, res) => {
       password,
     });
 
-    console.log("user._id的名字是", user._id);
+    console.log("user._id name is ", user._id);
     await UserStats.create({
       user: user._id, // ✅ 正确：ObjectId 类型
     });
@@ -39,11 +39,11 @@ const registerUser = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
-      res.status(400).json({ message: "无效的用户数据" });
+      res.status(400).json({ message: "Invalid user data" });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -70,11 +70,11 @@ const loginUser = async (req, res) => {
         longCardSlot: user.longCardSlot,
       });
     } else {
-      res.status(401).json({ message: "邮箱或密码不正确" });
+      res.status(401).json({ message: "Incorrect email or password" });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -97,11 +97,11 @@ const getUserProfile = async (req, res) => {
         longCardSlot: user.longCardSlot,
       });
     } else {
-      res.status(404).json({ message: "用户不存在" });
+      res.status(404).json({ message: "User does not exist" });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -132,11 +132,11 @@ const updateUserProfile = async (req, res) => {
         token: generateToken(updatedUser._id),
       });
     } else {
-      res.status(404).json({ message: "用户不存在" });
+      res.status(404).json({ message: "User does not exist" });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 

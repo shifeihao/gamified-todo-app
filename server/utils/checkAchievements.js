@@ -75,7 +75,7 @@ export async function checkAndUnlockAchievements(userId) {
           achievementId: ach._id,
           achievementName: ach.name,
         });
-        console.log(`🏆 用户 ${userId} 解锁成就：${ach.name}`);
+        console.log(`🏆 User ${userId} unlock achievements：${ach.name}`);
 
         // 4. 奖励发放
         await User.updateOne(
@@ -90,15 +90,15 @@ export async function checkAndUnlockAchievements(userId) {
           }
         );
         console.log(
-          `💰 用户 ${userId} 获得奖励：${ach.reward.exp || 0} 经验，${
+          `💰 User ${userId} Get rewards：${ach.reward.exp || 0} experience，${
             ach.reward.coins || 0
-          } 金币`
+          } Coins`
         );
       }
     }
 
     await checkIfGodAchievementUnlocked(userId);
   } catch (error) {
-    console.error("❌ 检查并解锁成就失败:", error);
+    console.error("❌ Failed to check and unlock achievement:", error);
   }
 }

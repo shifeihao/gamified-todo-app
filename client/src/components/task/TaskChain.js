@@ -14,7 +14,7 @@ export const TaskChain = ({
 
     // ✅ 使用 useMemo 来计算槽位内容，避免死循环
     const slots = useMemo(() => {
-        const longTermTasks = tasks.filter(task => task.type === '长期');
+        const longTermTasks = tasks.filter(task => task.type === 'Long');
         const result = Array(totalSlots).fill(null);
         longTermTasks.forEach((task, idx) => {
             if (idx < activeCount) result[idx] = task;

@@ -17,7 +17,7 @@ const cardSchema = new mongoose.Schema(
       },
     title: {
       type: String,
-      required: [true, '请提供卡片标题'],
+      required: [true, 'Please provide a card title'],
       trim: true,
     },
     description: {
@@ -43,8 +43,8 @@ const cardSchema = new mongoose.Schema(
     // 任务持续时长：短期、长期或通用
     taskDuration: {
       type: String,
-      enum: ['短期','长期','通用'],
-      default: '通用',
+      enum: ['Short','Long','Ususal'],
+      default: 'Usual',
     },
       //表示是否为可重复使用的卡片
     reusable: {
