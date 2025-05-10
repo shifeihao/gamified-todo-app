@@ -217,6 +217,19 @@ export async function addEditedTasksNum(userId) {
     { $inc: { task_edited_total: 1 } } // 更新内容：将该字段 +1
   );
 }
+//统计一次最大迷宫探索层数，task_edited_total计数器+1
+export async function addMaxMazeLevel(userId, level) {
+  // 1. 获取当前用户的最大迷宫层数
+  if (!level) {
+    console.error("❌ 迷宫层数无效");
+    return;
+  }
+  await UserStats.updateOne(
+    { user: userId }, // 查找条件
+    { $max: { max_maze_level: level } } // 更新内容，将探索层数更新到最大
+  );
+}
+
 //统计个人成就数量/判断是否解锁成就之神
 export async function checkIfGodAchievementUnlocked(userId) {
   // 1. 重新获取已解锁成就

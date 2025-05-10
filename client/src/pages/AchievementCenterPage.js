@@ -9,7 +9,7 @@ import { Navbar } from "../components/navbar/Navbar.js";
 const AchievementCenterPage = () => {
   const [achievements, setAchievements] = useState([]);
   const [userStats, setUserStats] = useState(null);
-  const [currentTab, setCurrentTab] = useState("总览");
+  const [currentTab, setCurrentTab] = useState("Overview");
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -38,7 +38,12 @@ const AchievementCenterPage = () => {
   // 分类统计
   const categoryStats = {};
   const categoryMap = {};
-  const categories = ["累计型", "持续型", "成长型", "探索型", "彩蛋型"];
+  const categories = [ "Overview",
+  "Cumulative",
+  "Continuous",
+  "Growth",
+  "Exploration",
+  "Easter_Egg"];
 
   for (const cat of categories) {
     const list = achievements.filter((a) => a.category === cat);
@@ -49,29 +54,37 @@ const AchievementCenterPage = () => {
 
   return (
     <div>
-      <Navbar />
-      <div className="max-w-7xl mx-auto px-6 py-10 flex">
-        <AchievementSidebar currentTab={currentTab} setTab={setCurrentTab} />
+      <div className="bg-achievementPage-100 text-achievementPage-600 min-h-screen">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-6 py-10 flex">
+          <AchievementSidebar currentTab={currentTab} setTab={setCurrentTab} />
+          <div className="flex-1">
+            {currentTab === "Overview" && (
+              <OverviewTab
+                recentUnlocked={recentUnlocked}
+                unlockedCount={unlocked.length}
+                totalCount={achievements.length}
+                categoryStats={categoryStats}
+                userStats={userStats}
+              />
+            )}
 
-        <div className="flex-1">
-          {currentTab === "总览" && (
-            <OverviewTab
-              recentUnlocked={recentUnlocked}
-              unlockedCount={unlocked.length}
-              totalCount={achievements.length}
-              categoryStats={categoryStats}
-              userStats={userStats}
-            />
-          )}
-
-          {categories.includes(currentTab) && (
-            <CategoryTab
-              category={currentTab}
-              achievements={categoryMap[currentTab]}
-              userStats={userStats}
-            />
-          )}
+            {categories.includes(currentTab) && (
+              <CategoryTab
+                category={currentTab}
+                achievements={categoryMap[currentTab]}
+                userStats={userStats}
+              />
+            )}
+          </div>
         </div>
+      </div>
+      {/* Tailwind safelist hint: 让 Tailwind 编译这些类名 */}
+      <div className="hidden">
+        bg-achievementPage-100 bg-achievementPage-200 bg-achievementPage-400
+        bg-achievementPage-500 bg-achievementPage-600 text-achievementPage-600
+        text-achievementPage-gold text-achievementPage-emerald
+        border-achievementPage-200
       </div>
     </div>
   );
