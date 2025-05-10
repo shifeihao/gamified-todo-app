@@ -14,23 +14,15 @@ const getSkills = async (names) => {
 };
 
 const classes = [
-  {
-    name: "Warrior",
-    slug: "warrior",
-    icon: "warrior.png",
-    description: "Strong melee fighters with great durability.",
-    baseStats: {
-      hp: 120,
-      attack: 18,
-      defense: 12,
-      magicPower: 0,
-      speed: 6,
-      critRate: 3,
-      evasion: 2,
+    {
+      name: 'Warrior',
+      slug: 'warrior',
+      icon: 'warrior.png',
+      description: 'Strong melee fighters with great durability.',
+      baseStats: { hp: 120, attack: 18, defense: 12, magicPower: 0, speed: 6, critRate: 3, evasion: 2 },
+      weaponTypes: ['sword'],
+      defaultSkillNames: ['Smash', 'Iron Defense', 'Battle Cry']
     },
-    weaponTypes: ["sword"],
-    defaultSkillNames: ["Smash", "Iron Defense", "Battle Cry"],
-  },
   {
     name: "Mage",
     slug: "mage",

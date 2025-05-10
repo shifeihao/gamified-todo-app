@@ -10,33 +10,82 @@ const shopItemSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     tradable: { type: Boolean, default: true },
   },
-  { discriminatorKey: "type", collection: "shopitems" }
-);
+
+  stats: {
+    attack: { type: Number, default: 0 },
+    magicPower: { type: Number, default: 0 },
+    critRate: { type: Number, default: 0 },
+    accuracy: { type: Number, default: 0 }
+  },
+  slot: { type: String, enum: ['mainHand', 'offHand'], required: true },
+  allowedClasses:  [{ type: ObjectId, ref: 'CharacterClass' }],
+  isEquipped: {type:Boolean,default:false},
+  requiredLevel: {
+    type: Number,
+    default: 1
+  }
+}));
+
+
+
 
 const ShopItem = mongoose.model("ShopItem", shopItemSchema);
 
-const WeaponItem = ShopItem.discriminator(
-  "weapon",
-  new mongoose.Schema({
-    weaponType: {
-      type: String,
-      enum: ["sword", "bow", "staff", "dagger"],
-      required: true,
-    },
-    stats: {
-      attack: { type: Number, default: 0 },
-      magicPower: { type: Number, default: 0 },
-      critRate: { type: Number, default: 0 },
-      accuracy: { type: Number, default: 0 },
-    },
-    slot: { type: String, enum: ["mainHand", "offHand"], required: true },
-    allowedClasses: [{ type: ObjectId, ref: "CharacterClass" }],
-    requiredLevel: {
-      type: Number,
-      default: 1,
-    },
-  })
-);
+
+const ArmorItem = ShopItem.discriminator('armor', new mongoose.Schema({
+  armorType: {
+    type: String,
+    enum: ['cloth', 'leather', 'plate', 'shield'],
+    required: true
+  },
+  stats: {
+    defense: { type: Number, default: 0 },
+    magicResist: { type: Number, default: 0 },
+    evasion: { type: Number, default: 0 }
+  },
+ 
+  slot: {
+    type: String,
+    enum: ['head', 'chest', 'legs', 'hands', 'feet', 'accessory', 'offHand'],
+    required: true
+  },
+  allowedClasses: {
+    type: [String],
+    default: ['all']
+  },
+  isEquipped: {type:Boolean,default:false},
+  requiredLevel: {
+    type: Number,
+    default: 1
+  }
+}));
+
+
+const ConsumableItem = ShopItem.discriminator('consumable', new mongoose.Schema({
+  effect: {
+    type: String, // 比如 'heal', 'buff-crit', 'restore-energy'
+    required: true
+  },
+  potency: {
+    type: Number, 
+    default: 0
+  },
+  duration: {
+    type: String,
+    enum: ['until-end-of-exploration', 'permanent'],
+    default: 'until-end-of-exploration'
+  },
+  trigger: {
+    type: String,
+    enum: ['onLowHp', 'onBattleStart', 'manual'],
+    default: 'manual'
+  },
+  stackable: {
+    type: Boolean,
+    default: true
+  }
+}));
+
 
 const ArmorItem = ShopItem.discriminator(
   "armor",
