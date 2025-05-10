@@ -19,17 +19,17 @@ const RegisterPage = () => {
     
     // 简单的表单验证
     if (!username || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
+      setError('请填写所有字段');
       return;
     }
     
     if (password !== confirmPassword) {
-      setError('The passwords you entered twice do not match');
+      setError('两次输入的密码不一致');
       return;
     }
     
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError('密码长度至少为6个字符');
       return;
     }
     
@@ -46,7 +46,7 @@ const RegisterPage = () => {
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
-          : 'Registration failed, please try again later'
+          : '注册失败，请稍后再试'
       );
     } finally {
       setIsLoading(false);
@@ -60,7 +60,7 @@ const RegisterPage = () => {
       <div className="max-w-md mx-auto mt-10 px-4 sm:px-6 lg:px-8">
         <div className="card">
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-            Register an account
+            注册账号
           </h2>
           
           {error && (
@@ -75,7 +75,7 @@ const RegisterPage = () => {
                 htmlFor="username"
                 className="block text-gray-700 font-medium mb-2"
               >
-                Username
+                用户名
               </label>
               <input
                 type="text"
@@ -83,7 +83,7 @@ const RegisterPage = () => {
                 className="form-input"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Please enter your username"
+                placeholder="请输入用户名"
                 required
               />
             </div>
@@ -93,7 +93,7 @@ const RegisterPage = () => {
                 htmlFor="email"
                 className="block text-gray-700 font-medium mb-2"
               >
-                Mail
+                邮箱
               </label>
               <input
                 type="email"
@@ -101,7 +101,7 @@ const RegisterPage = () => {
                 className="form-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Please enter your email"
+                placeholder="请输入邮箱"
                 required
               />
             </div>
@@ -111,7 +111,7 @@ const RegisterPage = () => {
                 htmlFor="password"
                 className="block text-gray-700 font-medium mb-2"
               >
-                Password
+                密码
               </label>
               <input
                 type="password"
@@ -119,7 +119,7 @@ const RegisterPage = () => {
                 className="form-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Please enter your password (atleast 6 characters)"
+                placeholder="请输入密码（至少6个字符）"
                 required
                 minLength={6}
               />
@@ -130,7 +130,7 @@ const RegisterPage = () => {
                 htmlFor="confirmPassword"
                 className="block text-gray-700 font-medium mb-2"
               >
-                Confirm Password
+                确认密码
               </label>
               <input
                 type="password"
@@ -138,7 +138,7 @@ const RegisterPage = () => {
                 className="form-input"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Please enter your password again"
+                placeholder="请再次输入密码"
                 required
                 minLength={6}
               />
@@ -150,14 +150,14 @@ const RegisterPage = () => {
                 className="btn-primary w-full"
                 disabled={isLoading}
               >
-                {isLoading ? 'Registering...' : 'Register'}
+                {isLoading ? '注册中...' : '注册'}
               </button>
             </div>
             
             <div className="text-center text-gray-600">
-              Have account？{' '}
+              已有账号？{' '}
               <Link to="/login" className="text-primary-600 hover:underline">
-                Login
+                登录
               </Link>
             </div>
           </form>

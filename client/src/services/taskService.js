@@ -44,7 +44,7 @@ export const getEquippedShortTasks = async (token) => {
     // 过滤出短期任务，并标记是否过期（装备后24小时）
     const now = Date.now();
     return data
-      .filter(task => task.type === 'Short' || task.slotType === 'short')
+      .filter(task => task.type === '短期' || task.slotType === 'short')
       .map(task => ({
         ...task,
         expired:
@@ -66,7 +66,7 @@ export const getEquippedLongTasks = async (token) => {
   try {
     const { data } = await axios.get('/api/tasks/equipped', getConfig(token));
     // 过滤出长期任务
-    return data.filter(task => task.type === 'Long' || task.slotType === 'long');
+    return data.filter(task => task.type === '长期' || task.slotType === 'long');
   } catch (error) {
     throw new Error(
       error.response && error.response.data.message

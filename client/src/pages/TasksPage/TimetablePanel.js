@@ -14,7 +14,7 @@ const TimetablePanel = ({
   user,
 }) => {
   const [activeTab, setActiveTab] = useState("list");
-  const longTasks = equippedTasks.filter((t) => t.type === "Long");
+  const longTasks = equippedTasks.filter((t) => t.type === "长期");
 
   return (
     <div className="mb-8">
@@ -29,7 +29,7 @@ const TimetablePanel = ({
                 : "text-gray-500"
             }`}
           >
-            List
+            任务列表
           </button>
           <button
             onClick={() => setActiveTab("calendar")}
@@ -39,7 +39,7 @@ const TimetablePanel = ({
                 : "text-gray-500"
             }`}
           >
-            Timetable
+            时刻表
           </button>
         </div>
       </div>
@@ -67,11 +67,11 @@ const TimetablePanel = ({
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              <p>Click Create Long-Term Task</p>
+              <p>点击创建长期任务</p>
             </>
           )}
           onCreate={onCreateTask}
-          onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, "Long")} // ✅ 明确类型
+          onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, "长期")} // ✅ 明确类型
           onComplete={onComplete}
           onDelete={onDelete}
           onEdit={onEdit}

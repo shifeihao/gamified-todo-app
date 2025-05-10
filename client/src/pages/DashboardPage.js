@@ -26,10 +26,10 @@ const DashboardPage = () => {
         setTasks(data);
         
         // 计算统计数据
-        const completed = data.filter((task) => task.status === 'Finished').length;
-        const pending = data.filter((task) => task.status === 'Unfinished').length;
-        const inProgress = data.filter((task) => task.status === 'Ongoing').length;
-        const highPriority = data.filter((task) => task.priority === 'High').length;
+        const completed = data.filter((task) => task.status === '已完成').length;
+        const pending = data.filter((task) => task.status === '待完成').length;
+        const inProgress = data.filter((task) => task.status === '进行中').length;
+        const highPriority = data.filter((task) => task.priority === '高').length;
         
         setStats({
           total: data.length,
@@ -39,7 +39,7 @@ const DashboardPage = () => {
           highPriority,
         });
       } catch (error) {
-        setError('Failed to obtain task data');
+        setError('获取任务数据失败');
         console.error(error);
       } finally {
         setLoading(false);
@@ -61,7 +61,7 @@ const DashboardPage = () => {
 
   // 获取即将到期的任务
   const upcomingTasks = tasks
-    .filter((task) => task.status !== 'Finished' && task.dueDate)
+    .filter((task) => task.status !== '已完成' && task.dueDate)
     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
     .slice(0, 5);
 
@@ -71,16 +71,16 @@ const DashboardPage = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">仪表盘</h1>
           <Link to="/tasks" className="btn-primary">
-            View All Tasks
+            查看所有任务
           </Link>
         </div>
 
         {loading ? (
           <div className="text-center py-10">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600"></div>
-            <p className="mt-2 text-gray-500">Loading...</p>
+            <p className="mt-2 text-gray-500">加载中...</p>
           </div>
         ) : error ? (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -109,7 +109,7 @@ const DashboardPage = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Total number of tasks</p>
+                    <p className="text-sm text-gray-500">总任务数</p>
                     <p className="text-xl font-semibold">{stats.total}</p>
                   </div>
                 </div>
@@ -134,7 +134,7 @@ const DashboardPage = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Completed tasks</p>
+                    <p className="text-sm text-gray-500">已完成任务</p>
                     <p className="text-xl font-semibold">{stats.completed}</p>
                   </div>
                 </div>
@@ -159,7 +159,7 @@ const DashboardPage = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Tasks to be completed</p>
+                    <p className="text-sm text-gray-500">待完成任务</p>
                     <p className="text-xl font-semibold">{stats.pending}</p>
                   </div>
                 </div>
@@ -184,7 +184,7 @@ const DashboardPage = () => {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">High priority tasks</p>
+                    <p className="text-sm text-gray-500">高优先级任务</p>
                     <p className="text-xl font-semibold">{stats.highPriority}</p>
                   </div>
                 </div>
@@ -193,7 +193,7 @@ const DashboardPage = () => {
 
             {/* 完成率进度条 */}
             <div className="card mb-8">
-              <h2 className="text-lg font-semibold mb-4">Task completion rate</h2>
+              <h2 className="text-lg font-semibold mb-4">任务完成率</h2>
               <div className="w-full bg-gray-200 rounded-full h-4">
                 <div
                   className="bg-primary-600 h-4 rounded-full"
@@ -209,16 +209,16 @@ const DashboardPage = () => {
             <div className="card mb-8 bg-gradient-to-r from-primary-500 to-primary-700 text-white">
               <div className="flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-bold mb-2">Welcome Back，{user.username}！</h2>
-                  <p className="opacity-80">Keep working on your tasks！</p>
+                  <h2 className="text-xl font-bold mb-2">欢迎回来，{user.username}！</h2>
+                  <p className="opacity-80">继续努力完成你的任务吧！</p>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold">{user.experience}</div>
-                  <div className="text-sm opacity-80">Experience</div>
+                  <div className="text-sm opacity-80">经验值</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold">{user.gold}</div>
-                  <div className="text-sm opacity-80">Coins</div>
+                  <div className="text-sm opacity-80">金币</div>
                 </div>
               </div>
             </div>
@@ -226,7 +226,7 @@ const DashboardPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* 最近添加的任务 */}
               <div className="card">
-                <h2 className="text-lg font-semibold mb-4">Recently added tasks</h2>
+                <h2 className="text-lg font-semibold mb-4">最近添加的任务</h2>
                 {recentTasks.length > 0 ? (
                   <div className="space-y-4">
                     {recentTasks.map((task) => (
@@ -242,9 +242,9 @@ const DashboardPage = () => {
                         </div>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            task.status === 'Finished'
+                            task.status === '已完成'
                               ? 'bg-green-100 text-green-800'
-                              : task.status === 'Ongoing'
+                              : task.status === '进行中'
                               ? 'bg-blue-100 text-blue-800'
                               : 'bg-yellow-100 text-yellow-800'
                           }`}
@@ -255,13 +255,13 @@ const DashboardPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500">No tasks yet</p>
+                  <p className="text-gray-500">暂无任务</p>
                 )}
               </div>
 
               {/* 即将到期的任务 */}
               <div className="card">
-                <h2 className="text-lg font-semibold mb-4">Tasks due soon</h2>
+                <h2 className="text-lg font-semibold mb-4">即将到期的任务</h2>
                 {upcomingTasks.length > 0 ? (
                   <div className="space-y-4">
                     {upcomingTasks.map((task) => (
@@ -272,25 +272,25 @@ const DashboardPage = () => {
                         <div>
                           <h3 className="font-medium">{task.title}</h3>
                           <p className="text-sm text-gray-500">
-                            Expiration date: {new Date(task.dueDate).toLocaleDateString('zh-CN')}
+                            截止日期: {new Date(task.dueDate).toLocaleDateString('zh-CN')}
                           </p>
                         </div>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            task.priority === 'High'
+                            task.priority === '高'
                               ? 'bg-red-100 text-red-800'
-                              : task.priority === 'Mid'
+                              : task.priority === '中'
                               ? 'bg-orange-100 text-orange-800'
                               : 'bg-green-100 text-green-800'
                           }`}
                         >
-                          {task.priority}Priority
+                          {task.priority}优先级
                         </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500">There are no tasks due soon</p>
+                  <p className="text-gray-500">暂无即将到期的任务</p>
                 )}
               </div>
             </div>
@@ -315,12 +315,12 @@ const DashboardPage = () => {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold mb-2">AI Assistant Tips</h2>
+                  <h2 className="text-lg font-bold mb-2">AI助手提示</h2>
                   <p className="opacity-90">
-                    Based on your task completion status, we recommend that you prioritize high-priority tasks and properly arrange your time to complete tasks that are about to expire.
+                    根据您的任务完成情况，建议您优先处理高优先级任务，并合理安排时间完成即将到期的任务。
                   </p>
                   <p className="mt-2 opacity-90">
-                    Your task completion rate is {completionRate.toFixed(1)}%，keep going！
+                    您的任务完成率为{completionRate.toFixed(1)}%，继续保持！
                   </p>
                 </div>
               </div>
