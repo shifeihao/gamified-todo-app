@@ -9,18 +9,18 @@ const HomePage = () => {
 
   const features = [
     {
-      name: '任务游戏化',
-      description: '将待办事项变成可收集的卡牌',
+      name: 'Gamification of tasks',
+      description: 'Turn your to-do list into collectible cards',
       icon: SparklesIcon,
     },
     {
-      name: '进度追踪',
-      description: '可视化你的成就成长轨迹',
+      name: 'Progress Tracking',
+      description: 'Visualize your achievement growth trajectory',
       icon: ChartBarIcon,
     },
     {
-      name: '知识管理',
-      description: '建立你的数字任务图书馆',
+      name: 'Knowledge Management',
+      description: 'Build your digital task library',
       icon: BookOpenIcon,
     },
   ];
@@ -36,13 +36,13 @@ const HomePage = () => {
             </div>
             <div className="flex space-x-4">
               <Link to="/login" className="text-gray-300 hover:text-white px-3 py-2 rounded-md">
-                登录
+                Login
               </Link>
               <Link 
                 to="/register" 
                 className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full transition-all"
               >
-                立即开始
+                Start Your Journey
               </Link>
             </div>
           </div>
@@ -61,13 +61,14 @@ const HomePage = () => {
               className="space-y-12"
             >
               <h1 className="text-5xl font-bold text-white leading-tight">
-                把你的待办事项
+                Put Your To-Do List
+                <br />
                 <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-                  变成可收集的卡牌
+                  Become A Collectible Card
                 </span>
               </h1>
               <p className="text-xl text-gray-300">
-                通过独特的卡牌收集系统，让任务管理变得像游戏一样有趣。完成目标、解锁成就、打造你的专属任务卡册。
+                Through the unique card collection system, task management becomes as interesting as a game. Complete goals, unlock achievements, and create your own exclusive task card book.
               </p>
               
               {/* 功能亮点 */}
@@ -94,7 +95,7 @@ const HomePage = () => {
                   to="/register" 
                   className="flex items-center space-x-3 bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full text-lg"
                 >
-                  <span>立即开始旅程</span>
+                  <span>Start Now</span>
                   <ArrowRightIcon className="h-5 w-5" />
                 </Link>
               </motion.div>
@@ -119,7 +120,7 @@ const HomePage = () => {
                           : 'bg-white/5 text-gray-300 hover:bg-white/10'
                       }`}
                     >
-                      登录
+                      Login
                     </button>
                     <button
                       onClick={() => setActiveTab('register')}
@@ -129,7 +130,7 @@ const HomePage = () => {
                           : 'bg-white/5 text-gray-300 hover:bg-white/10'
                       }`}
                     >
-                      注册
+                        Register
                     </button>
                   </div>
                   

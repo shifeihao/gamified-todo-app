@@ -32,7 +32,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
     const subTaskId = subTask._id || subTask.id;
 
     if (!token) {
-      alert('未检测到登录信息，请先登录');
+      alert('No login information detected, please log in first');
       return;
     }
 
@@ -52,17 +52,20 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
               i === idx ? { ...st, status: updatedSub.status } : st
           )
       );
+      
+      // 触发等级更新事件
+      window.dispatchEvent(new CustomEvent('taskCompleted'));
     } catch (err) {
-      console.error('更新子任务失败', err);
+      console.error('Update subtask failed', err);
       const status = err.response?.status;
       const msg = err.response?.data?.message || err.message;
       if (status === 401) {
-        alert('授权已过期，请重新登录');
+        alert('Authorization has expired, please log in again');
         window.location.href = '/login';
       } else if (status === 404) {
         alert('子任务未找到或已被删除');
       } else {
-        alert(`更新子任务失败（状态码 ${status}）：${msg}`);
+        alert(`Update subtask failed (status code ${status})：${msg}`);
       }
     } finally {
       setLoadingIdx(null);
@@ -101,7 +104,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
 
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">描述</h3>
+                      <h3 className="text-lg font-semibold mb-2">Describe</h3>
                       <p className="text-gray-600">
                         {task.description || '暂无描述'}
                       </p>
@@ -109,7 +112,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
 
                     {task.type === '长期' && subTasks.length > 0 && (
                         <div>
-                          <h3 className="text-lg font-semibold mb-2">子任务进度</h3>
+                          <h3 className="text-lg font-semibold mb-2">Subtask Process</h3>
                           <div className="space-y-2">
                             {subTasks.map((subTask, idx) => (
                                 <div
@@ -137,7 +140,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
                                               loadingIdx === idx ? 'opacity-50 cursor-not-allowed' : ''}
                               `}
                                       >
-                                        {loadingIdx === idx ? '提交中...' : '完成'}
+                                        {loadingIdx === idx ? 'Submitting...' : 'Complete'}
                                       </button>
                                   )}
                                 </div>
@@ -147,14 +150,14 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
                     )}
 
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">状态信息</h3>
+                      <h3 className="text-lg font-semibold mb-2">Status Information</h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="bg-gray-50 p-3 rounded">
-                          <p className="text-sm text-gray-500">当前状态</p>
+                          <p className="text-sm text-gray-500">Current Status</p>
                           <p className="font-medium">{task.status}</p>
                         </div>
                         <div className="bg-gray-50 p-3 rounded">
-                          <p className="text-sm text-gray-500">截止日期</p>
+                          <p className="text-sm text-gray-500">Expiration Date</p>
                           <p className="font-medium">
                             {task.dueDate
                                 ? new Date(task.dueDate).toLocaleDateString()
@@ -171,7 +174,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
                         onClick={onClose}
                         className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                     >
-                      关闭
+                      Close
                     </button>
                   </div>
                 </Dialog.Panel>

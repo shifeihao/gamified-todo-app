@@ -10,46 +10,61 @@ import React from 'react';
  * @param {number} data.expRemaining - 距离下一级还需经验
  * @param {number} data.progressRate - 当前升级进度（0 ~ 1）
  * @param {boolean} data.leveledUp - 是否升级
+ * @param {number} data.gold - 拥有的金币数
  */
 const UserLevelBar = ({ data }) => {
-  if (!data) return null;
-  console.log('等级组件接收到的数据:', data);
+  if (!data) {
+    return (
+      <div className="flex items-center space-x-2 animate-pulse">
+        <div className="h-2 w-8 bg-gray-300 rounded"></div>
+        <div className="flex-1 h-2 bg-gray-300 rounded"></div>
+        <div className="h-2 w-12 bg-gray-300 rounded"></div>
+        <div className="h-2 w-16 bg-gray-300 rounded"></div>
+      </div>
+    );
+  }
 
   const {
     level,
-    experience,
-    nextLevelExp,
     expProgress,
-    expRemaining,
+    nextLevelExp,
     progressRate,
     leveledUp,
+    gold = 0, // 默认值为0
   } = data;
 
+  // 计算当前等级内的经验值进度
+  const currentLevelExp = expProgress;
+  const nextLevelTotalExp = nextLevelExp;
+
   return (
-    <div className="bg-white p-4 rounded-xl shadow-md w-full max-w-md">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-bold">等级 {level}</h2>
-        <span className="text-sm text-gray-500">
-          {experience} / {nextLevelExp} XP
+    <div className="flex items-center space-x-4">
+      {/* 等级显示 */}
+      <div className="flex items-center space-x-2 flex-1">
+        <span className="text-xs font-medium whitespace-nowrap">Lv.{level}</span>
+        <div className="flex-1">
+          <div className="w-full bg-[#0080d0]/30 h-2 rounded-full overflow-hidden">
+            <div
+              className="bg-yellow-300 h-full transition-all duration-500 ease-out"
+              style={{ width: `${(progressRate * 100).toFixed(1)}%` }}
+            />
+          </div>
+        </div>
+        <span className="text-xs font-medium whitespace-nowrap">
+          {currentLevelExp}/{nextLevelTotalExp}
         </span>
+        {leveledUp && (
+          <span className="text-yellow-300 text-xs font-bold animate-bounce">
+            ⭐
+          </span>
+        )}
       </div>
 
-      <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
-        <div
-          className="bg-green-500 h-full transition-all duration-500"
-          style={{ width: `${(progressRate * 100).toFixed(1)}%` }}
-        />
+      {/* 金币显示 */}
+      <div className="flex items-center space-x-1 bg-yellow-100 px-3 py-1 rounded-full">
+        <span className="text-yellow-600 text-sm">🪙</span>
+        <span className="text-yellow-700 font-medium">{gold}</span>
       </div>
-
-      <p className="text-sm text-gray-600 mt-1">
-        距离下一级还需 <strong>{expRemaining}</strong> 经验
-      </p>
-
-      {leveledUp && (
-        <p className="text-green-600 font-semibold mt-2 animate-pulse">
-          🎉 恭喜升级！
-        </p>
-      )}
     </div>
   );
 };

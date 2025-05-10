@@ -80,20 +80,20 @@ export const TaskRepository = ({
             {/* 搜索 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                搜索任务
+                Search
               </label>
               <input
                   type="text"
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  placeholder="输入任务标题..."
+                  placeholder="Enter Task Title..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
               />
             </div>
             {/* 分类 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                分类
+                Tag
               </label>
               <select
                   value={selectedCategory}
@@ -110,7 +110,7 @@ export const TaskRepository = ({
             {/* 类型 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                任务类型
+                Type
               </label>
               <select
                   value={selectedType}
@@ -127,7 +127,7 @@ export const TaskRepository = ({
             {/* 排序 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                排序方式
+                Sort By
               </label>
               <div className="flex">
                 <select
@@ -135,10 +135,10 @@ export const TaskRepository = ({
                     onChange={e => setSortBy(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none"
                 >
-                  <option value="createdAt">创建时间</option>
-                  <option value="dueDate">截止日期</option>
-                  <option value="priority">优先级</option>
-                  <option value="experienceReward">经验值奖励</option>
+                  <option value="createdAt">Create Time</option>
+                  <option value="dueDate">Expired Date</option>
+                  <option value="priority">Priority</option>
+                  <option value="experienceReward">Experience Points Rewards</option>
                 </select>
                 <button
                     onClick={() =>
@@ -156,7 +156,7 @@ export const TaskRepository = ({
         {/* 任务列表展示 */}
         {filtered.length === 0 ? (
             <div className="text-center py-10 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">没有找到匹配的任务</p>
+              <p className="text-gray-500">No matching tasks found</p>
             </div>
         ) : (
             <div className="grid grid-cols-2 gap-6 justify-items-center">

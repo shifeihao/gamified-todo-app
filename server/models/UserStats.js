@@ -21,6 +21,10 @@ const UserStatsSchema = new mongoose.Schema(
     card_slot_total: { type: Number, default: 0 }, //长期任务卡槽数量
     achievements_total_unlocked: { type: Number, default: 0 }, //统计总成就数量
 
+    //迷宫相关
+    max_maze_level:{ type: Number, default: 0 },  //最大迷宫探索数
+
+
     //彩蛋型记录
     blank_card_max_held: { type: Number, default: 0 }, // 持有过最高数量的白卡
     special_card_max_held: { type: Number, default: 0 }, // 持有过最高数量的special card

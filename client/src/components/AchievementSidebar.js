@@ -1,21 +1,32 @@
 import React from "react";
 
-const TABS = ["总览", "累计型", "持续型", "成长型", "探索型", "彩蛋型"];
+const TABS = [
+  "Overview",
+  "Cumulative",
+  "Continuous",
+  "Growth",
+  "Exploration",
+  "Easter_Egg",
+];
 
+// src/components/AchievementSidebar.js
 const AchievementSidebar = ({ currentTab, setTab }) => {
   return (
-    <div className="w-40 mr-6 border-r border-gray-300 pr-4">
-      <h2 className="text-lg font-bold mb-4">成就分类</h2>
+    <div className="w-48 mr-6 bg-white/60 rounded-2xl p-4 shadow-xl">
+      <h2 className="text-lg font-bold text-achievementPage-600 mb-4">
+        Achievement Classification
+      </h2>
       <ul className="space-y-2">
         {TABS.map((tab) => (
           <li
             key={tab}
             onClick={() => setTab(tab)}
-            className={`cursor-pointer px-3 py-2 rounded hover:bg-gray-100 text-sm ${
-              currentTab === tab
-                ? "bg-blue-100 font-semibold text-blue-700"
-                : ""
-            }`}
+            className={`cursor-pointer px-4 py-2 rounded-xl transition-all text-sm font-medium
+              ${
+                currentTab === tab
+                  ? "bg-achievementPage-500 text-white shadow-inner"
+                  : "text-achievementPage-600 hover:bg-achievementPage-100"
+              }`}
           >
             {tab}
           </li>

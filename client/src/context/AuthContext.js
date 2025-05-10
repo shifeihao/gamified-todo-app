@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { createContext, useState, useEffect } from "react";
+import axios from "axios";
 
 // 创建认证上下文
 const AuthContext = createContext();
@@ -10,13 +10,12 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   // 在组件挂载时从本地存储中加载用户信息
   useEffect(() => {
-    const userInfo = localStorage.getItem('userInfo')
-      ? JSON.parse(localStorage.getItem('userInfo'))
+    const userInfo = localStorage.getItem("userInfo")
+      ? JSON.parse(localStorage.getItem("userInfo"))
       : null;
-    
+
     setUser(userInfo);
     setLoading(false);
   }, []);
@@ -26,19 +25,19 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const { data } = await axios.post('/api/users/login', { email, password });
-      
+      const { data } = await axios.post("/api/users/login", {
+        email,
+        password,
+      });
       // 将用户信息保存到本地存储
-      localStorage.setItem('userInfo', JSON.stringify(data));
+      localStorage.setItem("userInfo", JSON.stringify(data));
       setUser(data);
-      
       return data;
     } catch (error) {
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
-          : '登录失败'
+          : "Failed to login, please check your credentials"
       );
       throw error;
     } finally {
@@ -51,23 +50,23 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const { data } = await axios.post('/api/users/register', {
+
+      const { data } = await axios.post("/api/users/register", {
         username,
         email,
         password,
       });
-      
+
       // 将用户信息保存到本地存储
-      localStorage.setItem('userInfo', JSON.stringify(data));
+      localStorage.setItem("userInfo", JSON.stringify(data));
       setUser(data);
-      
+
       return data;
     } catch (error) {
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
-          : '注册失败'
+          : "Failed to register, please check your credentials"
       );
       throw error;
     } finally {
@@ -77,7 +76,7 @@ export const AuthProvider = ({ children }) => {
 
   // 登出函数
   const logout = () => {
-    localStorage.removeItem('userInfo');
+    localStorage.removeItem("userInfo");
     setUser(null);
   };
 
@@ -86,27 +85,27 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // 设置请求头中的认证token
       const config = {
         headers: {
           Authorization: `Bearer ${user.token}`,
         },
       };
-      
-      const { data } = await axios.put('/api/users/profile', userData, config);
-      
+
+      const { data } = await axios.put("/api/users/profile", userData, config);
+
       // 更新本地存储中的用户信息
       const updatedUser = { ...user, ...data };
-      localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+      localStorage.setItem("userInfo", JSON.stringify(updatedUser));
       setUser(updatedUser);
-      
+
       return data;
     } catch (error) {
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
-          : '更新个人资料失败'
+          : "Failed to update profile, please try again"
       );
       throw error;
     } finally {

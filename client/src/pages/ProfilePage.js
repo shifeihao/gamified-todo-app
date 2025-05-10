@@ -60,7 +60,7 @@ const ProfilePage = () => {
 
     // 验证密码
     if (formData.password && formData.password !== formData.confirmPassword) {
-      setFormError('两次输入的密码不一致');
+      setFormError('The passwords you entered twice do not match');
       return;
     }
 
@@ -88,7 +88,7 @@ const ProfilePage = () => {
       
       setSuccess(true);
     } catch (err) {
-      setFormError('更新个人资料失败');
+      setFormError('Update profile failed');
       console.error(err);
     }
   };
@@ -98,13 +98,13 @@ const ProfilePage = () => {
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">个人资料</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">Personal Profile</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 个人资料表单 */}
           <div className="lg:col-span-2">
             <div className="card">
-              <h2 className="text-lg font-semibold mb-4">编辑个人资料</h2>
+              <h2 className="text-lg font-semibold mb-4">Edit Profile</h2>
 
               {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -120,14 +120,14 @@ const ProfilePage = () => {
 
               {success && (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                  个人资料更新成功！
+                  Profile updated successfully!
                 </div>
               )}
 
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    用户名
+                    Username
                   </label>
                   <input
                     type="text"
@@ -141,7 +141,7 @@ const ProfilePage = () => {
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    邮箱
+                    Mail
                   </label>
                   <input
                     type="email"
@@ -155,7 +155,7 @@ const ProfilePage = () => {
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    新密码 (留空则保持不变)
+                    New Password (leave blank to keep unchanged)
                   </label>
                   <input
                     type="password"
@@ -168,7 +168,7 @@ const ProfilePage = () => {
 
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    确认新密码
+                    Confirm Password
                   </label>
                   <input
                     type="password"
@@ -185,7 +185,7 @@ const ProfilePage = () => {
                     className="btn-primary"
                     disabled={loading}
                   >
-                    {loading ? '更新中...' : '更新个人资料'}
+                    {loading ? 'Updating...' : 'Update'}
                   </button>
                 </div>
               </form>
@@ -204,22 +204,22 @@ const ProfilePage = () => {
                 <div className="grid grid-cols-2 gap-4 w-full">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{user && user.experience}</div>
-                    <div className="text-sm text-primary-100">经验值</div>
+                    <div className="text-sm text-primary-100">Experience</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">{user && user.gold}</div>
-                    <div className="text-sm text-primary-100">金币</div>
+                    <div className="text-sm text-primary-100">Coins</div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="card">
-              <h2 className="text-lg font-semibold mb-4">任务统计</h2>
+              <h2 className="text-lg font-semibold mb-4">Task Statistics</h2>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700">总任务数</span>
+                    <span className="text-sm font-medium text-gray-700">Total number of tasks</span>
                     <span className="text-sm font-medium text-gray-700">{stats.taskCount}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -232,7 +232,7 @@ const ProfilePage = () => {
 
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700">已完成任务</span>
+                    <span className="text-sm font-medium text-gray-700">Completed tasks</span>
                     <span className="text-sm font-medium text-gray-700">{stats.completedTasks}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -245,7 +245,7 @@ const ProfilePage = () => {
 
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700">完成率</span>
+                    <span className="text-sm font-medium text-gray-700">Completion Rate</span>
                     <span className="text-sm font-medium text-gray-700">{stats.completionRate}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -262,7 +262,7 @@ const ProfilePage = () => {
 
         {/* 成就展示区 */}
         <div className="card mt-8">
-          <h2 className="text-lg font-semibold mb-4">我的成就</h2>
+          <h2 className="text-lg font-semibold mb-4">My achievements</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* 成就项 - 已解锁 */}
             <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-lg p-4 text-center">
