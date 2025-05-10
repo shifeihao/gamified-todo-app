@@ -39,7 +39,8 @@ const userDungeonStatsSchema = new mongoose.Schema({
     startTime: { type: Date, default: Date.now },
     status: {
       inCombat: { type: Boolean, default: false },
-      atCheckpoint: { type: Boolean, default: false }
+      atCheckpoint: { type: Boolean, default: false },
+      inShop: { type: Boolean, default: false }
     }
   },
 
