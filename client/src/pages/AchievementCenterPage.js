@@ -38,12 +38,13 @@ const AchievementCenterPage = () => {
   // 分类统计
   const categoryStats = {};
   const categoryMap = {};
-  const categories = [ "Overview",
-  "Cumulative",
-  "Continuous",
-  "Growth",
-  "Exploration",
-  "Easter_Egg"];
+  const categories = [
+    "Cumulative",
+    "Continuous",
+    "Growth",
+    "Exploration",
+    "Easter_Egg",
+  ];
 
   for (const cat of categories) {
     const list = achievements.filter((a) => a.category === cat);

@@ -2,7 +2,6 @@
 import React from "react";
 import AchievementDetailRow from "./AchievementDetailRow";
 import { TrophyIcon } from "@heroicons/react/24/solid";
-import { motion } from "framer-motion";
 
 const CategoryTab = ({ category, achievements = [], userStats }) => {
   const unlocked = achievements

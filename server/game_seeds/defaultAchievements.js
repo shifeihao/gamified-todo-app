@@ -682,7 +682,7 @@ const defaultAchievements = [
     isEnabled: true,
     logic: {
       type: "achievements_total_unlocked",
-      value: 33,
+      value: 40,
       op: "gte",
     },
   },
