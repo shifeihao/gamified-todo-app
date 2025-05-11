@@ -159,7 +159,7 @@ export const TaskRepository = ({
               <p className="text-gray-500">No matching tasks found</p>
             </div>
         ) : (
-            <div className="grid grid-cols-2 gap-6 justify-items-center">
+            <div className="grid gap-6 justify-items-center" style={{gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))'}}>
               {filtered.map(task => (
                   <div
                       key={task._id}

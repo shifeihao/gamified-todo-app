@@ -40,6 +40,7 @@ const TasksPage = () => {
   const [equippedTasks, setEquippedTasks] = useState([]);
   const [equippedShortTasks, setEquippedShortTasks] = useState([]); // 短期任务槽
   const [equippedLongTasks, setEquippedLongTasks] = useState([]); // 长期任务槽
+  const [rewardInfo, setRewardInfo] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -55,18 +56,22 @@ const TasksPage = () => {
   // 拉取任务与卡片库存
   const fetchTasks = async () => {
     try {
-      const [allTasks, equipped, shortTasks, longTasks, inventory] =
+      const [allTasks, equipped, shortTasks, longTasks, inventory, levelInfo] =
         await Promise.all([
           getTasks(user.token),
           getEquippedTasks(user.token),
           getEquippedShortTasks(user.token),
           getEquippedLongTasks(user.token),
           getCardInventory(user.token),
+          axios.get("/api/levels/userLevelBar", {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }),
         ]);
       setTasks(allTasks);
       setEquippedShortTasks(shortTasks);
       setEquippedLongTasks(longTasks);
       setCards(inventory);
+      setRewardInfo(levelInfo.data);
       setError("");
     } catch (err) {
       console.error(err);
@@ -280,8 +285,8 @@ const TasksPage = () => {
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-fixed" style={{
-      backgroundImage: "url('/rpg-background.png')",
-      // backgroundColor: "rgba(0, 0, 0, 0.6)", // 暗色背景作为备用
+      // backgroundImage: "url('/rpg-background.png')",
+      backgroundColor: "rgba(191, 191, 191, 0.6)", // 暗色背景作为备用
       // backgroundBlendMode: "overlay" // 使背景图片变暗，提高内容可读性
     }}>
       <Navbar />
@@ -301,11 +306,7 @@ const TasksPage = () => {
             创建新任务
           </button>
         </div>
-        {rewardInfo && (
-  <div className="mt-2">
-    <UserLevelBar data={rewardInfo} />
-  </div>
-)}
+
 
         {errorAny && <div className="text-red-400 bg-black bg-opacity-50 p-2 rounded">{errorAny}</div>}
         {loadingAny && <div className="text-gray-200 bg-black bg-opacity-50 p-2 rounded">Loading...</div>}
