@@ -38,21 +38,37 @@ export const selectClass = async (req, res) => {
     // 应用职业基础属性
     stats.assignedStats = { ...characterClass.baseStats };
     
-    // 保存职业名称
+    // 保存职业名称和slug - 关键修改点
     stats.className = characterClass.name;
+    stats.classSlug = classSlug; // 添加职业slug保存
     
     // 分配职业默认技能
     if (characterClass.defaultSkills && characterClass.defaultSkills.length > 0) {
       stats.Skills = characterClass.defaultSkills.map(skill => skill._id);
     }
     
+    // 添加调试日志
+    console.log('正在保存职业选择:', {
+      userId,
+      className: stats.className,
+      classSlug: stats.classSlug
+    });
+    
     await stats.save();
+    
+    // 确认保存后的数据
+    const savedStats = await UserDungeonStats.findOne({ user: userId });
+    console.log('已保存的职业信息:', {
+      className: savedStats.className,
+      classSlug: savedStats.classSlug
+    });
     
     return res.json({
       success: true,
       message: `You have selected the ${characterClass.name} class`,
       class: {
         name: characterClass.name,
+        slug: classSlug, // 添加slug到返回值
         description: characterClass.description,
         baseStats: characterClass.baseStats,
         skills: characterClass.defaultSkills.map(skill => ({
@@ -147,6 +163,100 @@ export const getUserStats = async (req, res) => {
   } catch (err) {
     console.error('getUserStats error:', err);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+const STAT_MULTIPLIERS = {
+  hp: 15,        // 1点 = 15点HP
+  attack: 1,      // 1点 = 1点攻击
+  defense: 1,     // 1点 = 1点防御
+  magicPower: 1,  // 1点 = 1点魔法
+  speed: 0.5,     // 1点 = 0.5点速度
+  critRate: 0.2,  // 1点 = 0.2%暴击率
+  evasion: 0.2    // 1点 = 0.2%闪避率
+};
+
+// 分配属性点
+export const allocateStatPoints = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { allocation } = req.body;
+    
+    // 验证输入
+    if (!allocation || typeof allocation !== 'object') {
+      return res.status(400).json({ error: '无效的属性分配' });
+    }
+    
+    // 获取用户统计信息
+    const stats = await UserDungeonStats.findOne({ user: userId });
+    if (!stats) {
+      return res.status(404).json({ error: '未找到用户数据' });
+    }
+    
+    // 验证用户有足够的未分配点数
+    const totalAllocated = Object.values(allocation).reduce((sum, value) => sum + value, 0);
+    if (totalAllocated <= 0) {
+      return res.status(400).json({ error: '没有分配任何属性点' });
+    }
+    
+    if (totalAllocated > stats.unspentStatPoints) {
+      return res.status(400).json({ error: '未分配属性点不足' });
+    }
+    
+    // 确保assignedStats存在
+    if (!stats.assignedStats) {
+      stats.assignedStats = {};
+    }
+    
+    // 应用属性点分配
+    Object.entries(allocation).forEach(([stat, points]) => {
+      if (points > 0 && STAT_MULTIPLIERS[stat] !== undefined) {
+        // 初始化属性如果不存在
+        stats.assignedStats[stat] = stats.assignedStats[stat] || 0;
+        
+        // 根据乘数应用属性点
+        stats.assignedStats[stat] += points * STAT_MULTIPLIERS[stat];
+      }
+    });
+    
+    // 减少未分配点数
+    stats.unspentStatPoints -= totalAllocated;
+    
+    // 保存更改
+    await stats.save();
+    
+    // 返回更新后的统计数据
+    return res.json({
+      success: true,
+      message: '属性点分配成功',
+      assignedStats: stats.assignedStats,
+      unspentPoints: stats.unspentStatPoints
+    });
+  } catch (err) {
+    console.error('allocateStatPoints error:', err);
+    return res.status(500).json({ error: '服务器内部错误' });
+  }
+};
+
+// 获取当前属性点分配情况
+export const getStatAllocation = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // 获取用户统计信息
+    const stats = await UserDungeonStats.findOne({ user: userId });
+    if (!stats) {
+      return res.status(404).json({ error: '未找到用户数据' });
+    }
+    
+    return res.json({
+      assignedStats: stats.assignedStats || {},
+      unspentPoints: stats.unspentStatPoints || 0,
+      statMultipliers: STAT_MULTIPLIERS  // 返回乘数，前端可以显示加点效果
+    });
+  } catch (err) {
+    console.error('getStatAllocation error:', err);
+    return res.status(500).json({ error: '服务器内部错误' });
   }
 };
   // 在路由中添加

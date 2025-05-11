@@ -52,7 +52,7 @@ export const TaskCard = ({
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
-      setTimeLeft(`${d}天${h}时${m}分`);
+      setTimeLeft(`${d}d${h}h${m}m`);
     };
     update();
     const timer = setInterval(update, 60000);
@@ -123,7 +123,36 @@ export const TaskCard = ({
   if (isEquipped) {
     return (
       <div
-        className={`flex rounded-lg overflow-hidden backdrop-blur-sm bg-white bg-opacity-40 border ${typeStyles.borderColor} shadow-lg transition-all duration-300 ${className}`}
+              className={`card equipped-card relative hover:shadow-lg transition-shadow duration-300
+                    border-2 border-red-500 p-4 text-sm flex flex-col items-center justify-center h-40
+                    ${className}`}
+              draggable={false}
+          >
+            {/* ⚠️ 已过期大徽章 */}
+            <div className="absolute top-0 right-0 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-bl">
+              已过期
+            </div>
+
+            {/* 任务标题 */}
+            <h3 className="font-bold text-base text-center mb-4 truncate">
+              {task.title}
+            </h3>
+
+            {/* 删除按钮 */}
+            <button
+                onClick={() => onDelete(task._id)}
+                className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow"
+            >
+              删除过期任务
+            </button>
+          </div>
+      );
+    }
+    return (
+      <div
+        className={`card equipped-card hover:shadow-lg transition-shadow duration-300
+                    border-2 border-blue-500 p-2 text-xs flex flex-col justify-between h-full
+                    ${className}`}
         draggable={draggable}
         onDragStart={onDragStart ? e => onDragStart(e, task) : undefined}
       >
@@ -133,45 +162,34 @@ export const TaskCard = ({
             {typeStyles.icon} {task.category || '任务'}
           </span>
         </div>
-
-        {/* 右侧内容 */}
-        <div className="w-5/6 p-4 relative">
-          {/* 状态标签 */}
-          <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusStyles()}`}>
-            {isExpired ? '已过期' : task.status}
+        <div className="flex justify-between text-gray-500 text-xs mb-2">
+          {task.category && <span>分类: {task.category}</span>}
+          <span>剩余 {timeLeft}</span>
           </div>
-
-          {/* 标题和倒计时 */}
-          <div className="mb-2">
-            <h3 className="font-bold text-gray-900">{task.title}</h3>
-            {timeLeft && (
-              <div className="flex items-center mt-1 text-xs text-gray-600">
-                <Clock className="w-3 h-3 mr-1" />
-                {timeLeft}
-              </div>
-            )}
-          </div>
-
-          {/* 操作按钮 */}
-          <div className="absolute bottom-2 right-2 flex space-x-2">
-            <button
-              onClick={handleViewDetail}
-              className="p-1 rounded hover:bg-blue-100 text-blue-600 transition-colors"
-              title="查看详情"
-            >
-              <Info className="w-4 h-4" />
+        <div className="flex justify-between space-x-2">
+          {!isExpired && (
+            <button onClick={() => onComplete(task._id)} className="btn-primary text-xs py-1 px-2">
+              完成
             </button>
+          )}
+
+          <button
+            onClick={handleViewDetail}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            查看详情
+          </button>
             {!isExpired && task.status !== '已完成' && (
               <button
                 onClick={() => onComplete(task._id)}
                 className="p-1 rounded hover:bg-green-100 text-green-600 transition-colors"
                 title="完成任务"
               >
+            View Details
                 <CheckSquare className="w-4 h-4" />
               </button>
             )}
           </div>
-        </div>
 
         {/* 详情模态框 */}
         <TaskDetailModal
@@ -252,6 +270,7 @@ export const TaskCard = ({
                   className="p-1 rounded hover:bg-purple-100 text-purple-600 transition-colors"
                   title="装备任务"
                 >
+                    Complete
                   <Award className="w-4 h-4" />
                 </button>
                 <button
@@ -259,6 +278,7 @@ export const TaskCard = ({
                   className="p-1 rounded hover:bg-blue-100 text-blue-600 transition-colors"
                   title="编辑任务"
                 >
+                      Equip
                   <Edit2 className="w-4 h-4" />
                 </button>
               </>
@@ -268,18 +288,59 @@ export const TaskCard = ({
               className="p-1 rounded hover:bg-red-100 text-red-600 transition-colors"
               title="删除任务"
             >
-              <Trash2 className="w-4 h-4" />
+                    编辑
+                  </button>
+                </>
+              )}
+
+              {/* 删除按钮始终允许 */}
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  onDelete(task._id);
+                }}
+                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+              >
+                删除
             </button>
           </div>
         </div>
       </div>
 
-      {/* 详情模态框 */}
-      <TaskDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        task={task}
-      />
+      {/* 分类 & 描述 */}
+      {task.category && (
+        <div className="text-sm text-gray-500 mb-2">分类: {task.category}</div>
+      )}
+      <p className="text-sm text-gray-600 mb-4 whitespace-normal">{task.description || '无描述'}</p>
+
+      {/* 截止 & 奖励 */}
+      <div className="flex justify-between items-start text-xs text-gray-500 mb-4 space-x-2">
+        <div>截止日期: {formatDate(task.dueDate)}</div>
+        <div className="flex space-x-2">
+          <div>经验值: +{task.experienceReward}</div>
+          <div>金币: +{task.goldReward}</div>
+        </div>
+      </div>
+
+      {/* 子任务 */}
+      {task.subTasks?.length > 0 && (
+        <div className="mt-3 border-t pt-3">
+          <h4 className="text-sm font-medium mb-2">子任务：</h4>
+          <ul className="text-sm space-y-1">
+            {task.subTasks.map((st, i) => (
+              <li key={i} className="flex items-center">
+                <span className={`w-2 h-2 rounded-full mr-2 ${getStatusClass(st.status)}`}></span>
+                <span className="break-words">{st.title}</span>
+                {st.dueDate && (
+                  <span className="ml-2 text-xs text-gray-500">
+                    ({formatDate(st.dueDate)})
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

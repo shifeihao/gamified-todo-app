@@ -6,6 +6,8 @@ const userDungeonStatsSchema = new mongoose.Schema({
 
   baseTaskLevel: { type: Number, default: 1 },
   dungeonLevel: { type: Number, default: 1 },
+  classSlug: { type: String },
+  className: { type: String },
   dungeonExp: { type: Number, default: 0 },
   unspentStatPoints: { type: Number, default: 0 },
 
@@ -29,6 +31,7 @@ const userDungeonStatsSchema = new mongoose.Schema({
     defense: { type: Number, default: 0 }
   },
 
+
   currentExploration: {
     floorIndex: { type: Number },
     mode: { type: String, enum: ['auto', 'manual'], default: 'auto' },
@@ -39,7 +42,8 @@ const userDungeonStatsSchema = new mongoose.Schema({
     startTime: { type: Date, default: Date.now },
     status: {
       inCombat: { type: Boolean, default: false },
-      atCheckpoint: { type: Boolean, default: false }
+      atCheckpoint: { type: Boolean, default: false },
+      inShop: { type: Boolean, default: false }
     }
   },
 

@@ -58,6 +58,11 @@ export const resolveEventEffects = async (event, stats, currentHp) => {
     
     // 处理特殊事件类型
     if (effect.shopInventoryId) {
+      // 确保status对象存在
+      stats.currentExploration.status = stats.currentExploration.status || {};
+      // 设置inShop状态为true
+      stats.currentExploration.status.inShop = true;
+      
       return {
         log: `[Shop] You encountered a mysterious merchant...`,
         hp: resultHp, // 保持当前HP不变

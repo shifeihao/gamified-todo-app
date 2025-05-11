@@ -1,95 +1,207 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from  '../../context/AuthContext';
+import UserLevelBar from '../base/UserLevelBar';
+import axios from 'axios';
+
+// Create custom event for task completion notification
+export const TASK_COMPLETED_EVENT = 'taskCompleted';
 
 export const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [levelInfo, setLevelInfo] = useState(null);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
 
-  // 处理登出
+  // Handle logout
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
-  // 切换菜单
+  // Toggle menu
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // Fetch level info
+  const fetchLevelInfo = async () => {
+    try {
+      // Get level info and user profile
+      const [levelRes, profileRes] = await Promise.all([
+        axios.get("/api/levels/userLevelBar", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }),
+        axios.get("/api/users/profile", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        })
+      ]);
+
+      // Merge level and gold info
+      setLevelInfo({
+        ...levelRes.data,
+        gold: profileRes.data.gold
+      });
+    } catch (err) {
+      console.error("Failed to fetch level info:", err);
+    }
+  };
+
+  // Listen for task completion event
+  useEffect(() => {
+    const handleTaskCompleted = () => {
+      if (user?.token) {
+        fetchLevelInfo();
+      }
+    };
+
+    // Add event listener
+    window.addEventListener(TASK_COMPLETED_EVENT, handleTaskCompleted);
+
+    // Initial fetch of level info
+    if (user?.token) {
+      fetchLevelInfo();
+    }
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener(TASK_COMPLETED_EVENT, handleTaskCompleted);
+    };
+  }, [user]);
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <nav className="bg-primary-600 text-white shadow-md">
+    <nav className="bg-[#0093E9] text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold">任务管理系统</span>
+        <div className="flex justify-between items-center h-16">
+          {/* Left: System Name */}
+          <div className="flex-shrink-0">
+            <Link to="/" className="flex items-center">
+              <span className="text-xl font-bold">Task Master</span>
             </Link>
           </div>
 
-          {/* 桌面导航 */}
-          <div className="hidden md:flex md:items-center md:space-x-4">
-            <Link to="/" className="px-3 py-2 rounded-md hover:bg-primary-700">
-              首页
-            </Link>
+          {/* Middle: Level Bar */}
+          {user && (
+            <div className="hidden md:block flex-1 px-8 max-w-lg">
+              <UserLevelBar data={levelInfo} />
+            </div>
+          )}
 
+          {/* Right: Navigation */}
+          <div className="hidden md:flex md:items-center md:space-x-4">
             {user ? (
               <>
                 <Link
                   to="/dashboard"
-                  className="px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="px-3 py-2 rounded-md hover:bg-[#0080d0]"
                 >
-                  仪表盘
+                  Dashboard
                 </Link>
                 <Link
                   to="/tasks"
-                  className="px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="px-3 py-2 rounded-md hover:bg-[#0080d0]"
                 >
-                  任务
+                  Tasks
                 </Link>
-                <Link
-                  to="/profile"
-                  className="px-3 py-2 rounded-md hover:bg-primary-700"
-                >
-                  个人资料
-                </Link>
-                <Link
-                  to="/achievements"
-                  className="px-3 py-2 rounded-md hover:bg-primary-700"
-                >
-                  个人成就
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="px-3 py-2 rounded-md hover:bg-primary-700"
-                >
-                  登出
-                </button>
+                
+                {/* Avatar and Dropdown Menu */}
+                <div className="relative" ref={profileMenuRef}>
+                  <button
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                    className="flex items-center space-x-2 focus:outline-none"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white text-[#0093E9] flex items-center justify-center text-sm font-semibold">
+                      {user.username ? user.username.charAt(0).toUpperCase() : '?'}
+                    </div>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50">
+                      {/* User Info Section */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 rounded-full bg-[#0093E9] text-white flex items-center justify-center text-lg font-semibold">
+                            {user.username ? user.username.charAt(0).toUpperCase() : '?'}
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                            <div className="text-xs text-gray-500 truncate" style={{ maxWidth: '180px' }}>
+                              {user.email}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Menu Options */}
+                      <div className="py-1">
+                        <Link
+                          to="/profile"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                        >
+                          Personal Profile
+                        </Link>
+                        <Link
+                          to="/achievements"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsProfileMenuOpen(false)}
+                        >
+                          Personal Achievements
+                        </Link>
+                        <button
+                          onClick={() => {
+                            handleLogout();
+                            setIsProfileMenuOpen(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <>
                 <Link
                   to="/login"
-                  className="px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="px-3 py-2 rounded-md hover:bg-[#0080d0]"
                 >
-                  登录
+                  Login
                 </Link>
                 <Link
                   to="/register"
-                  className="px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="px-3 py-2 rounded-md hover:bg-[#0080d0]"
                 >
-                  注册
+                  Register
                 </Link>
               </>
             )}
           </div>
 
-          {/* 移动端菜单按钮 */}
+          {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
             <button
               onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md hover:bg-primary-700 focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-md hover:bg-[#0080d0] focus:outline-none"
             >
               <svg
                 className="h-6 w-6"
@@ -119,66 +231,72 @@ export const Navbar = () => {
         </div>
       </div>
 
-      {/* 移动端菜单 */}
+      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden">
+          {/* Mobile Level Bar */}
+          {user && (
+            <div className="px-4 py-2">
+              <UserLevelBar data={levelInfo} />
+            </div>
+          )}
+          
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link
-              to="/"
-              className="block px-3 py-2 rounded-md hover:bg-primary-700"
-              onClick={toggleMenu}
-            >
-              首页
-            </Link>
-
             {user ? (
               <>
                 <Link
                   to="/dashboard"
-                  className="block px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="block px-3 py-2 rounded-md hover:bg-[#0080d0]"
                   onClick={toggleMenu}
                 >
-                  仪表盘
+                  Dashboard
                 </Link>
                 <Link
                   to="/tasks"
-                  className="block px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="block px-3 py-2 rounded-md hover:bg-[#0080d0]"
                   onClick={toggleMenu}
                 >
-                  任务
+                  Tasks
                 </Link>
                 <Link
                   to="/profile"
-                  className="block px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="block px-3 py-2 rounded-md hover:bg-[#0080d0]"
                   onClick={toggleMenu}
                 >
-                  个人资料
+                  Profile
+                </Link>
+                <Link
+                  to="/achievements"
+                  className="block px-3 py-2 rounded-md hover:bg-[#0080d0]"
+                  onClick={toggleMenu}
+                >
+                  Achievements
                 </Link>
                 <button
                   onClick={() => {
                     handleLogout();
                     toggleMenu();
                   }}
-                  className="block w-full text-left px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="block w-full text-left px-3 py-2 rounded-md hover:bg-[#0080d0]"
                 >
-                  登出
+                  Logout
                 </button>
               </>
             ) : (
               <>
                 <Link
                   to="/login"
-                  className="block px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="block px-3 py-2 rounded-md hover:bg-[#0080d0]"
                   onClick={toggleMenu}
                 >
-                  登录
+                  Login
                 </Link>
                 <Link
                   to="/register"
-                  className="block px-3 py-2 rounded-md hover:bg-primary-700"
+                  className="block px-3 py-2 rounded-md hover:bg-[#0080d0]"
                   onClick={toggleMenu}
                 >
-                  注册
+                  Register
                 </Link>
               </>
             )}
@@ -188,3 +306,5 @@ export const Navbar = () => {
     </nav>
   );
 };
+
+export default Navbar;
