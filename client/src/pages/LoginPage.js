@@ -19,7 +19,7 @@ const LoginPage = () => {
     
     // 简单的表单验证
     if (!email || !password) {
-      showError('请填写所有字段');
+      showError('All fields are required');
       return;
     }
     
@@ -31,12 +31,12 @@ const LoginPage = () => {
       await login(email, password);
       
       // 登录成功后显示提示并跳转
-      showSuccess('登录成功！');
+      showSuccess('Login successful！');
       navigate('/dashboard');
     } catch (error) {
       const errorMessage = error.response && error.response.data.message
         ? error.response.data.message
-        : '登录失败，请检查您的凭据';
+        : 'Login failed, please check your credentials';
       setError(errorMessage);
       showError(errorMessage);
     } finally {
@@ -51,7 +51,7 @@ const LoginPage = () => {
       <div className="max-w-md mx-auto mt-10 px-4 sm:px-6 lg:px-8">
         <div className="card">
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-            登录
+            Login
           </h2>
           
           {error && (
@@ -66,7 +66,7 @@ const LoginPage = () => {
                 htmlFor="email"
                 className="block text-gray-700 font-medium mb-2"
               >
-                邮箱
+                Mail
               </label>
               <input
                 type="email"
@@ -74,7 +74,7 @@ const LoginPage = () => {
                 className="form-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="请输入您的邮箱"
+                placeholder="Please enter your email"
                 required
               />
             </div>
@@ -84,7 +84,7 @@ const LoginPage = () => {
                 htmlFor="password"
                 className="block text-gray-700 font-medium mb-2"
               >
-                密码
+                Password
               </label>
               <input
                 type="password"
@@ -92,7 +92,7 @@ const LoginPage = () => {
                 className="form-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="请输入您的密码"
+                placeholder="Please enter your password"
                 required
               />
             </div>
@@ -103,14 +103,14 @@ const LoginPage = () => {
                 className="btn-primary w-full"
                 disabled={isLoading}
               >
-                {isLoading ? '登录中...' : '登录'}
+                {isLoading ? 'Loading...' : 'Login'}
               </button>
             </div>
             
             <div className="text-center text-gray-600">
-              还没有账号？{' '}
+              No Account yet？{' '}
               <Link to="/register" className="text-primary-600 hover:underline">
-                注册
+                Register
               </Link>
             </div>
           </form>
@@ -118,11 +118,11 @@ const LoginPage = () => {
 
         {/* 演示账号信息 */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h3 className="text-lg font-semibold text-blue-800 mb-2">演示账号</h3>
-          <p className="text-blue-700 mb-1">邮箱: demo@example.com</p>
-          <p className="text-blue-700">密码: password123</p>
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">Demo Account</h3>
+          <p className="text-blue-700 mb-1">Mail: demo@example.com</p>
+          <p className="text-blue-700">Password: password123</p>
           <p className="text-sm text-blue-600 mt-2">
-            注意: 这只是一个演示账号，实际应用中不会显示此信息。
+            Note: This is just a demo account and will not be displayed in the actual application.
           </p>
         </div>
       </div>

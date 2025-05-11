@@ -28,15 +28,15 @@ const NotFoundPage = () => {
         <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
           404
         </h1>
-        <p className="mt-4 text-xl text-gray-500">页面未找到</p>
+        <p className="mt-4 text-xl text-gray-500">Page not found. </p>
         
         <p className="mt-6 text-base text-gray-500">
-          您访问的页面不存在或已被移除。
+          Sorry, the page you are looking for cannot be found or has been removed.
         </p>
         
         <div className="mt-10">
           <Link to="/" className="btn-primary">
-            返回首页
+            Back to home page
           </Link>
         </div>
       </div>

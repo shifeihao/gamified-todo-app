@@ -33,7 +33,7 @@ className={`px-3 py-1 rounded text-sm transition-all duration-150 ${
         : "text-gray-500 hover:text-blue-500"
 }`}
           >
-            任务列表
+            List
           </button>
           <button
 onClick={() => setActiveTab("calendar")}
@@ -43,7 +43,7 @@ className={`px-3 py-1 rounded text-sm transition-all duration-150 ${
         : "text-gray-500 hover:text-blue-500"
 }`}
           >
-            时刻表
+            Timetable
           </button>
         </div>
       </div>
@@ -70,7 +70,7 @@ className={`px-3 py-1 rounded text-sm transition-all duration-150 ${
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-                            <p className="text-sm text-blue-600">点击创建长期任务</p>
+                            <p className="text-sm text-blue-600">Click to create Long term Task</p>
             </>
           )}
           onCreate={onCreateTask}

@@ -303,7 +303,7 @@ const TasksPage = () => {
             className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors duration-200"
             disabled={loadingAny}
           >
-            创建新任务
+            Create Task
           </button>
         </div>
 

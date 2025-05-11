@@ -31,9 +31,24 @@ const createTask = async (req, res) => {
       return res.status(400).json({ message: "缺少必要的任务信息" });
     }
     if (!req.body.cardUsed) {
-      return res
-        .status(400)
-        .json({ message: "必须指定使用的卡片（cardUsed）" });
+      return res.status(400).json({ message: "必须指定使用的卡片（cardUsed）" });
+    }
+
+    // 如果是长期任务，验证子任务
+    if (req.body.type === '长期') {
+      if (!req.body.subTasks || !Array.isArray(req.body.subTasks) || req.body.subTasks.length === 0) {
+        return res.status(400).json({ message: "长期任务必须包含至少一个子任务" });
+      }
+
+      // 验证每个子任务
+      for (const subTask of req.body.subTasks) {
+        if (!subTask.title || !subTask.title.trim()) {
+          return res.status(400).json({ message: "子任务必须包含标题" });
+        }
+        if (!subTask.dueDate) {
+          return res.status(400).json({ message: "子任务必须设置截止时间" });
+        }
+      }
     }
 
     // 使用前端传来的任务数据创建任务
@@ -97,6 +112,54 @@ const updateTask = async (req, res) => {
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "没有权限" });
+    }
+
+    // 如果更新包含子任务列表，进行验证
+    if (req.body.subTasks) {
+      if (task.type === '长期' && (!Array.isArray(req.body.subTasks) || req.body.subTasks.length === 0)) {
+        return res.status(400).json({ message: "长期任务必须包含至少一个子任务" });
+      }
+
+      // 验证每个子任务
+      for (const subTask of req.body.subTasks) {
+        if (!subTask.title || !subTask.title.trim()) {
+          return res.status(400).json({ message: "子任务必须包含标题" });
+        }
+        if (!subTask.dueDate) {
+          return res.status(400).json({ message: "子任务必须设置截止时间" });
+        }
+      }
+    }
+
+    // 处理子任务完成
+    const { subTaskIndex } = req.body;
+    if (subTaskIndex !== undefined) {
+      // 检查子任务是否存在
+      if (!task.subTasks[subTaskIndex]) {
+        return res.status(404).json({ message: "子任务不存在" });
+      }
+
+      // 检查子任务是否已完成
+      if (task.subTasks[subTaskIndex].status === '已完成') {
+        return res.status(400).json({ message: "子任务已经完成" });
+      }
+
+      // 调用子任务完成处理函数
+      const { handleSubTaskCompletion } = await import("./levelController.js");
+      const result = await handleSubTaskCompletion({
+        user: req.user,
+        body: {
+          taskId: task._id.toString(),
+          subTaskIndex
+        }
+      });
+
+      return res.json({
+        message: "子任务已完成",
+        task: result.task,
+        subTaskReward: result.subTaskReward,
+        longTaskReward: result.longTaskReward // 如果长期任务也完成了，包含其奖励
+      });
     }
 
     // 优先处理子任务状态更新

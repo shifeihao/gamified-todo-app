@@ -21,17 +21,17 @@ const RegisterPage = () => {
     
     // 简单的表单验证
     if (!username || !email || !password || !confirmPassword) {
-      showError('请填写所有字段');
+      showError('Please complete all fields.\n');
       return;
     }
     
     if (password !== confirmPassword) {
-      showError('两次输入的密码不一致');
+      showError('Please enter password');
       return;
     }
     
     if (password.length < 6) {
-      showError('密码长度至少为6个字符');
+      showError('Password must be at least 6 characters long');
       return;
     }
     
@@ -43,12 +43,12 @@ const RegisterPage = () => {
       await register(username, email, password);
       
       // 注册成功后显示提示并跳转
-      showSuccess('注册成功！');
+      showSuccess('Register successful！');
       navigate('/dashboard');
     } catch (error) {
       const errorMessage = error.response && error.response.data.message
         ? error.response.data.message
-        : '注册失败，请稍后再试';
+        : 'Registration failed. Please try again later.\n';
       setError(errorMessage);
       showError(errorMessage);
     } finally {
@@ -63,7 +63,7 @@ const RegisterPage = () => {
       <div className="max-w-md mx-auto mt-10 px-4 sm:px-6 lg:px-8">
         <div className="card">
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-            注册账号
+            Register
           </h2>
           
           {error && (
@@ -78,7 +78,7 @@ const RegisterPage = () => {
                 htmlFor="username"
                 className="block text-gray-700 font-medium mb-2"
               >
-                用户名
+                Username
               </label>
               <input
                 type="text"
@@ -86,7 +86,7 @@ const RegisterPage = () => {
                 className="form-input"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="请输入用户名"
+                placeholder="Please enter your username"
                 required
               />
             </div>
@@ -96,7 +96,7 @@ const RegisterPage = () => {
                 htmlFor="email"
                 className="block text-gray-700 font-medium mb-2"
               >
-                邮箱
+                Mail
               </label>
               <input
                 type="email"
@@ -104,7 +104,7 @@ const RegisterPage = () => {
                 className="form-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="请输入邮箱"
+                placeholder="Please enter your email"
                 required
               />
             </div>
@@ -114,7 +114,7 @@ const RegisterPage = () => {
                 htmlFor="password"
                 className="block text-gray-700 font-medium mb-2"
               >
-                密码
+                Password
               </label>
               <input
                 type="password"
@@ -122,7 +122,7 @@ const RegisterPage = () => {
                 className="form-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="请输入密码（至少6个字符）"
+                placeholder="Please enter your password(at least 6 characters)"
                 required
                 minLength={6}
               />
@@ -133,7 +133,7 @@ const RegisterPage = () => {
                 htmlFor="confirmPassword"
                 className="block text-gray-700 font-medium mb-2"
               >
-                确认密码
+                Confirm Password
               </label>
               <input
                 type="password"
@@ -141,7 +141,7 @@ const RegisterPage = () => {
                 className="form-input"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="请再次输入密码"
+                placeholder="Please confirm your password"
                 required
                 minLength={6}
               />
@@ -153,14 +153,14 @@ const RegisterPage = () => {
                 className="btn-primary w-full"
                 disabled={isLoading}
               >
-                {isLoading ? '注册中...' : '注册'}
+                {isLoading ? 'Registering...' : 'Register'}
               </button>
             </div>
             
             <div className="text-center text-gray-600">
-              已有账号？{' '}
+              Already have an account?{' '}
               <Link to="/login" className="text-primary-600 hover:underline">
-                登录
+                Login
               </Link>
             </div>
           </form>

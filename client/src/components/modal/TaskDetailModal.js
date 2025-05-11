@@ -106,7 +106,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Describe</h3>
                       <p className="text-gray-600">
-                        {task.description || '暂无描述'}
+                        {task.description || 'Currently no description available'}
                       </p>
                     </div>
 

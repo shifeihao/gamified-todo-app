@@ -105,7 +105,7 @@ export const TaskChain = ({
                     d="M5 11h14a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2z"
                 />
             </svg>
-            <p className="ml-2 text-gray-400">锁定</p>
+            <p className="ml-2 text-gray-400">Lock</p>
         </div>
     );
 

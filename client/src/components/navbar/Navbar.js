@@ -92,7 +92,7 @@ export const Navbar = () => {
           {/* Left: System Name */}
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold">Task Master</span>
+              <span className="text-xl font-bold">TaskMaster</span>
             </Link>
           </div>
 

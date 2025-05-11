@@ -130,7 +130,7 @@ export const TaskCard = ({
         >
           {/* ⚠️ 已过期大徽章 */}
           <div className="absolute top-0 right-0 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-bl">
-            已过期
+            Expired
           </div>
 
           {/* 任务标题 */}
@@ -143,7 +143,7 @@ export const TaskCard = ({
             onClick={() => onDelete(task._id)}
             className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow"
           >
-            删除过期任务
+            Delete
           </button>
         </div>
       );
@@ -165,8 +165,8 @@ export const TaskCard = ({
         </div>
 
         <div className="flex justify-between text-gray-500 text-xs mb-2">
-          {task.category && <span>分类: {task.category}</span>}
-          <span>剩余 {timeLeft}</span>
+          {task.category && <span>Tag: {task.category}</span>}
+          <span>Remain {timeLeft}</span>
         </div>
 
         <div className="flex justify-between space-x-2">
@@ -174,14 +174,14 @@ export const TaskCard = ({
             onClick={() => onComplete(task._id)}
             className="btn-primary text-xs py-1 px-2"
           >
-            完成
+            Complete
           </button>
 
           <button
             onClick={handleViewDetail}
             className="text-blue-600 hover:text-blue-800"
           >
-            查看详情
+            Check
           </button>
 
           <button
@@ -236,7 +236,7 @@ export const TaskCard = ({
         {task.subTasks && task.subTasks.length > 0 && (
           <div className="mb-4">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-gray-600">任务进度</span>
+              <span className="text-xs text-gray-600">Task Progress</span>
               <span className="text-xs font-medium text-gray-700">{progress}%</span>
             </div>
             <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">

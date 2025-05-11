@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 const subTaskSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true,
+    required: [true, '请提供子任务标题'],
     trim: true,
   },
   status: {
@@ -14,6 +14,7 @@ const subTaskSchema = new mongoose.Schema({
   },
   dueDate: {
     type: Date,
+    required: [true, '请提供子任务截止时间'],
   },
   completedAt: {
     type: Date,

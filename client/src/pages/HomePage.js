@@ -19,7 +19,7 @@ const HomePage = () => {
       icon: ChartBarIcon,
     },
     {
-      name: 'Knowledge Management',
+      name: 'Task Management',
       description: 'Build your digital task library',
       icon: BookOpenIcon,
     },
