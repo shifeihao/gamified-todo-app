@@ -34,3 +34,13 @@ code {
     @apply w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500;
   }
 }
+
+/* 任务仓库面板过渡动画 */
+.repository-panel {
+  transition: width 0.3s ease-in-out;
+}
+
+/* 确保内容在调整大小时平滑过渡 */
+.repository-panel > * {
+  transition: all 0.3s ease-in-out;
+}

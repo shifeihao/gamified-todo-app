@@ -7,6 +7,7 @@ import {
   buyItem
 } from '../services/inventoryShopService';
 import axios from 'axios';
+import { useToast } from '../contexts/ToastContext';
 
 const categories = ['全部', '武器', '防具', '消耗品', '材料'];
 
@@ -16,6 +17,7 @@ export default function InventoryShopPage() {
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('全部');
   const [gold, setGold] = useState(null);
+  const { showSuccess, showError } = useToast();
 
   const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null;
   const token = userInfo?.token || null;
@@ -48,6 +50,7 @@ export default function InventoryShopPage() {
         }
       } catch (err) {
         setError(err.message);
+        showError('获取商店数据失败');
       }
     }
     fetchData();
@@ -55,7 +58,10 @@ export default function InventoryShopPage() {
 
   const handleBuy = async (itemId) => {
     try {
-      if (!token) return alert('请先登录');
+      if (!token) {
+        showError('请先登录');
+        return;
+      }
       await buyItem(itemId, token);
       const updatedInventory = await getUserInventory(token);
       setInventory(updatedInventory);
@@ -63,8 +69,9 @@ export default function InventoryShopPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setGold(res.data.gold);
+      showSuccess('购买成功！');
     } catch (err) {
-      alert('购买失败: ' + err.message);
+      showError('购买失败: ' + err.message);
     }
   };
 

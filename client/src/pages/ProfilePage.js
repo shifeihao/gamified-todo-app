@@ -1,9 +1,11 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Navbar } from '../components/navbar';
 import AuthContext from '../context/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 const ProfilePage = () => {
   const { user, updateProfile, loading, error } = useContext(AuthContext);
+  const { showSuccess, showError } = useToast();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -60,7 +62,7 @@ const ProfilePage = () => {
 
     // 验证密码
     if (formData.password && formData.password !== formData.confirmPassword) {
-      setFormError('两次输入的密码不一致');
+      showError('两次输入的密码不一致');
       return;
     }
 
@@ -87,8 +89,11 @@ const ProfilePage = () => {
       });
       
       setSuccess(true);
+      showSuccess('个人资料更新成功！');
     } catch (err) {
-      setFormError('更新个人资料失败');
+      const errorMessage = '更新个人资料失败';
+      setFormError(errorMessage);
+      showError(errorMessage);
       console.error(err);
     }
   };

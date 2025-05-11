@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import {TaskCard} from './TaskCard';
+import {NewTaskCard} from "./NewTaskCard";
 
 export const TaskChain = ({
                        tasks,
@@ -51,7 +52,7 @@ export const TaskChain = ({
             onDrop={(e) => handleDropItem(e, idx)}
         >
             {task ? (
-                <TaskCard
+                    <TaskCard
                     className="absolute inset-0 w-full h-full"
                     task={task}
                     onComplete={onComplete}

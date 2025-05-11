@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/navbar';
 import AuthContext from '../context/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 const RegisterPage = () => {
   const [username, setUsername] = useState('');
@@ -13,23 +14,24 @@ const RegisterPage = () => {
 
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // 简单的表单验证
     if (!username || !email || !password || !confirmPassword) {
-      setError('请填写所有字段');
+      showError('请填写所有字段');
       return;
     }
     
     if (password !== confirmPassword) {
-      setError('两次输入的密码不一致');
+      showError('两次输入的密码不一致');
       return;
     }
     
     if (password.length < 6) {
-      setError('密码长度至少为6个字符');
+      showError('密码长度至少为6个字符');
       return;
     }
     
@@ -40,14 +42,15 @@ const RegisterPage = () => {
       // 调用注册函数
       await register(username, email, password);
       
-      // 注册成功后跳转到仪表盘
+      // 注册成功后显示提示并跳转
+      showSuccess('注册成功！');
       navigate('/dashboard');
     } catch (error) {
-      setError(
-        error.response && error.response.data.message
-          ? error.response.data.message
-          : '注册失败，请稍后再试'
-      );
+      const errorMessage = error.response && error.response.data.message
+        ? error.response.data.message
+        : '注册失败，请稍后再试';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setIsLoading(false);
     }

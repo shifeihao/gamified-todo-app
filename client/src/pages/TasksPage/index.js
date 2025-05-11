@@ -3,6 +3,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Navbar } from '../../components';
 import {CreateTaskModal} from '../../components';
 import AuthContext from '../../context/AuthContext';
+import { NewTaskCard } from '../../components/task/NewTaskCard';
+import { useToast } from '../../contexts/ToastContext';
 
 import DailyTaskPanel from './DailyTaskPanel';
 import TimetablePanel from './TimetablePanel';
@@ -34,6 +36,7 @@ import UserLevelBar from '../../components/base/UserLevelBar';
 
 const TasksPage = () => {
   const { user } = useContext(AuthContext);
+  const { showSuccess, showError } = useToast();
 
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
@@ -77,7 +80,7 @@ const TasksPage = () => {
       setError('');
     } catch (err) {
       console.error(err);
-      setError('获取任务数据失败');
+      showError('获取任务数据失败');
     }
   };
 
@@ -107,7 +110,7 @@ const TasksPage = () => {
   
 
   // 显示成功信息
-  const showSuccess = (msg) => {
+  const showSuccessMessage = (msg) => {
     setSuccessMessage(msg);
     setTimeout(() => setSuccessMessage(''), 3000);
   };
@@ -127,7 +130,7 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error(err);
-      setError('删除任务失败');
+      showError('删除任务失败');
     }
   });
 
@@ -158,7 +161,7 @@ const TasksPage = () => {
     
     onError: (err) => {
       console.error(err);
-      setError('完成任务失败');
+      showError('完成任务失败');
     }
   });
 
@@ -189,7 +192,7 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error(err);
-      setError('创建任务失败');
+      showError('创建任务失败');
     }
   });
 
@@ -209,7 +212,7 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error(err);
-      setError('更新任务失败');
+      showError('更新任务失败');
     }
   });
 
@@ -227,13 +230,13 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error(err);
-      setError('装备任务失败');
+      showError('装备任务失败');
     }
   });
 
   const handleEquip = (task) => {
     if (task.status === '已完成') {
-      setError('无法装备已完成的任务');
+      showError('无法装备已完成的任务');
       return;
     }
     // 选择短期/长期槽
@@ -242,7 +245,7 @@ const TasksPage = () => {
       .map(t => t.slotPosition);
     let freeSlot = [...Array(3).keys()].find(i => !occupied.includes(i));
     if (freeSlot == null) {
-      setError(isLong ? '长期任务槽已满' : '短期任务槽已满');
+      showError(isLong ? '长期任务槽已满' : '短期任务槽已满');
       return;
     }
     const slotType = isLong ? 'long' : 'short';
@@ -297,12 +300,18 @@ const TasksPage = () => {
   const loadingAny = deleting || completing || creating || updating || equipping || unequipping;
   const errorAny   = deleteError || completeError || createError || updateError || equipError || unequipError || error;
 
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
-    <div>
+    <div className="min-h-screen bg-cover bg-center bg-fixed" style={{
+      backgroundImage: "url('/rpg-background.png')",
+      // backgroundColor: "rgba(0, 0, 0, 0.6)", // 暗色背景作为备用
+      // backgroundBlendMode: "overlay" // 使背景图片变暗，提高内容可读性
+    }}>
       <Navbar />
-      <div className="max-w-7xl mx-auto py-4 space-y-4">
+      <div className="max-w-[95%] mx-auto py-4 space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">我的任务</h1>
+          <h1 className="text-2xl font-bold text-white">我的任务</h1>
 
           <button
             onClick={() => {
@@ -310,21 +319,27 @@ const TasksPage = () => {
               setCreateSlotIndex(-1);
               setShowForm(true);
             }}
-            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors duration-200"
             disabled={loadingAny}
           >
             创建新任务
           </button>
         </div>
-        {rewardInfo && (
-  <div className="mt-2">
-    <UserLevelBar data={rewardInfo} />
-  </div>
-)}
+{/*        {rewardInfo && (*/}
+{/*  <div className="mt-2">*/}
+{/*    <UserLevelBar data={rewardInfo} />*/}
+{/*  </div>*/}
+{/*)}*/}
 
-        {errorAny && <div className="text-red-600">{errorAny}</div>}
-        {loadingAny && <div className="text-gray-600">加载中...</div>}
-        {successMessage && <div className="text-green-600">{successMessage}</div>}
+        {errorAny && <div className="text-red-400 bg-black bg-opacity-50 p-2 rounded">{errorAny}</div>}
+        {loadingAny && <div className="text-gray-200 bg-black bg-opacity-50 p-2 rounded">加载中...</div>}
+        {successMessage && <div className="text-green-400 bg-black bg-opacity-50 p-2 rounded">{successMessage}</div>}
+
+        {/* 添加 NewTaskCard 作为特色任务展示 */}
+        {/* <div className="mb-6">
+          <h2 className="text-xl font-semibold text-white mb-4">特色任务</h2>
+          <NewTaskCard />
+        </div> */}
 
         <CreateTaskModal
           isOpen={showForm}
@@ -348,9 +363,10 @@ const TasksPage = () => {
           }
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="w-full lg:w-1/2">
+        <div className="flex gap-4 relative">
+          {/* 左侧：任务槽区域 */}
+          <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-1/2' : 'w-3/4'}`}>
+            <div className="grid grid-cols-2 gap-4">  {/* 改回 grid-cols-2 实现水平排列 */}
               <DailyTaskPanel
                 tasks={tasks}
                 equippedTasks={equippedShortTasks}
@@ -362,8 +378,6 @@ const TasksPage = () => {
                 onCreateTask={(idx) => handleCreateFromSlot(idx, '短期')}
                 onEquip={handleEquip}
               />
-            </div>
-            <div className="w-full lg:w-1/2">
               <TimetablePanel
                 tasks={tasks}
                 equippedTasks={equippedLongTasks}
@@ -375,7 +389,9 @@ const TasksPage = () => {
               />
             </div>
           </div>
-          <div>
+          
+          {/* 右侧：可调整宽度的任务仓库 */}
+          <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-1/2' : 'w-1/4'}`}>
             <RepositoryPanel
               tasks={tasks}
               cards={cards}
@@ -383,6 +399,8 @@ const TasksPage = () => {
               onDelete={handleDelete}
               onEdit={setEditingTask}
               onEquip={handleEquip}
+              onExpand={setIsExpanded}
+              isExpanded={isExpanded}
             />
           </div>
         </div>

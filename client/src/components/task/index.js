@@ -7,3 +7,4 @@ export {BlankCardRepository} from './BlankCardRepository';
 export {RewardCardTile} from './RewardCardTile';
 export {TaskCalendar} from './TaskCalendar';
 export {TaskDetailModal} from '../modal/TaskDetailModal';
+export {NewTaskCard} from './NewTaskCard';

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // 导入页面组件
 
@@ -13,6 +15,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import InventoryShopPage from "./pages/InventoryShopPage";
 import AchievementCenterPage from "./pages/AchievementCenterPage.js";
 import DungeonTest from "./pages/DungeonTest";
+import TemplatePage from './pages/TemplatePage';
 
 
 // 导入上下文
@@ -37,6 +40,7 @@ function App() {
   return (
     <AuthProvider>
       <div className="min-h-screen bg-gray-50">
+        <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
           {/* 公开路由 */}
           <Route path="/" element={<HomePage />} />
@@ -77,6 +81,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AchievementCenterPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/templates"
+            element={
+              <ProtectedRoute>
+                <TemplatePage />
               </ProtectedRoute>
             }
           />

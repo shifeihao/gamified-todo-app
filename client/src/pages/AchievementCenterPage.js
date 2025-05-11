@@ -5,11 +5,13 @@ import AchievementSidebar from "../components/AchievementSidebar.js";
 import OverviewTab from "../components/OverviewTab.js";
 import CategoryTab from "../components/CategoryTab.js";
 import { Navbar } from "../components/navbar/Navbar.js";
+import { useToast } from '../contexts/ToastContext';
 
 const AchievementCenterPage = () => {
   const [achievements, setAchievements] = useState([]);
   const [userStats, setUserStats] = useState(null);
   const [currentTab, setCurrentTab] = useState("Overview");
+  const { showError } = useToast();
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -22,6 +24,7 @@ const AchievementCenterPage = () => {
         setUserStats(stats);
       } catch (error) {
         console.error("❌ 获取数据失败:", error);
+        showError('获取成就数据失败');
       }
     };
     fetchAll();

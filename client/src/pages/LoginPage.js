@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/navbar';
 import AuthContext from '../context/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -11,13 +12,14 @@ const LoginPage = () => {
 
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // 简单的表单验证
     if (!email || !password) {
-      setError('请填写所有字段');
+      showError('请填写所有字段');
       return;
     }
     
@@ -28,14 +30,15 @@ const LoginPage = () => {
       // 调用登录函数
       await login(email, password);
       
-      // 登录成功后跳转到仪表盘
+      // 登录成功后显示提示并跳转
+      showSuccess('登录成功！');
       navigate('/dashboard');
     } catch (error) {
-      setError(
-        error.response && error.response.data.message
-          ? error.response.data.message
-          : '登录失败，请检查您的凭据'
-      );
+      const errorMessage = error.response && error.response.data.message
+        ? error.response.data.message
+        : '登录失败，请检查您的凭据';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setIsLoading(false);
     }
