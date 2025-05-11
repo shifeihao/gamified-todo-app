@@ -92,7 +92,7 @@ const ConsumableItem = ShopItem.discriminator('consumable', new mongoose.Schema(
     default: true
   }
 }));
-
+// revised version
 
 const MaterialItem = ShopItem.discriminator('material', new mongoose.Schema({
     rarity: {
