@@ -85,7 +85,7 @@ const ConsumableItem = ShopItem.discriminator('consumable', new mongoose.Schema(
     default: true
   }
 }));
-
+// revised version
 
 const ArmorItem = ShopItem.discriminator(
   "armor",
