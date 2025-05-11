@@ -26,8 +26,8 @@ const DashboardPage = () => {
         setTasks(data);
         
         // 计算统计数据
-        const completed = data.filter((task) => task.status === '已完成').length;
-        const pending = data.filter((task) => task.status === '待完成').length;
+        const completed = data.filter((task) => task.status === 'Completed').length;
+        const pending = data.filter((task) => task.status === 'Pending').length;
         const inProgress = data.filter((task) => task.status === '进行中').length;
         const highPriority = data.filter((task) => task.priority === '高').length;
         
@@ -61,7 +61,7 @@ const DashboardPage = () => {
 
   // 获取即将到期的任务
   const upcomingTasks = tasks
-    .filter((task) => task.status !== '已完成' && task.dueDate)
+    .filter((task) => task.status !== 'Completed' && task.dueDate)
     .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
     .slice(0, 5);
 
@@ -242,7 +242,7 @@ const DashboardPage = () => {
                         </div>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            task.status === '已完成'
+                            task.status === 'Completed'
                               ? 'bg-green-100 text-green-800'
                               : task.status === '进行中'
                               ? 'bg-blue-100 text-blue-800'

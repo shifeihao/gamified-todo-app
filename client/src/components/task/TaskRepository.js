@@ -20,7 +20,7 @@ export const TaskRepository = ({
 
   // 分类与类型选项
   const categories = ['全部', ...new Set(unequippedTasks.map(t => t.category))];
-  const types = ['全部', '短期', '长期'];
+  const types = ['全部', 'short', 'long'];
 
   // 拖拽开始
   const handleDragStart = (e, task) => {

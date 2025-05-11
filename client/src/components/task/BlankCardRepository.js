@@ -47,7 +47,7 @@ export const BlankCardRepository = ({ cards }) => {
                             onChange={e => setSelectedType(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
                         >
-                            {['全部', '短期', '长期'].map(t => (
+                            {['全部', 'short', 'long'].map(t => (
                                 <option key={t} value={t}>
                                     {t}
                                 </option>

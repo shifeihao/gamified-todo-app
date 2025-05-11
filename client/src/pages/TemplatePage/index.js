@@ -12,7 +12,7 @@ const TemplatePage = () => {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        type: '短期',
+        type: 'short',
         category: 'default',
         subTasks: []
     });
@@ -51,7 +51,7 @@ const TemplatePage = () => {
             setFormData({
                 title: '',
                 description: '',
-                type: '短期',
+                type: 'short',
                 category: 'default',
                 subTasks: []
             });
@@ -105,7 +105,7 @@ const TemplatePage = () => {
                         setFormData({
                             title: '',
                             description: '',
-                            type: '短期',
+                            type: 'short',
                             category: 'default',
                             subTasks: []
                         });
@@ -165,8 +165,8 @@ const TemplatePage = () => {
                             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         >
-                            <option value="短期">短期</option>
-                            <option value="长期">长期</option>
+                            <option value="short">short</option>
+                            <option value="long">long</option>
                         </select>
                     </div>
 

@@ -22,7 +22,7 @@ const taskTemplateSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['短期', '长期'],
+    enum: ['short', 'long'],
     required: true,
   },
   subTasks: [{

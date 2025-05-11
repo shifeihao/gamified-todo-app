@@ -21,7 +21,7 @@ async function main() {
     // 3. 遍历更新
     for (const card of cards) {
         // 这里按类型决定默认值，你也可以改逻辑
-        card.taskDuration = card.type === 'special' ? '长期' : '短期';
+        card.taskDuration = card.type === 'special' ? 'long' : 'short';
         await card.save();
         console.log(`✔ 卡片 ${card._id} → ${card.taskDuration}`);
     }

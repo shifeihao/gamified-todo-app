@@ -202,17 +202,17 @@ const updateTask = async (req, res) => {
 
     let rewardResult = null;
 
-    if (req.body.status === "已完成" && oldStatus !== "已完成") {
+    if (req.body.status === "Completed" && oldStatus !== "Completed") {
       // 如果主任务变为已完成，处理奖励与历史记录
       if (
-        task.type === "短期" &&
+        task.type === "short" &&
         task.slotEquippedAt &&
         Date.now() - new Date(task.slotEquippedAt).getTime() >
           24 * 60 * 60 * 1000
       ) {
-        task.status = "过期";
+        task.status = "Overdue";
         await task.save();
-        return res.status(400).json({ message: "短期任务已过期，无法完成" });
+        return res.status(400).json({ message: "The short-term task has expired and cannot be completed" });
       }
 
       task.completedAt = Date.now();
@@ -327,7 +327,7 @@ const equipTask = async (req, res) => {
       return res.status(403).json({ message: "没有权限" });
     }
     // 检查任务类型是否匹配槽位类型
-    const expectedType = slotType === "long" ? "长期" : "短期";
+    const expectedType = slotType === "long" ? "long" : "short";
     if (task.type !== expectedType) {
       return res
         .status(400)

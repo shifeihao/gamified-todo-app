@@ -4,8 +4,8 @@ import mongoose from 'mongoose';
 const taskHistorySchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: String,
-    type: { type: String, enum: ['短期', '长期'], required: true },
-    status: { type: String, enum: ['已完成', '过期'], default: '已完成' },
+    type: { type: String, enum: ['short', 'long'], required: true },
+    status: { type: String, enum: ['Completed', 'Overdue'], default: 'Completed' },
     completedAt: Date,
     duration: Number, // ms
     experienceGained: Number,

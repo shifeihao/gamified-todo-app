@@ -41,7 +41,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
       // 使用 PUT 主任务路由，同时传 subTaskId 和 status
       const res = await axios.put(
           `/api/tasks/${taskId}`,
-          { subTaskId, status: '已完成' },
+          { subTaskId, status: 'Completed' },
           { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -110,7 +110,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
                       </p>
                     </div>
 
-                    {task.type === '长期' && subTasks.length > 0 && (
+                    {task.type === 'long' && subTasks.length > 0 && (
                         <div>
                           <h3 className="text-lg font-semibold mb-2">Subtask Process</h3>
                           <div className="space-y-2">
@@ -125,14 +125,14 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
                           </span>
                                   <span
                                       className={`px-2 py-1 rounded ${
-                                          subTask.status === '已完成'
+                                          subTask.status === 'Completed'
                                               ? 'bg-green-100 text-green-800'
                                               : 'bg-yellow-100 text-yellow-800'
                                       }`}
                                   >
                             {subTask.status}
                           </span>
-                                  {subTask.status !== '已完成' && (
+                                  {subTask.status !== 'Completed' && (
                                       <button
                                           onClick={() => handleComplete(subTask, idx)}
                                           disabled={loadingIdx === idx}

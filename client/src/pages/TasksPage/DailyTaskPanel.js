@@ -13,7 +13,7 @@ const DailyTaskPanel = ({
   user,
 }) => {
   // 只展示短期任务
-  const shortTasks = equippedTasks.filter((t) => t.type === "短期");
+  const shortTasks = equippedTasks.filter((t) => t.type === "short");
 
   return (
         <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-4 border-2 border-purple-300 backdrop-blur-sm">
@@ -48,7 +48,7 @@ const DailyTaskPanel = ({
           </>
         )}
         onCreate={onCreateTask}
-        onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, "短期")}
+        onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, "short")}
         onComplete={onComplete}
         onDelete={onDelete}
         onEdit={onEdit}

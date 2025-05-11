@@ -15,7 +15,7 @@ export const TaskChain = ({
 
     // ✅ 使用 useMemo 来计算槽位内容，避免死循环
     const slots = useMemo(() => {
-        const longTermTasks = tasks.filter(task => task.type === '长期');
+        const longTermTasks = tasks.filter(task => task.type === 'long');
         const result = Array(totalSlots).fill(null);
         longTermTasks.forEach((task, idx) => {
             if (idx < activeCount) result[idx] = task;
@@ -39,7 +39,7 @@ export const TaskChain = ({
             const data = JSON.parse(e.dataTransfer.getData('task'));
             if (data && onDrop) onDrop(data._id, idx);
         } catch (err) {
-            console.error('拖放长期任务失败:', err);
+            console.error('Dragging the long-term task failed:', err);
         }
     };
 
@@ -74,7 +74,7 @@ export const TaskChain = ({
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    <p>点击创建长期任务</p>
+                    <p>Click to create a long-term task</p>
                 </button>
             )}
         </div>

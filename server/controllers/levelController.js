@@ -15,7 +15,7 @@ export const handleTaskCompletion = async (req) => {
     if (!task || task.user.toString() !== userId.toString()) {
       throw new Error("任务无效或不属于当前用户");
     }
-    if (task.status !== "已完成") {
+    if (task.status !== "Completed") {
       throw new Error("任务尚未完成，无法结算奖励");
     }
 
@@ -25,8 +25,8 @@ export const handleTaskCompletion = async (req) => {
     let totalExp = 0;
     let totalGold = 0;
 
-    // 计算奖励（区分长期与短期）
-    if (task.type === "长期") {
+    // 计算奖励（区分长期与short）
+    if (task.type === "long") {
       const subExp = task.subTasks.reduce(
         (sum, s) => sum + (s.experience || 0),
         0

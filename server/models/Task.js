@@ -4,17 +4,17 @@ import mongoose from 'mongoose';
 const subTaskSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, '请提供子任务标题'],
+    required: [true, 'Please provide the subtask titles'],
     trim: true,
   },
   status: {
     type: String,
-    enum: ['待完成', '已完成'],
-    default: '待完成',
+    enum: ['Pending', 'Completed'],
+    default: 'Pending',
   },
   dueDate: {
     type: Date,
-    required: [true, '请提供子任务截止时间'],
+    required: [true, 'Please provide the deadlines of the sub-tasks'],
   },
   completedAt: {
     type: Date,
@@ -41,7 +41,7 @@ const taskSchema = new mongoose.Schema(
     cardUsed: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Card',
-      required: [true, '必须指定使用的卡片']
+      required: [true, 'The used card must be specified']
     },
     baseExperience: {
       type: Number,
@@ -62,7 +62,7 @@ const taskSchema = new mongoose.Schema(
       },
       title: {
       type: String,
-      required: [true, '请提供任务标题'],
+      required: [true, 'Please provide the title'],
       trim: true,
     },
     description: {
@@ -71,18 +71,18 @@ const taskSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['短期', '长期'],
-      default: '短期',
+      enum: ['short', 'long'],
+      default: 'short',
     },
     status: {
       type: String,
-      enum: ['待完成', '进行中', '已完成', '过期'],
-      default: '待完成',
+      enum: ['Pending', 'Completed', 'Overdue'],
+      default: 'Pending',
     },
     category: {
       type: String,
       trim: true,
-      default: '默认',
+      default: 'default',
     },
     dueDate: {
       type: Date,

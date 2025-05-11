@@ -38,14 +38,14 @@ const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
   const [equippedTasks, setEquippedTasks] = useState([]);
-  const [equippedShortTasks, setEquippedShortTasks] = useState([]); // 短期任务槽
+  const [equippedShortTasks, setEquippedShortTasks] = useState([]); // short任务槽
   const [equippedLongTasks, setEquippedLongTasks] = useState([]); // 长期任务槽
   const [rewardInfo, setRewardInfo] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [createSlotIndex, setCreateSlotIndex] = useState(-1);
-  const [createSlotType, setCreateSlotType] = useState("短期"); // 默认创建任务类型
+  const [createSlotType, setCreateSlotType] = useState("short"); // 默认创建任务类型
 
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -152,10 +152,10 @@ const TasksPage = () => {
     onSuccess: async (res, input) => {
       showSuccess("Task created");
       if (input?.fromSlot && input?.slotIndex >= 0) {
-        const isLong = input.type === "长期";
+        const isLong = input.type === "long";
         const slotType = isLong ? "long" : "short";
         await equipTaskService(res._id, input.slotIndex, user.token, slotType);
-        showSuccess(`已装备${isLong ? "长期" : "短期"}任务`);
+        showSuccess(`已装备${isLong ? "long" : "short"}任务`);
       }
       fetchTasks();
       setShowForm(false);
@@ -207,12 +207,12 @@ const TasksPage = () => {
   });
 
   const handleEquip = (task) => {
-    if (task.status === "已完成") {
+    if (task.status === "Completed") {
       showError("Cannot equip completed quests");
       return;
     }
-    // 选择短期/长期槽
-    const isLong = task.type === "长期";
+    // 选择short/长期槽
+    const isLong = task.type === "long";
     const occupied = (isLong ? equippedLongTasks : equippedShortTasks).map(
       (t) => t.slotPosition
     );
@@ -296,7 +296,7 @@ const TasksPage = () => {
 
           <button
             onClick={() => {
-              setCreateSlotType("短期");
+              setCreateSlotType("short");
               setCreateSlotIndex(-1);
               setShowForm(true);
             }}
@@ -326,7 +326,7 @@ const TasksPage = () => {
             setShowForm(false);
             setEditingTask(null);
             setCreateSlotIndex(-1);
-            setCreateSlotType("短期"); // 每次关闭时都重置任务类型，确保下次能准确控制
+            setCreateSlotType("short"); // 每次关闭时都重置任务类型，确保下次能准确控制
           }}
           onSubmit={handleSubmit}
           loading={editingTask ? updating : creating}
@@ -334,7 +334,7 @@ const TasksPage = () => {
           slotIndex={createSlotIndex}
           defaultType={createSlotType}
           defaultDueDateTime={
-            createSlotType === "短期"
+            createSlotType === "short"
               ? new Date(Date.now() + 24 * 60 * 60 * 1000)
                   .toISOString()
                   .slice(0, 19)
@@ -355,7 +355,7 @@ const TasksPage = () => {
                 onEdit={setEditingTask}
                 onUnequip={handleUnequip}
                 onDrop={(tid, idx) => handleDropToSlot(tid, idx, "short")}
-                onCreateTask={(idx) => handleCreateFromSlot(idx, "短期")}
+                onCreateTask={(idx) => handleCreateFromSlot(idx, "short")}
                 onEquip={handleEquip}
               />
               <TimetablePanel
@@ -366,7 +366,7 @@ const TasksPage = () => {
                 onDelete={handleDelete}
                 onEdit={setEditingTask}
                 onDrop={(tid, idx) => handleDropToSlot(tid, idx, "long")}
-                onCreateTask={(idx) => handleCreateFromSlot(idx, "长期")}
+                onCreateTask={(idx) => handleCreateFromSlot(idx, "long")}
               />
             </div>
           </div>

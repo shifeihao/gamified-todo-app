@@ -6,7 +6,7 @@ export const CardSelector = ({
   onSelect,
   selectedCard,
   showRewards = false,   // 是否显示奖励卡片列表
-  taskType = '短期'       // 任务类型，用于过滤奖励卡
+  taskType = 'short'       // 任务类型，用于过滤奖励卡
 }) => {
   const { user } = useContext(AuthContext);
   const [cards, setCards] = useState([]);
@@ -39,7 +39,7 @@ export const CardSelector = ({
   // 过滤奖励卡：special 且 duration 匹配或通用
   const rewardCards = cards.filter(card =>
     card.type === 'special' &&
-    (card.taskDuration === taskType || card.taskDuration === '通用')
+    (card.taskDuration === taskType || card.taskDuration === 'general')
   );
 
   return (

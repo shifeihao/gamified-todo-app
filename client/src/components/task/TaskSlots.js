@@ -44,7 +44,7 @@ export const TaskSlots = ({
     try {
       const data = JSON.parse(e.dataTransfer.getData('task'));
         // ✅ 阻止已完成任务被拖拽装备
-        if (data.status === '已完成') {
+        if (data.status === 'Completed') {
             return; // 禁止已完成任务装备
         }
       onDrop?.(data._id, idx);

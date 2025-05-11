@@ -57,13 +57,13 @@ export async function SyncTaskHistory(userId) {
     }
     // 正确统计数量
     const completedNum = taskHistory.filter(
-      (t) => t.status === "已完成"
+      (t) => t.status === "Completed"
     ).length;
     const completedShortNum = taskHistory.filter(
-      (t) => t.status === "已完成" && t.type === "短期"
+      (t) => t.status === "Completed" && t.type === "short"
     ).length;
     const completedLongNum = taskHistory.filter(
-      (t) => t.status === "已完成" && t.type === "长期"
+      (t) => t.status === "Completed" && t.type === "long"
     ).length;
     const useSpecialNum = taskHistory.filter(
       (t) => t.cardType === "special"
@@ -78,10 +78,10 @@ export async function SyncTaskHistory(userId) {
 
     // 找出持续时间 最长/最短
     const shortTasks = taskHistory.filter(
-      (t) => t.type === "短期" && t.status === "已完成"
+      (t) => t.type === "short" && t.status === "Completed"
     );
     const longTasks = taskHistory.filter(
-      (t) => t.type === "长期" && t.status === "已完成"
+      (t) => t.type === "long" && t.status === "Completed"
     );
     const shortShortestTask = getMinDuration(shortTasks);
     const shortLongestTask = getMaxDuration(shortTasks);
@@ -92,7 +92,7 @@ export async function SyncTaskHistory(userId) {
     // 获取该用户所有“已完成”的任务
     const completedTasks = await TaskHistory.find({
       user: userId,
-      status: "已完成",
+      status: "Completed",
       completedAt: { $exists: true },
     });
 
@@ -189,7 +189,7 @@ export async function checkTaskNumber(userId) {
   const laterTimeStr = toTimeStr(sortedByTime.at(-1).createdAt);
 
   //记录创建过的长期任务中子任务最多的数量，只要创建就记录下来
-  const longTasks = taskCreate.filter((t) => t.type === "长期");
+  const longTasks = taskCreate.filter((t) => t.type === "long");
   const maxSubtaskCount = longTasks.reduce((max, current) => {
     const count = current.subTasks?.length || 0;
     return count > max ? count : max;

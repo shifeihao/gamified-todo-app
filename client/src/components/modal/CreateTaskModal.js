@@ -13,7 +13,7 @@ export const CreateTaskModal = ({
                                   loading = false,
                                   slotIndex = -1,
                                   initialData = null,
-                                  defaultType = '短期',
+                                  defaultType = 'short',
                                   defaultDueDateTime
                                 }) => {
   const { user } = useContext(AuthContext);
@@ -38,9 +38,9 @@ export const CreateTaskModal = ({
     setTaskType(initialData?.type || defaultType);
   }, [initialData, defaultType]);
 
-  // taskType 改变时，短期任务设置为当前本地时间 +24h
+  // taskType 改变时，short任务设置为当前本地时间 +24h
   useEffect(() => {
-    if (taskType === '短期') {
+    if (taskType === 'short') {
       const now = new Date();
       now.setDate(now.getDate() + 1);
       setDueDate(getLocalDateTimeString(now));
@@ -60,16 +60,16 @@ export const CreateTaskModal = ({
         const blanks = res.data.inventory.filter(c =>
             c.type === 'blank' &&
             !c.used && // ✅ 只统计未使用的
-            (taskType === '短期'
-                ? ['短期', '通用'].includes(c.taskDuration)
-                : ['长期', '通用'].includes(c.taskDuration))
+            (taskType === 'short'
+                ? ['short', 'general'].includes(c.taskDuration)
+                : ['long', 'general'].includes(c.taskDuration))
         ).length;
         setDailyCards(blanks);
 
         const rewards = res.data.inventory.filter(card =>
             card.type === 'special' &&
             !card.used && // ✅ 只统计未使用的
-            ['通用', taskType].includes(card.taskDuration)
+            ['general', taskType].includes(card.taskDuration)
         ).length;
         setRewardCardCount(rewards);
       } catch (err) {
@@ -119,7 +119,7 @@ export const CreateTaskModal = ({
 
       // 清空表单状态
       setTitle('');
-      setTaskType('短期');
+      setTaskType('short');
       setUseReward(false);
       setSelectedCard(null);
       onClose();
@@ -132,7 +132,7 @@ export const CreateTaskModal = ({
 
   const handleClose = () => {
     setTitle('');
-    setTaskType('短期');
+    setTaskType('short');
     setUseReward(false);
     setSelectedCard(null);
     onClose();
@@ -172,8 +172,8 @@ export const CreateTaskModal = ({
                   disabled={isFromSlot}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="短期">Quick Quests</option>
-                <option value="长期">Quest Chains
+                <option value="short">Quick Quests</option>
+                <option value="long">Quest Chains
                 </option>
               </select>
               {isFromSlot && (

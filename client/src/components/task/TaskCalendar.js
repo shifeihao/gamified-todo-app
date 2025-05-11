@@ -7,7 +7,7 @@ export const TaskCalendar = ({ tasks }) => {
     const [calendarItems, setCalendarItems] = useState([]);
 
     useEffect(() => {
-        const longTasks = tasks.filter(task => task.type === '长期' && task.equipped);
+        const longTasks = tasks.filter(task => task.type === 'long' && task.equipped);
         const palette = ['#f9f871','#a6f991', '#45f1bf', '#66b6f9', '#8885d8'];
 
         const result = longTasks.flatMap((task, idx) => {
@@ -106,8 +106,8 @@ export const TaskCalendar = ({ tasks }) => {
                                 </div>
                             </div>
                             <div className="text-green-500 text-lg">
-                                {task.status === '已完成' ? (
-                                    <span title="已完成">✅</span>
+                                {task.status === 'Completed' ? (
+                                    <span title="Completed">✅</span>
                                 ) : (
                                     <span title="未完成">⌛</span>
                                 )}

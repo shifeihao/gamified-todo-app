@@ -58,7 +58,7 @@ export const TaskForm = ({
       toast.error('Please enter a subtask title');
       return;
     }
-    
+
     // 验证子任务截止时间
     if (!subTaskDueDate) {
       toast.error('Please select a subtask deadline');
@@ -70,20 +70,18 @@ export const TaskForm = ({
       toast.error('The subtask deadline cannot be later than the parent task deadline');
       return;
     }
-    
     const newSub = {
       title: subTaskTitle,
-      status: '待完成',
-      dueDate: subTaskDueDate
+      status: 'Pending',
+      dueDate: subTaskDueDate || null
     };
-    
     setFormData(prev => ({
       ...prev,
       subTasks: [...prev.subTasks, newSub]
     }));
-    
+
     toast.success('Subtask added successfully');
-    
+
     // 清空输入
     setSubTaskTitle('');
     setSubTaskDueDate('');
@@ -100,25 +98,24 @@ export const TaskForm = ({
 
   // 校验
   const validate = () => {
-    // 验证长期任务必须有子任务
-    if (taskType === '长期' && formData.subTasks.length === 0) {
-      toast.error('A long-term task requires at least one subtask');
-      return false;
+    const newErrors = {};
+    if (taskType === 'long' && formData.subTasks.length === 0) {
+      newErrors.subTasks = 'A long-term task requires at least one subtask';
     }
-    
+
     // 验证所有子任务的截止时间都在父任务截止时间之前
-    if (taskType === '长期' && formData.dueDate) {
+    if (taskType === 'long' && formData.dueDate) {
       const parentDueDate = new Date(formData.dueDate);
       const invalidSubTasks = formData.subTasks.filter(
         subTask => new Date(subTask.dueDate) > parentDueDate
       );
-      
+
       if (invalidSubTasks.length > 0) {
         toast.error('There is a subtask deadline that is later than the parent task deadline. Please modify it.');
         return false;
       }
     }
-    
+
     return true;
   };
 
@@ -181,7 +178,7 @@ export const TaskForm = ({
       </div>
 
       {/* 子任务，仅长期任务 */}
-      {taskType === '长期' && (
+      {taskType === 'long' && (
         <div className="p-4 bg-gray-50 rounded-lg">
           <h3 className="text-md font-medium mb-2">Subtask</h3>
           {formData.dueDate && (

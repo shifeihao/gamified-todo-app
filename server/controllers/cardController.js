@@ -66,8 +66,8 @@ const issueDailyCards = asyncHandler(async (req, res) => {
         user: user._id,
         type: "blank",
         title: "空白卡片",
-        description: "限定为短期类型的任务",
-        taskDuration: "短期", //  限定为短期卡片
+        description: "This card limited to short-term type",
+        taskDuration: "short", //  限定为短期卡片
         issuedAt: new Date(),
       })
     )
@@ -97,7 +97,7 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
   const isMonday = today.getDay() === 1;
   if (!isMonday) {
     res.status(400);
-    throw new Error("今天不是发放长期卡片的时间（仅限周一）");
+    throw new Error("Today is not the time to send Long-term cards (Monday only).");
   }
   // 检查是否本周已发放
   const lastWeek = new Date(user.weeklyCards?.lastIssued || 0);
@@ -106,7 +106,7 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
   startOfThisWeek.setHours(0, 0, 0, 0);
   if (lastWeek >= startOfThisWeek) {
     res.status(400);
-    throw new Error("本周长期卡片已发放");
+    throw new Error("Long-term cards have been sent this week");
   }
   // 创建3张长期空白卡片
   const blankCards = await Promise.all(
@@ -114,9 +114,9 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
       Card.create({
         user: user._id,
         type: "blank",
-        title: "长期空白卡片",
-        description: "限定为长期类型的任务",
-        taskDuration: "长期",
+        title: "Long-term blank card",
+        description: "Tasks limited to the long-term type",
+        taskDuration: "long",
         issuedAt: new Date(),
       })
     )
@@ -143,10 +143,10 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
 const issueRewardCard = asyncHandler(async (req, res) => {
   const { type, title, description, bonus, taskDuration } = req.body;
   // 验证 taskDuration 是否有效
-  if (!["短期", "长期", "通用"].includes(taskDuration)) {
+  if (!["short", "long", "general"].includes(taskDuration)) {
     res.status(400);
     throw new Error(
-      "无效的任务持续时长：taskDuration 必须为 短期、长期 或 通用"
+      "无效的任务持续时长：taskDuration 必须为 Short、Long 或 general"
     );
   }
 
@@ -186,7 +186,7 @@ const issueBlankCard = asyncHandler(async (req, res) => {
     type: "blank",
     title,
     description,
-    taskDuration: "短期", //  限定为短期卡片
+    taskDuration: "short", //  限定为short卡片
     issuedAt: new Date(),
   });
 
@@ -229,7 +229,7 @@ const consumeCard = asyncHandler(async (req, res) => {
     }
 
     // ✅ 校验任务类型是否匹配
-    if (card.taskDuration !== "通用" && card.taskDuration !== taskData.type) {
+    if (card.taskDuration !== "general" && card.taskDuration !== taskData.type) {
       res.status(400);
       throw new Error(
         `该卡片仅支持 ${card.taskDuration} 类型任务，无法用于 ${taskData.type} 类型任务`
@@ -241,7 +241,7 @@ const consumeCard = asyncHandler(async (req, res) => {
       user: req.user.id,
       used: false,
       type: "blank",
-      $or: [{ taskDuration: taskData.type }, { taskDuration: "通用" }],
+      $or: [{ taskDuration: taskData.type }, { taskDuration: "general" }],
     });
 
     if (!card) {

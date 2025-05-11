@@ -45,7 +45,7 @@ export const TaskCard = ({
     const update = () => {
       const diff = new Date(task.dueDate).getTime() - Date.now();
       if (diff <= 0) {
-        setTimeLeft('已过期');
+        setTimeLeft('Overdue');
         return;
       }
       const d = Math.floor(diff / 86400000);
@@ -61,7 +61,7 @@ export const TaskCard = ({
   // 计算任务进度
   const calculateProgress = () => {
     if (!task.subTasks || task.subTasks.length === 0) return 0;
-    const completed = task.subTasks.filter(st => st.status === '已完成').length;
+    const completed = task.subTasks.filter(st => st.status === 'Completed').length;
     return Math.round((completed / task.subTasks.length) * 100);
   };
 
@@ -105,11 +105,11 @@ export const TaskCard = ({
   // 获取状态样式
   const getStatusStyles = () => {
     switch (task.status) {
-      case '已完成':
+      case 'Completed':
         return 'bg-green-100 text-green-800 border-green-200';
       case '进行中':
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case '待完成':
+      case 'Pending':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case '过期':
         return 'bg-red-100 text-red-800 border-red-200';
@@ -207,7 +207,7 @@ export const TaskCard = ({
   return (
     <div
       className={`flex rounded-lg overflow-hidden backdrop-blur-sm bg-white bg-opacity-40 border ${typeStyles.borderColor} shadow-lg transition-all duration-300 ${className}`}
-      draggable={draggable && task.status !== '已完成'}
+      draggable={draggable && task.status !== 'Completed'}
       onDragStart={onDragStart ? e => onDragStart(e, task) : undefined}
     >
       {/* 左侧类型标识 */}
@@ -265,7 +265,7 @@ export const TaskCard = ({
             >
               <Info className="w-4 h-4" />
             </button>
-            {task.status !== '已完成' && (
+            {task.status !== 'Completed' && (
               <>
                 <button
                   onClick={() => onEquip(task)}
