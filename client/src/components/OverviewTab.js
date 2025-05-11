@@ -14,15 +14,20 @@ const OverviewTab = ({
     totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">成就总览</h1>
+    <div className="bg-white rounded-2xl shadow-xl p-8 space-y-10">
+      {/* 标题 */}
+      <div className="bg-achievementPage-100 border-l-4 border-achievementPage-500 pl-4 py-1 rounded">
+        <h2 className="text-lg font-semibold text-achievementPage-600">
+          Recently Acquired
+        </h2>
+      </div>
+
       {/* 最近获得成就 */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2">最近获得</h2>
+      <div>
         {recentUnlocked.length === 0 ? (
-          <p className="text-sm text-gray-500">暂无已解锁成就</p>
+          <p className="text-sm text-gray-500">No achievements unlocked yet</p>
         ) : (
-          <div className="divide-y">
+          <div className="space-y-4">
             {recentUnlocked.map((a) => (
               <AchievementDetailRow
                 key={a._id}
@@ -35,21 +40,23 @@ const OverviewTab = ({
         )}
       </div>
 
-      {/* 总体进度 */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2">总进度</h2>
-        <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden mb-1">
+      {/* 总体进度条 */}
+      <div>
+        <h2 className="text-lg font-semibold text-achievementPage-title mb-2">
+          Overall Progress
+        </h2>
+        <div className="w-full h-3 bg-achievementPage-200 rounded-full overflow-hidden mb-1">
           <div
-            className="h-full bg-green-500"
+            className="h-full bg-achievementPage-titleBlue transition-all duration-500"
             style={{ width: `${percent}%` }}
           ></div>
         </div>
-        <p className="text-sm text-gray-600 text-right">
-          {unlockedCount} / {totalCount}（{percent}%）
+        <p className="text-sm text-right text-gray-500">
+          {unlockedCount} / {totalCount}({percent}%)
         </p>
       </div>
 
-      {/* 分类进度 */}
+      {/* 分类进度条 */}
       <AchievementCategoryProgress categoryStats={categoryStats} />
     </div>
   );

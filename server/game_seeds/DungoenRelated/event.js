@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { Event } from '../../models/Event.js';
 
-// ✅ 请替换成你已有的真实 ObjectId（可通过 MongoDB Compass 或 item 表查询）
+// 请替换成你已有的真实 ObjectId（可通过 MongoDB Compass 或 item 表查询）
 const ITEM_ID_HEALTH_POTION = new mongoose.Types.ObjectId(); 
 const SHOP_INVENTORY_ID = new mongoose.Types.ObjectId();
 

@@ -5,7 +5,7 @@ import { TaskCard } from './TaskCard';
 export const TaskSlots = ({
                             items = [],             // 待填充的任务列表
                             totalSlots = 5,         // 总槽位数
-                            activeCount = 2,        // 前 N 个可用，其余锁定
+                            activeCount,        // 前 N 个可用，其余锁定
                             renderCreateContent,    // 渲染“新建”按钮内部结构
                             onCreate,               // 点击新建回调 (index -> slot)
                             onDrop,                 // 拖放到槽位回调 (taskId, index)

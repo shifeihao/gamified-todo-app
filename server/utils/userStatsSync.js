@@ -5,6 +5,7 @@ import Task from "../models/Task.js";
 import Achievement from "../models/Achievement.js";
 import TaskHistory from "../models/TaskHistory.js";
 import UserAchievement from "../models/UserAchievement.js";
+import { UserDungeonStats } from "../models/UserDungeonStats.js";
 
 //统一调动所有函数同步UserStats
 export async function SyncUserStats(userId) {
@@ -12,8 +13,8 @@ export async function SyncUserStats(userId) {
   await SyncTaskHistory(userId);
   await checkCardNumber(userId);
   await checkTaskNumber(userId);
+  await checkGameStats(userId);
 }
-
 //统计User
 export async function SyncUser(userId) {
   try {
@@ -216,6 +217,26 @@ export async function addEditedTasksNum(userId) {
     { user: userId }, // 查找条件
     { $inc: { task_edited_total: 1 } } // 更新内容：将该字段 +1
   );
+}
+//统计游戏数据，计数器+1
+export async function checkGameStats(userId) {
+  console.log("✅ 开始检查游戏信息");
+  const dungeonStats = await UserDungeonStats.findOne({ user: userId });
+  if (!dungeonStats) {
+    console.error("❌ 成就游戏信息：未找到该用户 userId =", userId);
+    return;
+  }
+  const { exploredFloors } = dungeonStats;
+  if (!Array.isArray(exploredFloors) || exploredFloors.length === 0) {
+    console.error("❌ exploredFloors 无效或为空");
+    return;
+  }
+  const maxFloor = Math.max(...exploredFloors);
+  await UserStats.updateOne(
+    { user: userId },
+    { $max: { max_maze_level: maxFloor } }
+  );
+  console.log(`✅ 已同步 max_maze_level = ${maxFloor}`);
 }
 //统计个人成就数量/判断是否解锁成就之神
 export async function checkIfGodAchievementUnlocked(userId) {

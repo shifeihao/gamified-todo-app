@@ -56,7 +56,6 @@ const loginUser = async (req, res) => {
 
     // 查找用户并包含密码字段
     const user = await User.findOne({ email }).select("+password");
-    console.log(user);
     // 检查用户是否存在以及密码是否匹配
     if (user && (await user.matchPassword(password))) {
       res.json({
@@ -67,6 +66,8 @@ const loginUser = async (req, res) => {
         experience: user.experience,
         gold: user.gold,
         token: generateToken(user._id),
+        shortCardSlot: user.shortCardSlot,
+        longCardSlot: user.longCardSlot,
       });
     } else {
       res.status(401).json({ message: "邮箱或密码不正确" });
@@ -92,6 +93,8 @@ const getUserProfile = async (req, res) => {
         role: user.role,
         experience: user.experience,
         gold: user.gold,
+        shortCardSlot: user.shortCardSlot,
+        longCardSlot: user.longCardSlot,
       });
     } else {
       res.status(404).json({ message: "用户不存在" });
