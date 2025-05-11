@@ -7,6 +7,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
   const closeBtnRef = useRef(null);
   const [subTasks, setSubTasks] = useState([]);
   const [loadingIdx, setLoadingIdx] = useState(null);
+  const [rewardMessage, setRewardMessage] = useState(null);
 
   // 计算任务 ID，兼容 _id 或 id
   const taskId = task?._id || task?.id;
@@ -15,6 +16,16 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
   useEffect(() => {
     if (task?.subTasks) setSubTasks(task.subTasks);
   }, [task]);
+
+  // 关闭reward消息
+  useEffect(() => {
+    if (rewardMessage) {
+      const timer = setTimeout(() => {
+        setRewardMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [rewardMessage]);
 
   if (!task) return null;
 
@@ -38,20 +49,30 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
 
     setLoadingIdx(idx);
     try {
-      // 使用 PUT 主任务路由，同时传 subTaskId 和 status
+      // 更新API调用，现在使用子任务索引而不是ID
       const res = await axios.put(
           `/api/tasks/${taskId}`,
-          { subTaskId, status: 'Completed' },
+          { subTaskIndex: idx }, // 使用索引作为参数
           { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // 返回更新后的子任务对象
-      const updatedSub = res.data;
-      setSubTasks(prev =>
-          prev.map((st, i) =>
-              i === idx ? { ...st, status: updatedSub.status } : st
-          )
-      );
+      // 处理响应，包含子任务和可能的主任务奖励信息
+      const { task: updatedTask, subTaskReward, longTaskReward } = res.data;
+      
+      // 更新子任务状态
+      if (updatedTask && updatedTask.subTasks) {
+        setSubTasks(updatedTask.subTasks);
+      }
+      
+      // 显示奖励信息
+      let rewardText = `You earned ${subTaskReward.expGained} XP and ${subTaskReward.goldGained} Gold!`;
+      
+      // 如果长期任务也完成了，则显示额外奖励
+      if (longTaskReward) {
+        rewardText += ` Long task bonus: ${longTaskReward.expGained} XP and ${longTaskReward.goldGained} Gold!`;
+      }
+      
+      setRewardMessage(rewardText);
       
       // 触发等级更新事件
       window.dispatchEvent(new CustomEvent('taskCompleted'));
@@ -63,9 +84,9 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
         alert('Authorization has expired, please log in again');
         window.location.href = '/login';
       } else if (status === 404) {
-        alert('子任务未找到或已被删除');
+        alert('Subtask not found or has been deleted');
       } else {
-        alert(`Update subtask failed (status code ${status})：${msg}`);
+        alert(`Update subtask failed (status code ${status}): ${msg}`);
       }
     } finally {
       setLoadingIdx(null);
@@ -90,6 +111,18 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
                     exit={{ scale: 0.9, opacity: 0 }}
                     className="mx-auto w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg"
                 >
+                  {/* Reward message notification */}
+                  {rewardMessage && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg"
+                    >
+                      {rewardMessage}
+                    </motion.div>
+                  )}
+                
                   <div className="border-b pb-4 mb-4">
                     <Dialog.Title className="text-2xl font-bold">{task.title}</Dialog.Title>
                     <div className="flex gap-2 mt-2">
@@ -97,7 +130,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
                     {task.type}
                   </span>
                       <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-                    {task.category || '默认分类'}
+                    {task.category || 'Default Category'}
                   </span>
                     </div>
                   </div>
@@ -161,7 +194,7 @@ export const TaskDetailModal = ({ isOpen, onClose, task }) => {
                           <p className="font-medium">
                             {task.dueDate
                                 ? new Date(task.dueDate).toLocaleDateString()
-                                : '无'}
+                                : 'None'}
                           </p>
                         </div>
                       </div>

@@ -22,11 +22,11 @@ const subTaskSchema = new mongoose.Schema({
     // 子任务经验 + 金币
     experience: {
         type: Number,
-        default: 5,
+        default: 10,
     },
     gold: {
         type: Number,
-        default: 3,
+        default: 5,
     },
 });
 

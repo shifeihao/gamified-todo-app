@@ -152,18 +152,19 @@ export const TaskCard = ({
     return (
       <div
         className={`card equipped-card hover:shadow-lg transition-shadow duration-300
-                    border-2 border-blue-500 p-2 text-xs flex flex-col justify-between h-full
+                    border-2 border-blue-500 p-3 text-xs flex flex-col justify-between h-full
                     ${className}`}
         draggable={draggable}
         onDragStart={onDragStart ? e => onDragStart(e, task) : undefined}
       >
-        {/* 左侧类型标识 */}
-        <div className={`w-1/6 ${typeStyles.bgColor} bg-opacity-50 flex items-center justify-center`}>
-          <span className={`font-medium ${typeStyles.textColor} px-2 py-1 rounded-md text-xs`}>
-            {typeStyles.icon} {task.category || '任务'}
-          </span>
+        {/* 任务标题 - 改为左对齐并增加宽度 */}
+        <div className="w-full">
+          <h3 className="font-bold text-sm text-left mb-1 overflow-hidden text-ellipsis whitespace-nowrap">
+            {task.title}
+          </h3>
         </div>
-
+        
+        {/* 类型与标签信息 */}
         <div className="flex justify-between text-gray-500 text-xs mb-2">
           {task.category && <span>Tag: {task.category}</span>}
           <span>Remain {timeLeft}</span>

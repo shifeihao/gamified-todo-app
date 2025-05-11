@@ -129,11 +129,154 @@ export const handleTaskCompletion = async (req) => {
   }
 };
 
+// 处理子任务完成，给予经验和金币奖励
+export const handleSubTaskCompletion = async (req) => {
+  try {
+    const userId = req.user._id;
+    const { taskId, subTaskIndex } = req.body;
 
+    // 1. 查找主任务和用户
+    const task = await Task.findById(taskId).populate("cardUsed");
+    if (!task || task.user.toString() !== userId.toString()) {
+      throw new Error("Task is invalid or does not belong to the current user");
+    }
 
+    // 确保是长期任务并且子任务索引有效
+    if (task.type !== "long" || !task.subTasks[subTaskIndex]) {
+      throw new Error("Invalid task type or subtask index");
+    }
 
+    // 如果子任务已经完成，返回错误
+    if (task.subTasks[subTaskIndex].status === "Completed") {
+      throw new Error("Subtask already completed");
+    }
 
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
 
+    // 2. 设置子任务为已完成状态
+    task.subTasks[subTaskIndex].status = "Completed";
+    task.subTasks[subTaskIndex].completedAt = new Date();
+    
+    // 3. 计算子任务的奖励（与短期任务相同）
+    const subTaskExp = task.subTasks[subTaskIndex].experience || 10;
+    const subTaskGold = task.subTasks[subTaskIndex].gold || 5;
+    
+    // 4. 应用卡片加成（如果有）
+    const { experience, gold } = calculateReward(
+      subTaskExp,
+      subTaskGold,
+      task.cardUsed?.bonus
+    );
+    
+    // 5. 发放奖励
+    user.experience += experience;
+    user.gold += gold;
+    
+    // 6. 计算等级和经验进度
+    const newExp = user.experience;
+    const currentLevel = await Level.findOne({
+      expRequired: { $lte: newExp },
+    }).sort({ level: -1 });
+    const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
+
+    const nextLevelExp = nextLevel
+      ? nextLevel.expRequired
+      : currentLevel.expRequired;
+    const expProgress = newExp - currentLevel.expRequired;
+    const expRemaining = nextLevelExp - newExp;
+    const progressRate =
+      currentLevel.expToNext > 0
+        ? Math.min(expProgress / currentLevel.expToNext, 1)
+        : 1;
+    const leveledUp = currentLevel.level > user.level;
+
+    user.level = currentLevel.level;
+    user.nextLevelExp = nextLevelExp;
+
+    // 7. 检查主任务是否全部子任务都已完成
+    const allSubTasksCompleted = task.subTasks.every(
+      (sub) => sub.status === "Completed"
+    );
+    
+    let longTaskReward = null;
+    
+    // 8. 如果所有子任务已完成，自动完成主任务并计算额外奖励
+    if (allSubTasksCompleted && task.status !== "Completed") {
+      task.status = "Completed";
+      task.completedAt = new Date();
+      
+      // 计算主任务的额外奖励（bonus rewards）
+      const bonusExp = task.finalBonusExperience || 10;
+      const bonusGold = task.finalBonusGold || 5;
+      
+      const { experience: bonusExpWithCard, gold: bonusGoldWithCard } = calculateReward(
+        bonusExp,
+        bonusGold,
+        task.cardUsed?.bonus
+      );
+      
+      // 发放额外奖励
+      user.experience += bonusExpWithCard;
+      user.gold += bonusGoldWithCard;
+      
+      // 更新长期任务完成奖励信息
+      longTaskReward = {
+        expGained: bonusExpWithCard,
+        goldGained: bonusGoldWithCard
+      };
+      
+      // 写入任务历史记录
+      const TaskHistory = (await import("../models/TaskHistory.js")).default;
+      const duration = task.slotEquippedAt
+        ? Math.floor((task.completedAt - new Date(task.slotEquippedAt)) / 60000)
+        : null;
+
+      await TaskHistory.create({
+        user: task.user,
+        title: task.title,
+        type: task.type,
+        status: task.status,
+        completedAt: task.completedAt,
+        duration,
+        experienceGained: bonusExpWithCard,
+        goldGained: bonusGoldWithCard,
+        cardType: task.cardUsed?.type || null,
+        cardBonus: task.cardUsed?.bonus || null,
+      });
+    }
+
+    // 9. 保存更改
+    await user.save();
+    await task.save();
+    
+    // 10. 同步用户状态
+    await SyncUser(userId);
+    await SyncTaskHistory(userId);
+
+    // 11. 返回结果
+    return {
+      success: true,
+      message: 'Subtask completed successfully',
+      task,
+      subTaskReward: {
+        expGained: experience,
+        goldGained: gold
+      },
+      longTaskReward,
+      level: currentLevel.level,
+      experience: newExp,
+      nextLevelExp,
+      expProgress,
+      expRemaining,
+      progressRate,
+      leveledUp
+    };
+  } catch (error) {
+    console.error("❌ Subtask completion failed:", error);
+    throw new Error("Subtask completion failed: " + error.message);
+  }
+};
 
 export const getUserLevelBar = async (req, res) => {
   try {

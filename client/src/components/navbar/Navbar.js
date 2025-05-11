@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from  '../../context/AuthContext';
 import UserLevelBar from '../base/UserLevelBar';
@@ -14,6 +15,7 @@ export const Navbar = () => {
   const [levelInfo, setLevelInfo] = useState(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const buttonRef = useRef(null);
 
   // Handle logout
   const handleLogout = () => {
@@ -74,7 +76,8 @@ export const Navbar = () => {
   // Close profile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target) && 
+          buttonRef.current && !buttonRef.current.contains(event.target)) {
         setIsProfileMenuOpen(false);
       }
     };
@@ -85,8 +88,71 @@ export const Navbar = () => {
     };
   }, []);
 
+  // Get profile menu position for the portal
+  const getProfileMenuPosition = () => {
+    if (!buttonRef.current) return { top: 0, right: 0 };
+    const rect = buttonRef.current.getBoundingClientRect();
+    return {
+      top: rect.bottom + window.scrollY + 10,
+      right: window.innerWidth - rect.right - window.scrollX
+    };
+  };
+
+  // Profile menu content
+  const ProfileMenu = () => {
+    const { top, right } = getProfileMenuPosition();
+    
+    return ReactDOM.createPortal(
+      <div 
+        ref={profileMenuRef}
+        className="fixed bg-white rounded-md shadow-xl py-1 w-64 z-[9999]"
+        style={{ top: `${top}px`, right: `${right}px` }}
+      >
+        <div className="px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-[#a546f5] text-white flex items-center justify-center text-lg font-semibold">
+              {user.username ? user.username.charAt(0).toUpperCase() : '?'}
+            </div>
+            <div className="ml-3">
+              <div className="text-sm font-medium text-gray-900">{user.username}</div>
+              <div className="text-xs text-gray-500 truncate" style={{ maxWidth: '180px' }}>
+                {user.email}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="py-1">
+          <Link
+            to="/profile"
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            onClick={() => setIsProfileMenuOpen(false)}
+          >
+            Personal Profile
+          </Link>
+          <Link
+            to="/achievements"
+            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            onClick={() => setIsProfileMenuOpen(false)}
+          >
+            Personal Achievements
+          </Link>
+          <button
+            onClick={() => {
+              handleLogout();
+              setIsProfileMenuOpen(false);
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Logout
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
   return (
-      <nav className="bg-gradient-to-r from-[#1f005c] via-[#5b1fa6] to-[#8e2de2] bg-opacity-90 backdrop-blur text-white shadow-md">
+      <nav className="bg-gradient-to-r from-[#1f005c] via-[#5b1fa6] to-[#8e2de2] bg-opacity-90 backdrop-blur text-white shadow-md relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex-shrink-0">
@@ -111,8 +177,9 @@ export const Navbar = () => {
                       Tasks
                     </Link>
 
-                    <div className="relative" ref={profileMenuRef}>
+                    <div className="relative">
                       <button
+                          ref={buttonRef}
                           onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                           className="flex items-center space-x-2 focus:outline-none"
                       >
@@ -121,48 +188,7 @@ export const Navbar = () => {
                         </div>
                       </button>
 
-                      {isProfileMenuOpen && (
-                          <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50">
-                            <div className="px-4 py-3 border-b border-gray-100">
-                              <div className="flex items-center">
-                                <div className="w-10 h-10 rounded-full bg-[#a546f5] text-white flex items-center justify-center text-lg font-semibold">
-                                  {user.username ? user.username.charAt(0).toUpperCase() : '?'}
-                                </div>
-                                <div className="ml-3">
-                                  <div className="text-sm font-medium text-gray-900">{user.username}</div>
-                                  <div className="text-xs text-gray-500 truncate" style={{ maxWidth: '180px' }}>
-                                    {user.email}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="py-1">
-                              <Link
-                                  to="/profile"
-                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                  onClick={() => setIsProfileMenuOpen(false)}
-                              >
-                                Personal Profile
-                              </Link>
-                              <Link
-                                  to="/achievements"
-                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                  onClick={() => setIsProfileMenuOpen(false)}
-                              >
-                                Personal Achievements
-                              </Link>
-                              <button
-                                  onClick={() => {
-                                    handleLogout();
-                                    setIsProfileMenuOpen(false);
-                                  }}
-                                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                Logout
-                              </button>
-                            </div>
-                          </div>
-                      )}
+                      {isProfileMenuOpen && <ProfileMenu />}
                     </div>
                   </>
               ) : (

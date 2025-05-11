@@ -116,17 +116,17 @@ const updateTask = async (req, res) => {
 
     // 如果更新包含子任务列表，进行验证
     if (req.body.subTasks) {
-      if (task.type === '长期' && (!Array.isArray(req.body.subTasks) || req.body.subTasks.length === 0)) {
-        return res.status(400).json({ message: "长期任务必须包含至少一个子任务" });
+      if (task.type === 'long' && (!Array.isArray(req.body.subTasks) || req.body.subTasks.length === 0)) {
+        return res.status(400).json({ message: "Long tasks must contain at least one subtask" });
       }
 
       // 验证每个子任务
       for (const subTask of req.body.subTasks) {
         if (!subTask.title || !subTask.title.trim()) {
-          return res.status(400).json({ message: "子任务必须包含标题" });
+          return res.status(400).json({ message: "Subtask must contain a title" });
         }
         if (!subTask.dueDate) {
-          return res.status(400).json({ message: "子任务必须设置截止时间" });
+          return res.status(400).json({ message: "Subtask must have a deadline" });
         }
       }
     }
@@ -136,12 +136,12 @@ const updateTask = async (req, res) => {
     if (subTaskIndex !== undefined) {
       // 检查子任务是否存在
       if (!task.subTasks[subTaskIndex]) {
-        return res.status(404).json({ message: "子任务不存在" });
+        return res.status(404).json({ message: "Subtask does not exist" });
       }
 
       // 检查子任务是否已完成
-      if (task.subTasks[subTaskIndex].status === '已完成') {
-        return res.status(400).json({ message: "子任务已经完成" });
+      if (task.subTasks[subTaskIndex].status === 'Completed') {
+        return res.status(400).json({ message: "Subtask has already been completed" });
       }
 
       // 调用子任务完成处理函数
@@ -155,7 +155,7 @@ const updateTask = async (req, res) => {
       });
 
       return res.json({
-        message: "子任务已完成",
+        message: "Subtask completed",
         task: result.task,
         subTaskReward: result.subTaskReward,
         longTaskReward: result.longTaskReward // 如果长期任务也完成了，包含其奖励
@@ -167,7 +167,7 @@ const updateTask = async (req, res) => {
     if (subTaskId && status) {
       const sub = task.subTasks.id(subTaskId);
       if (!sub) {
-        return res.status(404).json({ message: "子任务未找到" });
+        return res.status(404).json({ message: "Subtask not found" });
       }
       sub.status = status;
       await task.save();

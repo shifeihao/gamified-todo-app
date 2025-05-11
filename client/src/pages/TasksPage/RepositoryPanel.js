@@ -72,6 +72,7 @@ const RepositoryPanel = ({
                         onDelete={onDelete}
                         onEdit={onEdit}
                         onEquip={onEquip}
+                        isExpanded={isExpanded}
                     />
                 )}
                 {activeTab === 'blank' && (
