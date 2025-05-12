@@ -1,176 +1,174 @@
+// src/components/modal/CreateTaskModal.js
 import React, { useState, useEffect, useContext } from 'react';
-
-import { Modal } from '../base';
-import { TaskForm } from '../form';
-import { CardSelector } from '../base';
+import { Modal } from '../base/Modal';
+import { TaskForm } from '../form/TaskForm';
+import { CardSelector } from '../base/CardSelector';
+import { Tooltip } from '../base/Tooltip';
 import axios from 'axios';
 import AuthContext from '../../context/AuthContext';
+import { HelpCircle, Loader2 } from 'lucide-react';
 
 export const CreateTaskModal = ({
-                                  isOpen,
-                                  onClose,
-                                  onSubmit,
-                                  loading = false,
-                                  slotIndex = -1,
-                                  initialData = null,
-                                  defaultType = 'short',
-                                  defaultDueDateTime
-                                }) => {
+  isOpen,
+  onClose,
+  onSubmit,
+  loading = false,
+  slotIndex = -1,
+  initialData = null,
+  defaultType = 'short',
+  defaultDueDateTime
+}) => {
   const { user } = useContext(AuthContext);
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [taskType, setTaskType] = useState(initialData?.type || defaultType);
-  const [dueDate, setDueDate] = useState('');
-  const [useReward, setUseReward] = useState(false);
-  const [selectedCard, setSelectedCard] = useState(null);
+
+  const isFromSlot = slotIndex >= 0;
+  const initialTaskType = initialData?.type || (isFromSlot && initialData?.slotInfo?.type) || defaultType;
+
+  const [taskType, setTaskType] = useState(initialTaskType);
+  const [useReward, setUseReward] = useState(initialData?.cardId ? true : false);
+  const [selectedCard, setSelectedCard] = useState(initialData?.cardDetails || null);
   const [cardError, setCardError] = useState('');
   const [shortBlankCards, setShortBlankCards] = useState(0);
   const [longBlankCards, setLongBlankCards] = useState(0);
   const [rewardCardCount, setRewardCardCount] = useState(0);
+  const [isFetchingInventory, setIsFetchingInventory] = useState(false);
+  const [dueDate, setDueDate] = useState('');
 
-  // 将 Date 转为本地 'YYYY-MM-DDTHH:mm' 格式
-  const getLocalDateTimeString = date => {
-    const offsetMs = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-  };
-
-  // 使用 initialData 或 defaultDueDateTime 初始化
+  // Effect to initialize or update taskType based on props
   useEffect(() => {
-    setTitle(initialData?.title || '');
-    setTaskType(initialData?.type || defaultType);
-  }, [initialData, defaultType]);
+    const newType = initialData?.type || (isFromSlot && initialData?.slotInfo?.type) || defaultType;
+    if (newType !== taskType) {
+      setTaskType(newType);
+    }
+  }, [initialData, defaultType, isFromSlot, taskType]);
 
-  // taskType 改变时，short任务设置为当前本地时间 +24h
+  // Effect to initialize or update dueDate based on taskType or defaultDueDateTime prop
   useEffect(() => {
-    if (taskType === 'short') {
+    if (defaultDueDateTime) {
+      setDueDate(defaultDueDateTime);
+    } else if (taskType === 'short' && !initialData?.dueDate) {
       const now = new Date();
       now.setDate(now.getDate() + 1);
-      setDueDate(getLocalDateTimeString(now));
+      now.setHours(23, 59);
+      setDueDate(now.toISOString().slice(0, 16));
+    } else if (initialData?.dueDate) {
+      setDueDate(new Date(initialData.dueDate).toISOString().slice(0, 16));
     } else {
       setDueDate('');
     }
-  }, [taskType]);
+  }, [taskType, defaultDueDateTime, initialData]);
 
-  // 每次打开弹窗或切换类型时拉取库存
+  // Fetch card inventory
   useEffect(() => {
     const fetchInventory = async () => {
+      if (!user || !isOpen) return;
+      setIsFetchingInventory(true);
+      setCardError('');
       try {
-        console.log("获取卡片库存，当前任务类型:", taskType, "来自卡槽:", slotIndex >= 0, "卡槽索引:", slotIndex);
-        
         const res = await axios.get('/api/cards/inventory', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
-        
-        if (res.data && res.data.inventory) {
-          // 计算短期空白卡片数量
-          const shortBlanks = res.data.inventory.filter(c =>
-            c.type === 'blank' &&
-            !c.used &&
-            c.taskDuration === 'short'
+        const inventory = res.data.inventory || [];
+
+        const blanks = inventory.filter(c =>
+          c.type === 'blank' &&
+          !c.used &&
+          (taskType === 'short'
+            ? ['short', 'general'].includes(c.taskDuration)
+            : ['long', 'general'].includes(c.taskDuration))
           ).length;
-          
-          // 计算长期空白卡片数量
-          const longBlanks = res.data.inventory.filter(c =>
-            c.type === 'blank' &&
-            !c.used &&
-            c.taskDuration === 'long'
-          ).length;
-          
-          // 设置对应数量
-          setShortBlankCards(shortBlanks);
-          setLongBlankCards(longBlanks);
-          
-          // 筛选与当前任务类型匹配的奖励卡 - 无论是来自普通创建还是卡槽创建
-          const currentType = taskType;  // 确保使用当前任务类型
-          
-          // 不使用查询列表方式筛选，而是直接遍历数组手动筛选并打印每个卡片信息，方便排查问题
-          let matchingRewards = 0;
-          console.log("筛选可用奖励卡片, 当前任务类型:", currentType);
-          
-          res.data.inventory.forEach(card => {
-            if (card.type === 'special' && !card.used) {
-              const isMatch = card.taskDuration === currentType || card.taskDuration === 'general';
-              console.log(`卡片ID: ${card._id}, 标题: ${card.title}, 类型: ${card.type}, 任务时长: ${card.taskDuration}, 匹配: ${isMatch}`);
-              if (isMatch) {
-                matchingRewards++;
-              }
-            }
-          });
-          
-          console.log(`匹配的奖励卡片总数: ${matchingRewards}`);
-          setRewardCardCount(matchingRewards);
-          
-          console.log(`短期空白卡: ${shortBlanks}, 长期空白卡: ${longBlanks}, 奖励卡: ${matchingRewards}`);
-        }
+
+        const rewards = res.data.inventory.filter(card =>
+          card.type === 'special' &&
+          !card.used &&
+          ['general', taskType].includes(card.taskDuration)
+        );
+        const longBlanks = res.data.inventory.filter(c =>
+          c.type === 'blank' &&
+          !c.used &&
+          c.taskDuration === 'long'
+        ).length;
+        const shortBlanks = res.data.inventory.filter(c =>
+          c.type === 'blank' &&
+          !c.used &&
+          c.taskDuration === 'short'
+        ).length;
+
+        // 更新空白卡片状态
+        setShortBlankCards(shortBlanks);
+        setLongBlankCards(longBlanks);
+
+        // Calculate matching reward cards
+        const matchingRewards = res.data.inventory.filter(card =>
+          card.type === 'special' &&
+          !card.used &&
+          ['general', taskType].includes(card.taskDuration)
+        ).length;
+
+        console.log(`Long-term Blank Cards: ${longBlanks}, Short-term Blank Cards: ${shortBlanks}, Reward Cards: ${matchingRewards}`);
+        setRewardCardCount(matchingRewards);
       } catch (err) {
-        console.error('获取卡片库存失败:', err);
+        console.error('Failed to obtain card inventory:', err);
+        setCardError('Could not load card inventory.');
       }
     };
-    
     if (isOpen && user) {
       fetchInventory();
     }
-  }, [isOpen, user, taskType, slotIndex]);  // 添加slotIndex作为依赖项，确保卡槽变化时重新获取
+  }, [isOpen, user, taskType, slotIndex]); // Added slotIndex as dependency to refetch inventory on slot change
 
-  const handleSubmit = async formFields => {
-    try {
-      if (!title.trim()) return alert('Please enter a task title');
-      setCardError('');
-
-      let cardId;
-      if (useReward) {
-        if (!selectedCard?._id) return alert('Please select a rewards card');
-        cardId = selectedCard._id;
-      }
-
-      const isoDueDate = dueDate ? new Date(dueDate).toISOString() : '';
-      const rawTaskData = {
-        title,
-        type: taskType,
-        dueDate: isoDueDate,
-        ...formFields,
-        fromSlot: slotIndex >= 0,
-        slotIndex,
-        ...(useReward ? { cardId } : {})
-      };
-
-      // ✅ 发起卡片消耗请求，包含奖励或空白卡片的逻辑
-      const res = await axios.post('/api/cards/consume', {
-        taskData: rawTaskData,
-        ...(useReward ? { cardId } : {})
-      }, {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-
-      const processedTask = res.data.processedTask;
-
-      // ✅ 确保 cardUsed 字段存在
-      if (!processedTask.cardUsed) {
-        return alert('The task is not bound to a card, please try again');
-      }
-      await onSubmit(processedTask);  // ✅ 传入包含 cardUsed 的任务数据
-
-      // 清空表单状态
-      setTitle('');
-      setTaskType('short');
-      setUseReward(false);
-      setSelectedCard(null);
-      onClose();
-    } catch (err) {
-      console.error('Failed to create task:', err);
-      alert('Failed to create task, please try again');
-    }
+  const resetFormState = () => {
+    setTaskType(initialData?.type || defaultType);
+    setUseReward(initialData?.cardId ? true : false);
+    setSelectedCard(initialData?.cardDetails || null);
+    setCardError('');
   };
 
-
   const handleClose = () => {
-    setTitle('');
-    setTaskType('short');
-    setUseReward(false);
-    setSelectedCard(null);
+    resetFormState();
     onClose();
   };
 
-  const isFromSlot = slotIndex >= 0;
+  const handleSubmitForm = async (formFields) => {
+    if (useReward && !selectedCard?._id) {
+      setCardError('Please select a reward card or uncheck "Use reward card".');
+      return;
+    }
+    setCardError('');
+
+    // 只处理长期任务的截止时间
+    let finalDueDate = null;
+    if (taskType === 'long' && formFields.dueDate) {
+      if (formFields.dueDate.length === 10) {
+        finalDueDate = new Date(formFields.dueDate + "T00:00:00.000Z").toISOString();
+      } else {
+        finalDueDate = new Date(formFields.dueDate).toISOString();
+      }
+    }
+
+    const taskPayload = {
+      ...formFields,
+      title: formFields.title,
+      type: taskType,
+      dueDate: finalDueDate,  // 短期任务的dueDate为null，由后端处理装备后24小时
+      fromSlot: isFromSlot,
+      slotIndex: isFromSlot ? slotIndex : undefined,
+      experienceReward: formFields.experienceReward || 10,
+      goldReward: formFields.goldReward || 5,
+      ...(useReward && selectedCard?._id ? { cardUsed: selectedCard._id } : {})
+    };
+
+    try {
+      await onSubmit(taskPayload);
+      handleClose();
+    } catch (err) {
+      console.error('Failed to submit task:', err);
+      setCardError(err.message || 'Failed to create/update task. Please try again.');
+    }
+  };
+
+  const modalTitle = initialData
+    ? `Edit Task ${isFromSlot ? `in Slot ${slotIndex + 1}` : ''}`
+    : `Create Task ${isFromSlot ? `for Slot ${slotIndex + 1}` : ''}`;
 
   // 获取当前任务类型对应的空白卡片数量
   const getCurrentBlankCardCount = () => {
@@ -178,95 +176,104 @@ export const CreateTaskModal = ({
   };
 
   return (
-      <Modal
-          isOpen={isOpen}
-          onClose={handleClose}
-          title={
-            isFromSlot ? `Create a task to slot ${slotIndex + 1}` : 'Create a new task'
-          }
-      >
-        <div className="py-4 space-y-4">
-          {/* 标题与类型 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={modalTitle}
+      size="lg"
+    >
+      <div className="py-4 space-y-6">
+        {/* Section 1: Task Basics */}
+        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50/50">
+          <h3 className="text-md font-semibold text-gray-800 mb-3">1. Task Type</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Task Title *
+              <label htmlFor="taskTypeSelect" className="block text-sm font-medium text-gray-700 mb-1">
+                Select Task Type *
               </label>
-              <input
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Enter task title"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Task Type *
-              </label>
-              <select
+              <div className="flex items-center gap-2">
+                <select
+                  id="taskTypeSelect"
                   value={taskType}
                   onChange={e => setTaskType(e.target.value)}
                   disabled={isFromSlot}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="short">Quick Quests</option>
-                <option value="long">Quest Chains
-                </option>
-              </select>
-              {isFromSlot && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    The task type is determined by the task slot and cannot be modified.
-                  </p>
-              )}
-            </div>
-          </div>
-
-          {/* 奖励卡 / 空白卡 */}
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              {useReward
-                ? `Available Reward Cards（${taskType === 'short' ? 'short' : 'long'}）: ${rewardCardCount}`
-                : taskType === 'short'
-                  ? `Available Blank Quick Quest Cards: ${shortBlankCards}`
-                  : `Available Blank Long-Term Cards: ${longBlankCards}`
-              }
-            </div>
-            <label className="flex items-center space-x-2 text-sm text-gray-700">
-              <input
-                  type="checkbox"
-                  checked={useReward}
-                  onChange={e => setUseReward(e.target.checked)}
-                  className="h-4 w-4 text-purple-600 border-gray-300 rounded"
-              />
-              <span>Use a Reward Card?</span>
-            </label>
-          </div>
-
-          {/* 奖励卡列表 */}
-          {useReward && (
-              <div>
-                <CardSelector
-                    key={`card-selector-${taskType}-${slotIndex}`}
-                    onSelect={setSelectedCard}
-                    selectedCard={selectedCard}
-                    showRewards
-                    taskType={taskType}
-                />
-                {cardError && <p className="text-red-500 text-sm">{cardError}</p>}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="short">Daily Quest (Short-term)</option>
+                  <option value="long">Quest Chain (Long-term)</option>
+                </select>
+                {isFromSlot && (
+                  <Tooltip content="Task type is determined by the slot and cannot be modified.">
+                    <HelpCircle className="h-5 w-5 text-gray-400" />
+                  </Tooltip>
+                )}
               </div>
-          )}
+            </div>
+        <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+          <div className="flex items-center">
+            <span>Long Blank Cards: <span className="font-semibold">{longBlankCards}</span></span>
+            {isFetchingInventory && taskType === 'long' && <Loader2 className="h-4 w-4 ml-2 animate-spin text-primary-500" />}
+          </div>
+          <div className="flex items-center">
+            <span>Short Blank Cards: <span className="font-semibold">{shortBlankCards}</span></span>
+            {isFetchingInventory && taskType === 'short' && <Loader2 className="h-4 w-4 ml-2 animate-spin text-primary-500" />}
+          </div>
+        </div>
+        <div className="text-sm text-gray-700">
+          {useReward
+            ? `Available Reward Cards (${taskType === 'short' ? 'short' : 'long'}): ${rewardCardCount}`
+            : `Available Cards (${taskType}): ${getCurrentBlankCardCount()}`}
+        </div>
+          </div>
 
-          {/* 其他字段 */}
+          <div>
+            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useReward}
+                onChange={e => {
+                  setUseReward(e.target.checked);
+                  if (!e.target.checked) setSelectedCard(null);
+                  setCardError('');
+                }}
+                className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+              />
+              <span>Use a Reward Card (does not consume a Blank Card)</span>
+            </label>
+            {useReward && rewardCardCount === 0 && !isFetchingInventory && (
+                <p className="text-xs text-orange-600 mt-1">You have no reward cards available for this task type.</p>
+            )}
+          </div>
+
+          {useReward && (
+            <div className="mt-3">
+              <CardSelector
+                    key={`card-selector-${taskType}-${slotIndex}`}
+                onSelect={setSelectedCard}
+                selectedCard={selectedCard}
+                showRewards
+                taskType={taskType}
+                disabled={rewardCardCount === 0 && !selectedCard}
+              />
+            </div>
+          )}
+          {cardError && <p className="text-red-600 text-sm mt-2">{cardError}</p>}
+        </div>
+
+        {/* Section 3: Task Details */}
+        <div className="pt-4">
+          <h3 className="text-md font-semibold text-gray-800 mb-3">3. Task Details</h3>
           <TaskForm
-              onSubmit={handleSubmit}
-              onCancel={handleClose}
-              loading={loading}
-              initialData={initialData}
-              taskType={taskType}
-              defaultDueDateTime={dueDate}
-              onDueDateChange={setDueDate}
+            onSubmit={handleSubmitForm}
+            onCancel={handleClose}
+            loading={loading}
+            initialData={initialData}
+            taskType={taskType}
+            defaultDueDateTime={dueDate}
+            key={taskType + (initialData?._id || 'new')}
           />
         </div>
-      </Modal>
+      </div>
+    </Modal>
   );
 };

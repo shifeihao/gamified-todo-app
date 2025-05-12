@@ -1,265 +1,183 @@
-import React, { useState, useEffect, useContext } from 'react';
-import AuthContext from '../../context/AuthContext';
-import toast from 'react-hot-toast'; // 引入 react-hot-toast
+// src/components/form/TaskForm.js
+import React, { useState, useEffect, useCallback } from 'react';
+import { Tooltip } from '../base/Tooltip';
+import { PlusCircle, Trash2, Save, XCircle, CalendarDays, Clock, Info } from 'lucide-react';
+import toast from 'react-hot-toast';
 
-// 任务表单组件（仅展示分类、截止日期、描述、子任务；仅长期任务显示子任务区）
 export const TaskForm = ({
   onSubmit,
-  initialData = null,
   onCancel,
   loading = false,
-  taskType,
-  defaultDueDate,      // 新增：默认截止日期（YYYY-MM-DD）
-  defaultDueDateTime   // 新增：默认截止日期时间（YYYY-MM-DDTHH:mm）
+  initialData = null,
+  taskType = 'short',
+  defaultDueDateTime = '',
 }) => {
-  const { user } = useContext(AuthContext);
-
-  const [formData, setFormData] = useState({
-    category: initialData?.category || 'Default',
-    dueDate: initialData?.dueDate
-      ? new Date(initialData.dueDate).toISOString().split('T')[0]
-      : (defaultDueDate || ''),  // 默认使用 defaultDueDate
-    baseExperience: 10,
-    baseGold: 5,
-    description: initialData?.description || '',
-    subTasks: initialData?.subTasks || []
-  });
-  const [subTaskTitle, setSubTaskTitle] = useState('');
-  const [subTaskDueDate, setSubTaskDueDate] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [subTasks, setSubTasks] = useState([]);
+  const [dueDate, setDueDate] = useState('');
   const [errors, setErrors] = useState({});
 
-  // 如果有初始子任务，填充
+  const getTomorrowDate = () => {
+    const d = new Date();
+    d.setHours(d.getHours() + 24);
+    return d.toISOString().split('T')[0];
+  };
+
+  const getTomorrowTime = () => {
+    const d = new Date();
+    d.setHours(d.getHours() + 24);
+    return d.toTimeString().slice(0,5);
+  };
+
+  const initializeForm = useCallback(() => {
+    setTitle(initialData?.title || '');
+    setDescription(initialData?.description || '');
+    setSubTasks(
+      initialData?.subTasks?.map(st => ({
+        ...st,
+        id: st._id || st.id || Date.now() + Math.random()
+      })) || []
+    );
+    let dateValue = '';
+    if (initialData?.dueDate) {
+      dateValue = new Date(initialData.dueDate).toISOString().split('T')[0];
+    } else if (defaultDueDateTime) {
+      dateValue = defaultDueDateTime.split('T')[0];
+    } else if (taskType === 'short') {
+      dateValue = getTomorrowDate();
+    }
+    setDueDate(dateValue);
+    setErrors({});
+  }, [initialData, defaultDueDateTime, taskType]);
+
   useEffect(() => {
-    if (initialData?.subTasks) {
-      setFormData(prev => ({ ...prev, subTasks: initialData.subTasks }));
-    }
-  }, [initialData]);
+    initializeForm();
+  }, [initializeForm]);
 
-  // 如果没有 initialData 且 defaultDueDate 提供，设置截止日期
-  useEffect(() => {
-    if (!initialData && defaultDueDate) {
-      setFormData(prev => ({ ...prev, dueDate: defaultDueDate }));
-    }
-  }, [defaultDueDate, initialData]);
-
-  // 通用字段变更
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
-    }
-  };
-
-  // 添加子任务
-  const handleAddSub = () => {
-    // 验证子任务标题
-    if (!subTaskTitle.trim()) {
-      toast.error('Please enter a subtask title');
-      return;
-    }
-
-    // 验证子任务截止时间
-    if (!subTaskDueDate) {
-      toast.error('Please select a subtask deadline');
-      return;
-    }
-
-    // 验证子任务截止时间不能晚于父任务截止时间
-    if (formData.dueDate && new Date(subTaskDueDate) > new Date(formData.dueDate)) {
-      toast.error('The subtask deadline cannot be later than the parent task deadline');
-      return;
-    }
-    const newSub = {
-      title: subTaskTitle,
-      status: 'Pending',
-      dueDate: subTaskDueDate || null
-    };
-    setFormData(prev => ({
-      ...prev,
-      subTasks: [...prev.subTasks, newSub]
-    }));
-
-    toast.success('Subtask added successfully');
-
-    // 清空输入
-    setSubTaskTitle('');
-    setSubTaskDueDate('');
-  };
-
-  // 删除子任务
-  const handleRemoveSub = index => {
-    setFormData(prev => {
-      const subs = [...prev.subTasks];
-      subs.splice(index, 1);
-      return { ...prev, subTasks: subs };
-    });
-  };
-
-  // 校验
-  const validate = () => {
+  const validateForm = () => {
     const newErrors = {};
-    if (taskType === 'long' && formData.subTasks.length === 0) {
-      newErrors.subTasks = 'A long-term task requires at least one subtask';
-    }
-
-    // 验证所有子任务的截止时间都在父任务截止时间之前
-    if (taskType === 'long' && formData.dueDate) {
-      const parentDueDate = new Date(formData.dueDate);
-      const invalidSubTasks = formData.subTasks.filter(
-        subTask => new Date(subTask.dueDate) > parentDueDate
-      );
-
-      if (invalidSubTasks.length > 0) {
-        toast.error('There is a subtask deadline that is later than the parent task deadline. Please modify it.');
-        return false;
-      }
-    }
-
-    return true;
+    if (!title.trim()) newErrors.title = 'Task title is required.';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  // 提交
   const handleSubmit = e => {
     e.preventDefault();
-    if (!validate()) return;
-    // 如果存在默认截止日期时间，覆盖表单值
-    if (defaultDueDateTime) {
-      formData.dueDate = defaultDueDateTime;
-    }
+    if (!validateForm()) return;
+    const processedSubTasks = subTasks.map(st => ({
+      title: st.title,
+      dueDate: st.dueDate ? new Date(st.dueDate).toISOString() : null
+    }));
+    const formData = {
+      title: title.trim(),
+      description: description.trim(),
+      subTasks: processedSubTasks,
+      dueDate,
+      status: initialData?.status || 'pending'
+    };
     onSubmit(formData);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* 分类 & 截止日期 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tag</label>
-          <input
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Expired Date</label>
-          {defaultDueDateTime ? (
-            <input
-              type="datetime-local"
-              step="1"
-              value={defaultDueDateTime}
-              disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
-            />
-          ) : (
-            <input
-              type="date"
-              name="dueDate"
-              value={formData.dueDate}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-            />
-          )}
-        </div>
-      </div>
+  const addSubTask = () => {
+    setSubTasks(prev => [
+      ...prev,
+      { id: Date.now(), title: '', dueDate: '' }
+    ]);
+  };
 
-      {/* 任务描述 */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+  const updateSubTask = (index, field, value) => {
+    setSubTasks(prev =>
+      prev.map((st, i) => (i === index ? { ...st, [field]: value } : st))
+    );
+  };
+
+  const removeSubTask = index => {
+    setSubTasks(prev => prev.filter((_, i) => i !== index));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <label htmlFor="title" className="block mb-1 font-medium">Title *</label>
+        <input
+          id="title"
+          type="text"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          className={`w-full px-3 py-2 border rounded ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+        />
+        {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title}</p>}
+        <label htmlFor="description" className="block mt-4 mb-1 font-medium">Description</label>
         <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
+          id="description"
           rows="3"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          className="w-full px-3 py-2 border rounded border-gray-300"
         />
       </div>
 
-      {/* 子任务，仅长期任务 */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <h3 className="font-medium mb-2">Schedule</h3>
+        <label htmlFor="dueDate" className="block mb-1 flex items-center">
+          <CalendarDays className="mr-2" /> Due Date
+        </label>
+        <input
+          id="dueDate"
+          type="date"
+          value={taskType === 'short' ? getTomorrowDate() : dueDate}
+          onChange={e => setDueDate(e.target.value)}
+          className="w-full px-3 py-2 border rounded border-gray-300"
+          disabled={taskType === 'short'}
+        />
+        {taskType === 'short' && (
+          <p className="text-gray-500 text-sm mt-1">Expires in 24h</p>
+        )}
+      </div>
+
       {taskType === 'long' && (
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-md font-medium mb-2">Subtask</h3>
-          {formData.dueDate && (
-            <div className="mb-3 text-sm text-blue-600">
-              <span>Parent task deadline: {new Date(formData.dueDate).toLocaleDateString('zh-CN')}</span>
-            </div>
-          )}
-          {formData.subTasks.map((sub, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between p-2 bg-white rounded border border-gray-200 mb-2 hover:bg-gray-50"
-            >
-              <div className="flex items-center flex-grow">
-                <span className="font-medium flex-grow mr-2">{sub.title}</span>
-                <span className="text-sm text-gray-500 ml-auto min-w-[120px] text-right">
-                  {new Date(sub.dueDate).toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                  })}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  handleRemoveSub(idx);
-                  toast.success('Subtask deleted');
-                }}
-                className="text-red-500 hover:text-red-700 ml-2"
-              >
-                Delete
-              </button>
-            </div>
-          ))}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-4">
-            <div className="flex flex-col md:col-span-7">
-              <input
-                type="text"
-                value={subTaskTitle}
-                onChange={e => setSubTaskTitle(e.target.value)}
-                placeholder="Enter a subtask title"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              />
-            </div>
-            <div className="flex flex-col md:col-span-3">
-              <input
-                type="date"
-                value={subTaskDueDate}
-                onChange={e => setSubTaskDueDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleAddSub}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-2 rounded md:col-span-2 text-sm flex items-center justify-center"
-            >
-              <span>Add</span>
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-medium">Sub-tasks</h3>
+            <button type="button" onClick={addSubTask} className="text-primary-600 flex items-center">
+              <PlusCircle className="mr-1" /> Add
             </button>
+          </div>
+          {subTasks.length === 0 && <p className="text-gray-500 text-sm">No steps added.</p>}
+          <div className="space-y-2">
+            {subTasks.map((st, i) => (
+              <div key={st.id} className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={st.title}
+                  onChange={e => updateSubTask(i, 'title', e.target.value)}
+                  placeholder={`Step ${i+1}`}
+                  className="flex-grow px-3 py-2 border rounded border-gray-300"
+                />
+                <input
+                  type="datetime-local"
+                  value={st.dueDate || ''}
+                  onChange={e => updateSubTask(i, 'dueDate', e.target.value)}
+                  className="px-3 py-2 border rounded border-gray-300"
+                />
+                <button type="button" onClick={() => removeSubTask(i)}>
+                  <Trash2 />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* 操作按钮 */}
-      <div className="flex justify-end space-x-2">
-        <button
-          type="button"
-          onClick={() => {
-            onCancel();
-            toast('Operation canceled');
-          }}
-          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-        >
-            Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
-          disabled={loading}
-        >
-          {loading ? 'Handling...' : initialData ? 'Update Task' : 'Create Task'}
+      <div className="flex justify-end space-x-3">
+        {onCancel && (
+          <button type="button" onClick={onCancel} disabled={loading} className="px-4 py-2 border rounded">
+            <XCircle className="inline mr-1" /> Cancel
+          </button>
+        )}
+        <button type="submit" disabled={loading} className="px-4 py-2 bg-primary-600 text-white rounded flex items-center">
+          {loading ? 'Processing...' : (<><Save className="inline mr-1"/> {initialData ? 'Save' : 'Create'}</>)}
         </button>
       </div>
     </form>

@@ -13,6 +13,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.8.4",
     "cookie-parser": "^1.4.7",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.7.3",
     "lucide-react": "^0.509.0",
     "node-cron": "^3.0.3",

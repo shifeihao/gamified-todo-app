@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export const Modal = ({ isOpen, onClose, children, title }) => {
+export const Modal = ({ isOpen, onClose, children, title, size = 'md' }) => {
   // 按ESC键关闭模态框
   useEffect(() => {
     const handleEsc = (e) => {
@@ -19,6 +19,18 @@ export const Modal = ({ isOpen, onClose, children, title }) => {
     e.stopPropagation();
   };
 
+  const sizeClasses = {
+    sm: 'max-w-md',
+    md: 'max-w-xl',
+    lg: 'max-w-2xl',
+    xl: 'max-w-3xl',
+    '2xl': 'max-w-4xl',
+    '3xl': 'max-w-5xl',
+    '4xl': 'max-w-6xl',
+    '5xl': 'max-w-7xl',
+    full: 'max-w-full'
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -34,7 +46,7 @@ export const Modal = ({ isOpen, onClose, children, title }) => {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={handleContentClick}
-            className="w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden"
+            className={`w-full ${sizeClasses[size] || sizeClasses.md} bg-white rounded-2xl shadow-xl overflow-hidden`}
           >
             {/* 模态框头部 */}
             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">

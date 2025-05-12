@@ -3,12 +3,12 @@ import React, { useMemo } from 'react';
 import { TaskCard } from './TaskCard';
 
 export const TaskSlots = ({
-                              items = [],
-                              totalSlots = 5,
-                              activeCount,
-                              renderCreateContent,
-                              onCreate,
-                              onDrop,
+                            items = [],             // 待填充的任务列表
+                            totalSlots = 5,         // 总槽位数
+                            activeCount,        // 前 N 个可用，其余锁定
+                            renderCreateContent,    // 渲染"新建"按钮内部结构
+                            onCreate,               // 点击新建回调 (index -> slot)
+                            onDrop,                 // 拖放到槽位回调 (taskId, index)
                               onComplete,
                               onDelete,
                               onEdit,
@@ -66,7 +66,7 @@ export const TaskSlots = ({
         e.currentTarget.classList.remove(theme.bg);
         try {
             const data = JSON.parse(e.dataTransfer.getData('task'));
-            if (data.status === 'Completed') return;
+            if (data.status === 'completed') return;
             onDrop?.(data._id, idx);
         } catch {}
     };
@@ -77,6 +77,7 @@ export const TaskSlots = ({
                 idx < activeCount ? (
                     <div
                         key={idx}
+                    className={`border-2 border-dashed border-gray-300 rounded-lg relative w-full min-h-[180px] p-2`}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={e => handleDrop(e, idx)}
@@ -97,7 +98,7 @@ export const TaskSlots = ({
                     >
                         {task ? (
                             <TaskCard
-                                className="absolute inset-0 w-full h-full"
+                          className="w-full h-full"
                                 task={task}
                                 onComplete={onComplete}
                                 onDelete={onDelete}

@@ -89,7 +89,7 @@ const ProfilePage = () => {
       });
       
       setSuccess(true);
-      showSuccess('个人资料更新成功！');
+      showSuccess('Profile updated successfully!');
     } catch (err) {
       const errorMessage = 'Update profile failed';
       setFormError(errorMessage);
