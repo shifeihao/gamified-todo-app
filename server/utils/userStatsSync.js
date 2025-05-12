@@ -10,21 +10,27 @@ import { UserDungeonStats } from "../models/UserDungeonStats.js";
 //统一调动所有函数同步UserStats
 export async function SyncUserStats(userId) {
   await checkUserStats(userId);
+  console.log("✅ 成就记录检查成功");
   await SyncUser(userId);
+  console.log("✅ User成就记录同步");
   await SyncTaskHistory(userId);
+  console.log("✅ TaskHistory成就记录同步");
   await checkCardNumber(userId);
+  console.log("✅ CardNumber成就记录同步");
   await checkTaskNumber(userId);
+  console.log("✅ TaskNumber成就记录同步");
   await checkGameStats(userId);
+  console.log("✅ GameStats成就记录同步");
 }
 
 // 检查UserStats表是否存在，如果不存在就创建一个新的
 export async function checkUserStats(userId) {
+  console.log("开始检查UserStats表");
   const userStats = await UserStats.findOne({ user: userId });
   if (!userStats) {
     console.log("UserStats表不存在，创建新的记录");
     const newUserStats = new UserStats({ user: userId });
     await newUserStats.save();
-    console.log("✅ 创建成功");
   } else {
     console.log("UserStats表已存在");
   }
@@ -69,6 +75,7 @@ export async function SyncTaskHistory(userId) {
       console.error("❌ 没有任务记录");
       return;
     }
+
     // 正确统计数量
     const completedNum = taskHistory.filter(
       (t) => t.status === "Completed"
@@ -106,9 +113,10 @@ export async function SyncTaskHistory(userId) {
     // 获取该用户所有“已完成”的任务
     const completedTasks = await TaskHistory.find({
       user: userId,
-      status: "Completed",
+      status: { $in: ["completed", "finished", "已完成"] },
       completedAt: { $exists: true },
     });
+    console.log("completedTasks:", completedTasks);
 
     // 用 Set 保存完成任务的“日期字符串”（格式："YYYY-MM-DD"）
     const completedDays = new Set(
@@ -131,6 +139,9 @@ export async function SyncTaskHistory(userId) {
     // 重置日期再算 unStreak（连续未完成）
     let unStreak = 0;
     current = new Date();
+    console.log("current:", current);
+    console.log("completedDays:", completedDays);
+
     while (true) {
       const key = current.toISOString().slice(0, 10);
       if (!completedDays.has(key)) {

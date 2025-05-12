@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import UserStats from "../models/UserStats.js";
-
 import { generateToken } from "../middleware/auth.js";
+import { SyncUserStats } from "../utils/userStatsSync.js";
 
 // @desc    注册新用户
 // @route   POST /api/users/register
@@ -9,20 +9,17 @@ import { generateToken } from "../middleware/auth.js";
 const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-
     // 检查用户是否已存在
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: "用户已存在" });
     }
-
     // 创建新用户
     const user = await User.create({
       username,
       email,
       password,
     });
-
     console.log("user._id的名字是", user._id);
     await UserStats.create({
       user: user._id, // ✅ 正确：ObjectId 类型
@@ -58,6 +55,7 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ email }).select("+password");
     // 检查用户是否存在以及密码是否匹配
     if (user && (await user.matchPassword(password))) {
+      await SyncUserStats(user._id); // 同步用户数据
       res.json({
         _id: user._id,
         username: user.username,
