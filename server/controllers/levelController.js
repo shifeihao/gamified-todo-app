@@ -28,7 +28,7 @@ export const handleTaskCompletion = async (req) => {
     // 计算奖励（区分长期与short）
     if (task.type === "long") {
       // 检查子任务完成情况
-      const completedSubTasks = task.subTasks.filter(st => st.status === 'Completed');
+      const completedSubTasks = task.subTasks.filter(st => st.status === 'completed');
       const allSubTasksCompleted = completedSubTasks.length === task.subTasks.length;
       
       console.log("长期任务手动完成 - 任务ID:", task._id);
@@ -40,8 +40,8 @@ export const handleTaskCompletion = async (req) => {
       // 确保所有子任务都标记为已完成
       let anySubTaskCompleted = false;
       task.subTasks.forEach(subTask => {
-        if (subTask.status !== 'Completed') {
-          subTask.status = 'Completed';
+        if (subTask.status !== 'completed') {
+          subTask.status = 'completed';
           subTask.completedAt = new Date();
         } else {
           anySubTaskCompleted = true;
@@ -49,8 +49,8 @@ export const handleTaskCompletion = async (req) => {
       });
       
       // 如果任务之前未完成，设置完成状态
-      if (task.status !== "Completed") {
-        task.status = "Completed";
+      if (task.status !== "completed") {
+        task.status = "completed";
         task.completedAt = new Date();
       }
       

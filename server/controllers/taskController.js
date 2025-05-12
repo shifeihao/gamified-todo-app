@@ -156,7 +156,7 @@ if (task.subTasks[subTaskIndex].status === 'completed') {
 
       // 检查是否所有子任务都已完成
       const allSubTasksCompleted = task.subTasks.every(st =>
-        st.status === 'Completed' || (st === task.subTasks[subTaskIndex])
+        st.status === 'completed' || (st === task.subTasks[subTaskIndex])
       );
 
       return res.json({
@@ -218,7 +218,7 @@ if (req.body.status && req.body.status.toLowerCase() === "completed" && oldStatu
         Date.now() - new Date(task.slotEquippedAt).getTime() >
           24 * 60 * 60 * 1000
       ) {
-        task.status = "Overdue";
+        task.status = "expired";
         await task.save();
         return res.status(400).json({ message: "The short-term task has expired and cannot be completed" });
       }

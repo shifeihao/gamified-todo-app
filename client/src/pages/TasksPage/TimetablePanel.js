@@ -18,7 +18,8 @@ const TimetablePanel = ({
   const longTasks = equippedTasks.filter((t) => t.type === "long");
   return (
         <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-4 border-2 border-blue-300 backdrop-blur-sm">
-      <div className="flex items-center justify-between mb-4">
+      {/* 固定高度的标题区域 */}
+      <div className="flex items-center justify-between h-14">
                 <h2 className="text-xl font-bold text-blue-900 flex items-center">
                     <Clipboard className="h-6 w-6 mr-2" />
                     Quest Chains

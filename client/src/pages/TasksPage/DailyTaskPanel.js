@@ -18,10 +18,17 @@ const DailyTaskPanel = ({
 
   return (
         <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-4 border-2 border-purple-300 backdrop-blur-sm">
-            <h2 className="text-xl font-bold mb-4 text-purple-900 flex items-center">
-                <Zap className="h-6 w-6 mr-2" />
-                Quick Quests
-            </h2>
+            {/* 固定高度的标题区域 */}
+            <div className="flex items-center justify-between h-14">
+                <h2 className="text-xl font-bold text-purple-900 flex items-center">
+                    <Zap className="h-6 w-6 mr-2" />
+                    Quick Quests
+                </h2>
+                {/* 空的div，保持与另一个面板相同的结构 */}
+                <div className="flex space-x-2">
+                </div>
+            </div>
+            
       <TaskSlots
         items={shortTasks}
         totalSlots={5}

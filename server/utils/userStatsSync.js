@@ -57,10 +57,10 @@ export async function SyncTaskHistory(userId) {
     }
     // 正确统计数量
     const completedNum = taskHistory.filter(
-      (t) => t.status === "Completed"
+      (t) => t.status === "completed"
     ).length;
     const completedShortNum = taskHistory.filter(
-      (t) => t.status === "Completed" && t.type === "short"
+      (t) => t.status === "completed" && t.type === "short"
     ).length;
     const completedLongNum = taskHistory.filter(
       (t) => t.status === "Completed" && t.type === "long"
