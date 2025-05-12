@@ -154,11 +154,19 @@ const updateTask = async (req, res) => {
         }
       });
 
+      // 检查是否所有子任务都已完成
+      const allSubTasksCompleted = task.subTasks.every(st => 
+        st.status === 'Completed' || (st === task.subTasks[subTaskIndex])
+      );
+      
       return res.json({
-        message: "Subtask completed",
+        message: allSubTasksCompleted ? 
+          "子任务完成！所有子任务已完成，点击完成长期任务按钮可获得额外奖励" : 
+          "子任务完成",
         task: result.task,
         subTaskReward: result.subTaskReward,
-        longTaskReward: result.longTaskReward // 如果长期任务也完成了，包含其奖励
+        longTaskReward: result.longTaskReward,
+        allSubTasksCompleted: allSubTasksCompleted
       });
     }
 
@@ -202,7 +210,7 @@ const updateTask = async (req, res) => {
 
     let rewardResult = null;
 
-    if (req.body.status === "Completed" && oldStatus !== "Completed") {
+    if (req.body.status === "Completed") {
       // 如果主任务变为已完成，处理奖励与历史记录
       if (
         task.type === "short" &&
@@ -215,7 +223,7 @@ const updateTask = async (req, res) => {
         return res.status(400).json({ message: "The short-term task has expired and cannot be completed" });
       }
 
-      task.completedAt = Date.now();
+      task.completedAt = task.completedAt || Date.now();
       await task.save(); // ✅ 保存更新（包括 status 字段）
       console.log("任务ID:", task._id); // 应该是 ObjectId 类型
       console.log("传入 handleTaskCompletion 的 ID:", task._id?.toString());

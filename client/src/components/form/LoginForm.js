@@ -23,7 +23,7 @@ export const LoginForm = ({ isEmbedded = false }) => {
       setIsLoading(true);
       setError('');
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/tasks');
     } catch (error) {
       setError(
         error.response && error.response.data.message

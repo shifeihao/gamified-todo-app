@@ -44,7 +44,7 @@ const RegisterPage = () => {
       
       // 注册成功后显示提示并跳转
       showSuccess('Register successful！');
-      navigate('/dashboard');
+      navigate('/tasks');
     } catch (error) {
       const errorMessage = error.response && error.response.data.message
         ? error.response.data.message

@@ -35,7 +35,7 @@ export const RegisterForm = ({ isEmbedded = false }) => {
       setIsLoading(true);
       setError('');
       await register(username, email, password);
-      navigate('/dashboard');
+      navigate('/tasks');
     } catch (error) {
       setError(
         error.response && error.response.data.message

@@ -32,7 +32,7 @@ const LoginPage = () => {
       
       // 登录成功后显示提示并跳转
       showSuccess('Login successful！');
-      navigate('/dashboard');
+      navigate('/tasks');
     } catch (error) {
       const errorMessage = error.response && error.response.data.message
         ? error.response.data.message

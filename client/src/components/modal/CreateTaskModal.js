@@ -198,7 +198,7 @@ export const CreateTaskModal = ({
                   onChange={e => setUseReward(e.target.checked)}
                   className="h-4 w-4 text-purple-600 border-gray-300 rounded"
               />
-              <span>Do you use reward cards?</span>
+              <span>Use a reward card?</span>
             </label>
           </div>
 

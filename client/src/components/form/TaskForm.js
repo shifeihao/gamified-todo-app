@@ -167,7 +167,7 @@ export const TaskForm = ({
 
       {/* 任务描述 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Task Describe</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
         <textarea
           name="description"
           value={formData.description}

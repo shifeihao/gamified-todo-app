@@ -15,9 +15,9 @@ export const handleTaskCompletion = async (req) => {
     if (!task || task.user.toString() !== userId.toString()) {
       throw new Error("任务无效或不属于当前用户");
     }
-    if (task.status !== "Completed") {
-      throw new Error("任务尚未完成，无法结算奖励");
-    }
+    
+    // 只检查任务存在性，不再检查状态
+    // 任务状态可能已被设置为Completed
 
     const user = await User.findById(userId);
     if (!user) throw new Error("用户未找到");
@@ -27,23 +27,53 @@ export const handleTaskCompletion = async (req) => {
 
     // 计算奖励（区分长期与short）
     if (task.type === "long") {
-      const subExp = task.subTasks.reduce(
-        (sum, s) => sum + (s.experience || 0),
-        0
-      );
-      const subGold = task.subTasks.reduce((sum, s) => sum + (s.gold || 0), 0);
-      const bonusExp = task.finalBonusExperience || 0;
-      const bonusGold = task.finalBonusGold || 0;
-      const baseExp = subExp + bonusExp;
-      const baseGold = subGold + bonusGold;
-      const { experience, gold } = calculateReward(
-        baseExp,
-        baseGold,
+      // 检查子任务完成情况
+      const completedSubTasks = task.subTasks.filter(st => st.status === 'Completed');
+      const allSubTasksCompleted = completedSubTasks.length === task.subTasks.length;
+      
+      console.log("长期任务手动完成 - 任务ID:", task._id);
+      console.log("长期任务手动完成 - 任务标题:", task.title);
+      console.log("长期任务手动完成 - 使用卡片:", task.cardUsed?.type, "加成:", task.cardUsed?.bonus);
+      console.log("长期任务手动完成 - 子任务总数:", task.subTasks.length);
+      console.log("长期任务手动完成 - 已完成子任务数:", completedSubTasks.length);
+      
+      // 确保所有子任务都标记为已完成
+      let anySubTaskCompleted = false;
+      task.subTasks.forEach(subTask => {
+        if (subTask.status !== 'Completed') {
+          subTask.status = 'Completed';
+          subTask.completedAt = new Date();
+        } else {
+          anySubTaskCompleted = true;
+        }
+      });
+      
+      // 如果任务之前未完成，设置完成状态
+      if (task.status !== "Completed") {
+        task.status = "Completed";
+        task.completedAt = new Date();
+      }
+      
+      // 主任务的额外奖励
+      const bonusExp = task.finalBonusExperience || 10;
+      const bonusGold = task.finalBonusGold || 5;
+      
+      console.log("长期任务额外奖励 - 经验:", bonusExp);
+      console.log("长期任务额外奖励 - 金币:", bonusGold);
+      
+      // 应用卡片加成到额外奖励
+      const { experience: finalExp, gold: finalGold } = calculateReward(
+        bonusExp,
+        bonusGold,
         task.cardUsed?.bonus
       );
-
-      totalExp = experience;
-      totalGold = gold;
+      
+      console.log("长期任务额外奖励(加成后) - 经验:", finalExp);
+      console.log("长期任务额外奖励(加成后) - 金币:", finalGold);
+      
+      // 设置总奖励为额外奖励
+      totalExp = finalExp;
+      totalGold = finalGold;
     } else {
       task.finalBonusExperience = 0;
       task.finalBonusGold = 0;
@@ -201,49 +231,13 @@ export const handleSubTaskCompletion = async (req) => {
     
     let longTaskReward = null;
     
-    // 8. 如果所有子任务已完成，自动完成主任务并计算额外奖励
+    // 8. 如果所有子任务已完成，只将主任务标记为已完成，但不自动发放额外奖励
     if (allSubTasksCompleted && task.status !== "Completed") {
+      // 将任务状态标记为完成
       task.status = "Completed";
       task.completedAt = new Date();
       
-      // 计算主任务的额外奖励（bonus rewards）
-      const bonusExp = task.finalBonusExperience || 10;
-      const bonusGold = task.finalBonusGold || 5;
-      
-      const { experience: bonusExpWithCard, gold: bonusGoldWithCard } = calculateReward(
-        bonusExp,
-        bonusGold,
-        task.cardUsed?.bonus
-      );
-      
-      // 发放额外奖励
-      user.experience += bonusExpWithCard;
-      user.gold += bonusGoldWithCard;
-      
-      // 更新长期任务完成奖励信息
-      longTaskReward = {
-        expGained: bonusExpWithCard,
-        goldGained: bonusGoldWithCard
-      };
-      
-      // 写入任务历史记录
-      const TaskHistory = (await import("../models/TaskHistory.js")).default;
-      const duration = task.slotEquippedAt
-        ? Math.floor((task.completedAt - new Date(task.slotEquippedAt)) / 60000)
-        : null;
-
-      await TaskHistory.create({
-        user: task.user,
-        title: task.title,
-        type: task.type,
-        status: task.status,
-        completedAt: task.completedAt,
-        duration,
-        experienceGained: bonusExpWithCard,
-        goldGained: bonusGoldWithCard,
-        cardType: task.cardUsed?.type || null,
-        cardBonus: task.cardUsed?.bonus || null,
-      });
+      console.log("所有子任务已完成，长期任务标记为已完成状态，需手动点击完成按钮获取额外奖励");
     }
 
     // 9. 保存更改
