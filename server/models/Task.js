@@ -9,8 +9,8 @@ const subTaskSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Completed'],
-    default: 'Pending',
+    enum: ['completed', 'pending', 'in-progress', 'expired'],
+    default: 'pending',
   },
   dueDate: {
     type: Date,
@@ -76,8 +76,8 @@ const taskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Completed', 'Overdue'],
-      default: 'Pending',
+      enum: ['completed', 'pending', 'in-progress', 'expired'],
+      default: 'pending',
     },
     category: {
       type: String,

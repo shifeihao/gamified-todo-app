@@ -140,7 +140,7 @@ const updateTask = async (req, res) => {
       }
 
       // 检查子任务是否已完成
-      if (task.subTasks[subTaskIndex].status === 'Completed') {
+if (task.subTasks[subTaskIndex].status === 'completed') {
         return res.status(400).json({ message: "Subtask has already been completed" });
       }
 
@@ -155,13 +155,13 @@ const updateTask = async (req, res) => {
       });
 
       // 检查是否所有子任务都已完成
-      const allSubTasksCompleted = task.subTasks.every(st => 
+      const allSubTasksCompleted = task.subTasks.every(st =>
         st.status === 'Completed' || (st === task.subTasks[subTaskIndex])
       );
-      
+
       return res.json({
-        message: allSubTasksCompleted ? 
-          "子任务完成！所有子任务已完成，点击完成长期任务按钮可获得额外奖励" : 
+        message: allSubTasksCompleted ?
+          "子任务完成！所有子任务已完成，点击完成长期任务按钮可获得额外奖励" :
           "子任务完成",
         task: result.task,
         subTaskReward: result.subTaskReward,
@@ -177,7 +177,7 @@ const updateTask = async (req, res) => {
       if (!sub) {
         return res.status(404).json({ message: "Subtask not found" });
       }
-      sub.status = status;
+      sub.status = status.toLowerCase();
       await task.save();
       return res.json(sub);
     }
@@ -189,7 +189,7 @@ const updateTask = async (req, res) => {
     task.title = req.body.title || task.title;
     task.description = req.body.description || task.description;
     task.type = req.body.type || task.type;
-    task.status = req.body.status || task.status;
+    task.status = req.body.status ? req.body.status.toLowerCase() : task.status;
     task.category = req.body.category || task.category;
     task.dueDate = req.body.dueDate || task.dueDate;
     task.experienceReward = req.body.experienceReward || task.experienceReward;
@@ -210,7 +210,7 @@ const updateTask = async (req, res) => {
 
     let rewardResult = null;
 
-    if (req.body.status === "Completed") {
+if (req.body.status && req.body.status.toLowerCase() === "completed" && oldStatus !== "completed") {
       // 如果主任务变为已完成，处理奖励与历史记录
       if (
         task.type === "short" &&

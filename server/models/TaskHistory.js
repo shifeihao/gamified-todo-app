@@ -5,7 +5,11 @@ const taskHistorySchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: String,
     type: { type: String, enum: ['short', 'long'], required: true },
-    status: { type: String, enum: ['Completed', 'Overdue'], default: 'Completed' },
+    status: {
+        type: String,
+        enum: ['completed', 'pending', 'in-progress', 'expired'],
+        default:'completed',
+    },
     completedAt: Date,
     duration: Number, // ms
     experienceGained: Number,
