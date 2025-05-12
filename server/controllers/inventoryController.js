@@ -1,63 +1,66 @@
 import { UserInventory, UserEquipment } from "../models/Inventory.js";
 import { ShopItem } from "../models/ShopItem.js"; // 物品模型
-import { UserDungeonStats } from "../models/UserDungeonStats.js"; // 如果你要做职业/等级判断 I
-
+import { UserDungeonStats } from "../models/UserDungeonStats.js"; // 如果你要做职业/等级判断
 // 装备逻辑
 export const equipItem = async (req, res) => {
   try {
     const userId = req.user._id;
     const { inventoryItemId } = req.body;
-    const userItem = await UserInventory.findOne({
-      item: inventoryItemId,
-    }).populate("item");
+
+    console.log("✅ 开始执行装备逻辑");
+
+    // 🧠 使用 lean + populate 确保 discriminator 字段被完整取出
+    const userItem = await UserInventory.findById(inventoryItemId)
+      .populate({ path: "item", model: "ShopItem" })
+      .lean();
+
     if (!userItem) return res.status(404).json({ error: "物品不存在" });
     if (!userItem.userId.equals(userId))
       return res.status(403).json({ error: "你不能装备别人的物品" });
     if (userItem.equipped)
       return res.status(400).json({ error: "该物品已装备" });
 
-    console.log("userItem：", userItem);
-
     const shopItem = userItem.item;
+    console.log("🔍 shopItem:", shopItem);
+
     if (!["weapon", "armor"].includes(shopItem.type)) {
       return res.status(400).json({ error: "该物品类型不可装备" });
     }
 
-    // 查出角色当前状态（判断等级、职业）
     const stats = await UserDungeonStats.findOne({ user: userId });
     if (!stats) return res.status(400).json({ error: "请先选择职业" });
 
-    // 判断等级是否符合
-    if (shopItem.requiredLevel > stats.dungeonLevel) {
-      return res.status(400).json({ error: "等级不足，无法装备" });
-    }
+    // ✅ 调试信息
+    console.log("🔍 shopItem.type:", shopItem.type);
+    console.log(
+      "🔍 allowedClasses 是数组吗？",
+      Array.isArray(shopItem.allowedClasses)
+    );
+    console.log("🔍 allowedClasses 内容：", shopItem.allowedClasses);
 
-    // 判断职业是否符合（目前 armor 用 string，weapon 用 ObjectId）
-    const allowed = shopItem.allowedClasses;
     if (
       shopItem.type === "weapon" &&
       Array.isArray(shopItem.allowedClasses) &&
       shopItem.allowedClasses.length > 0
     ) {
-      const matched = shopItem.allowedClasses.some((clsId) =>
-        clsId.equals?.(userStats.classSlug)
-      );
+      const matched = shopItem.allowedClasses.includes(stats.classSlug);
+      console.log("✅ 用户当前职业 slug:", stats.classSlug);
+      console.log("✅ 武器允许的职业列表:", shopItem.allowedClasses);
       if (!matched) {
         return res.status(400).json({ error: "该职业无法使用该武器" });
       }
     }
 
-    // 找到槽位名称（weapon/armor 都有 slot 字段）
     const slot = shopItem.slot;
     if (!slot) return res.status(400).json({ error: "装备槽位未指定" });
 
-    // 获取/创建角色装备表
+    // 获取或创建 UserEquipment 表
     let equipment = await UserEquipment.findOne({ userId });
     if (!equipment) {
       equipment = new UserEquipment({ userId });
     }
 
-    // 如果该槽位已有装备 → 卸下
+    // 如原槽位已有装备，卸下
     const oldEquippedItemId = equipment.slots[slot];
     if (oldEquippedItemId) {
       await UserInventory.findByIdAndUpdate(oldEquippedItemId, {
@@ -69,9 +72,10 @@ export const equipItem = async (req, res) => {
     equipment.slots[slot] = userItem._id;
     await equipment.save();
 
-    // 标记当前物品为装备状态
-    userItem.equipped = true;
-    await userItem.save();
+    // 更新背包状态
+    await UserInventory.findByIdAndUpdate(userItem._id, {
+      equipped: true,
+    });
 
     res.status(200).json({ message: "装备成功", slot, item: shopItem.name });
   } catch (err) {
@@ -107,12 +111,14 @@ export const unequipItem = async (req, res) => {
 export const getUserEquipment = async (req, res) => {
   try {
     const userId = req.user._id;
-    const equipment = await UserEquipment.findOne({ userId }).populate(
-      "slots.head slots.chest slots.legs slots.mainHand slots.offHand slots.feet slots.hands slots.accessory"
-    );
+    const equipment = await UserEquipment.findOne({ userId }).populate({
+      path: "slots.head slots.chest slots.legs slots.hands slots.feet slots.mainHand slots.offHand slots.accessory",
+      populate: { path: "item" }, // ✅ 进一步填充 ShopItem 数据
+    });
+
     res.status(200).json(equipment);
   } catch (err) {
-    console.error(err);
+    console.error("❌ 获取装备失败:", err);
     res.status(500).json({ error: "获取装备失败" });
   }
 };
