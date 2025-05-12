@@ -1,10 +1,29 @@
 // client/src/components/task/TaskCard.js
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Award, Edit2, Info, Trash2 } from "lucide-react";
+import { 
+  Award, Edit2, Info, Trash2, 
+  // 导入所有可能用到的图标
+  BookOpen, BookMarked, GraduationCap,
+  Microscope, Users, Kanban,
+  Code, Palette, Wrench,
+  Dumbbell, Trophy, Heart,
+  Sparkles, Gamepad2, Share2,
+  FileText, Zap, CalendarDays 
+} from "lucide-react";
 import { TaskDetailModal } from "../modal";
 import { tagStyleMap } from "./tagStyles";
 import { useRemainingTime } from "../hooks/useRemainingTime";
+
+// 图标映射对象，将图标名映射到图标组件
+const iconComponents = {
+  BookOpen, BookMarked, GraduationCap,
+  Microscope, Users, Kanban,
+  Code, Palette, Wrench,
+  Dumbbell, Trophy, Heart,
+  Sparkles, Gamepad2, Share2,
+  FileText, Zap, CalendarDays
+};
 
 /**
  * TaskCard component renders a task card in three modes:
@@ -51,6 +70,12 @@ export const TaskCard = ({
     return tagStyleMap[key] ?? tagStyleMap.others;
   }, [task.category]);
 
+  // 获取对应的图标组件
+  const CategoryIcon = React.useMemo(() => {
+    const iconName = typeStyles.iconName || 'FileText';
+    return iconComponents[iconName] || FileText;
+  }, [typeStyles]);
+
   /** Badge styles based on task.status */
   const statusStyles = React.useMemo(() => {
     switch (task.status) {
@@ -92,15 +117,22 @@ export const TaskCard = ({
     />
   );
 
+  // 首字母大写的辅助函数
+  const capitalizeFirstLetter = (string) => {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
   // Category indicator - left side of the card
   const LeftTag = (
     <div
-      className={`w-1/6 ${typeStyles.bgColor} bg-opacity-50 flex items-center justify-center`}
+      className="w-1/6 bg-gray-100 bg-opacity-50 flex items-center justify-center"
     >
       <span
-        className={`whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ${typeStyles.textColor}`}
+        className="whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium flex items-center gap-1"
       >
-        {typeStyles.icon} {task.category || "Task"}
+        <CategoryIcon size={16} className={typeStyles.textColor} />
+        <span className={typeStyles.textColor}>{capitalizeFirstLetter(task.category) || "Task"}</span>
       </span>
     </div>
   );
@@ -165,7 +197,7 @@ export const TaskCard = ({
     return (
       <>
         <div
-          className={`flex h-full overflow-hidden rounded-lg border ${typeStyles.borderColor} bg-white bg-opacity-40 shadow-lg transition-all duration-300 ${className}`}
+          className={`flex h-full overflow-hidden rounded-lg border border-gray-300 bg-white bg-opacity-40 shadow-lg transition-all duration-300 ${className}`}
           draggable={draggable}
           onDragStart={(e) => onDragStart?.(e, task)}
         >
@@ -232,7 +264,7 @@ export const TaskCard = ({
   return (
     <>
       <div
-        className={`flex overflow-hidden rounded-lg border ${typeStyles.borderColor} bg-white bg-opacity-40 shadow-lg transition-all duration-300 task-card ${className}`}
+        className={`flex overflow-hidden rounded-lg border border-gray-300 bg-white bg-opacity-40 shadow-lg transition-all duration-300 task-card ${className}`}
         draggable={draggable && task.status !== "completed"}
         onDragStart={(e) => onDragStart?.(e, task)}
       >

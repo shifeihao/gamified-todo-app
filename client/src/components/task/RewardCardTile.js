@@ -1,4 +1,5 @@
 import React from 'react';
+import { Medal, Coins, Gift } from 'lucide-react';
 
 export const RewardCardTile = ({ card, isSelected = false, onClick = null, readOnly = false }) => {
     return (
@@ -28,8 +29,8 @@ export const RewardCardTile = ({ card, isSelected = false, onClick = null, readO
             <div className="mt-3 flex flex-col gap-1 border-t pt-2 border-purple-200">
                 {/* Experience multiplier */}
                 <div className="flex items-center">
-                    <div className="w-6 h-6 flex items-center justify-center bg-purple-200 rounded-full mr-2">
-                        <span role="img" aria-label="experience" className="text-purple-700">✨</span>
+                    <div className="w-6 h-6 flex items-center justify-center bg-purple-100 rounded-full mr-2">
+                        <Medal size={16} className="text-purple-700" />
                     </div>
                     <span className="text-sm text-purple-800 font-medium">
                         Experience <span className="font-bold">{card.bonus?.experienceMultiplier || 1}x</span>
@@ -38,8 +39,8 @@ export const RewardCardTile = ({ card, isSelected = false, onClick = null, readO
                 
                 {/* Coins multiplier */}
                 <div className="flex items-center">
-                    <div className="w-6 h-6 flex items-center justify-center bg-yellow-200 rounded-full mr-2">
-                        <span role="img" aria-label="coins" className="text-yellow-700">🪙</span>
+                    <div className="w-6 h-6 flex items-center justify-center bg-yellow-100 rounded-full mr-2">
+                        <Coins size={16} className="text-yellow-700" />
                     </div>
                     <span className="text-sm text-yellow-800 font-medium">
                         Coins <span className="font-bold">{card.bonus?.goldMultiplier || 1}x</span>
@@ -49,8 +50,8 @@ export const RewardCardTile = ({ card, isSelected = false, onClick = null, readO
                 {/* If card has an extra special bonus */}
                 {card.bonus?.specialBonus && (
                     <div className="flex items-center">
-                        <div className="w-6 h-6 flex items-center justify-center bg-green-200 rounded-full mr-2">
-                            <span role="img" aria-label="special" className="text-green-700">🎁</span>
+                        <div className="w-6 h-6 flex items-center justify-center bg-green-100 rounded-full mr-2">
+                            <Gift size={16} className="text-green-700" />
                         </div>
                         <span className="text-sm text-green-800 font-medium">
                             {card.bonus.specialBonus}
