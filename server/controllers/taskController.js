@@ -5,6 +5,7 @@ import {
   addDeletedTasksNum,
   addEditedTasksNum,
   checkTaskNumber,
+  SyncUserStats,
 } from "../utils/userStatsSync.js";
 
 // @desc    获取当前用户的所有任务
@@ -31,13 +32,21 @@ const createTask = async (req, res) => {
       return res.status(400).json({ message: "缺少必要的任务信息" });
     }
     if (!req.body.cardUsed) {
-      return res.status(400).json({ message: "必须指定使用的卡片（cardUsed）" });
+      return res
+        .status(400)
+        .json({ message: "必须指定使用的卡片（cardUsed）" });
     }
 
     // 如果是长期任务，验证子任务
-    if (req.body.type === '长期') {
-      if (!req.body.subTasks || !Array.isArray(req.body.subTasks) || req.body.subTasks.length === 0) {
-        return res.status(400).json({ message: "长期任务必须包含至少一个子任务" });
+    if (req.body.type === "长期") {
+      if (
+        !req.body.subTasks ||
+        !Array.isArray(req.body.subTasks) ||
+        req.body.subTasks.length === 0
+      ) {
+        return res
+          .status(400)
+          .json({ message: "长期任务必须包含至少一个子任务" });
       }
 
       // 验证每个子任务
@@ -68,7 +77,7 @@ const createTask = async (req, res) => {
     res.status(201).json(task);
 
     //触发task表检查，将表记录同步到Userstats
-    checkTaskNumber(req.user._id);
+    SyncUserStats(req.user._id);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "服务器错误" });
@@ -116,17 +125,26 @@ const updateTask = async (req, res) => {
 
     // 如果更新包含子任务列表，进行验证
     if (req.body.subTasks) {
-      if (task.type === 'long' && (!Array.isArray(req.body.subTasks) || req.body.subTasks.length === 0)) {
-        return res.status(400).json({ message: "Long tasks must contain at least one subtask" });
+      if (
+        task.type === "long" &&
+        (!Array.isArray(req.body.subTasks) || req.body.subTasks.length === 0)
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Long tasks must contain at least one subtask" });
       }
 
       // 验证每个子任务
       for (const subTask of req.body.subTasks) {
         if (!subTask.title || !subTask.title.trim()) {
-          return res.status(400).json({ message: "Subtask must contain a title" });
+          return res
+            .status(400)
+            .json({ message: "Subtask must contain a title" });
         }
         if (!subTask.dueDate) {
-          return res.status(400).json({ message: "Subtask must have a deadline" });
+          return res
+            .status(400)
+            .json({ message: "Subtask must have a deadline" });
         }
       }
     }
@@ -140,8 +158,10 @@ const updateTask = async (req, res) => {
       }
 
       // 检查子任务是否已完成
-      if (task.subTasks[subTaskIndex].status === 'Completed') {
-        return res.status(400).json({ message: "Subtask has already been completed" });
+      if (task.subTasks[subTaskIndex].status === "Completed") {
+        return res
+          .status(400)
+          .json({ message: "Subtask has already been completed" });
       }
 
       // 调用子任务完成处理函数
@@ -150,23 +170,23 @@ const updateTask = async (req, res) => {
         user: req.user,
         body: {
           taskId: task._id.toString(),
-          subTaskIndex
-        }
+          subTaskIndex,
+        },
       });
 
       // 检查是否所有子任务都已完成
-      const allSubTasksCompleted = task.subTasks.every(st => 
-        st.status === 'Completed' || (st === task.subTasks[subTaskIndex])
+      const allSubTasksCompleted = task.subTasks.every(
+        (st) => st.status === "Completed" || st === task.subTasks[subTaskIndex]
       );
-      
+
       return res.json({
-        message: allSubTasksCompleted ? 
-          "子任务完成！所有子任务已完成，点击完成长期任务按钮可获得额外奖励" : 
-          "子任务完成",
+        message: allSubTasksCompleted
+          ? "子任务完成！所有子任务已完成，点击完成长期任务按钮可获得额外奖励"
+          : "子任务完成",
         task: result.task,
         subTaskReward: result.subTaskReward,
         longTaskReward: result.longTaskReward,
-        allSubTasksCompleted: allSubTasksCompleted
+        allSubTasksCompleted: allSubTasksCompleted,
       });
     }
 
@@ -220,7 +240,11 @@ const updateTask = async (req, res) => {
       ) {
         task.status = "Overdue";
         await task.save();
-        return res.status(400).json({ message: "The short-term task has expired and cannot be completed" });
+        return res
+          .status(400)
+          .json({
+            message: "The short-term task has expired and cannot be completed",
+          });
       }
 
       task.completedAt = task.completedAt || Date.now();
@@ -239,6 +263,7 @@ const updateTask = async (req, res) => {
     const updatedTask = await task.save();
 
     // 每编辑一次任务，userStats里面计数器+1
+    await SyncUserStats(req.user._id);
     await addEditedTasksNum(req.user._id);
 
     // ✅ 最终统一响应
@@ -275,6 +300,7 @@ const deleteTask = async (req, res) => {
     res.json({ message: "任务已归档并删除" });
 
     //删除一个任务，计数一次
+    await SyncUserStats(req.user._id);
     await addDeletedTasksNum(req.user._id);
   } catch (error) {
     console.error(error);

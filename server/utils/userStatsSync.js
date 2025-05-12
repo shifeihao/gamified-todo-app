@@ -9,11 +9,25 @@ import { UserDungeonStats } from "../models/UserDungeonStats.js";
 
 //统一调动所有函数同步UserStats
 export async function SyncUserStats(userId) {
+  await checkUserStats(userId);
   await SyncUser(userId);
   await SyncTaskHistory(userId);
   await checkCardNumber(userId);
   await checkTaskNumber(userId);
   await checkGameStats(userId);
+}
+
+// 检查UserStats表是否存在，如果不存在就创建一个新的
+export async function checkUserStats(userId) {
+  const userStats = await UserStats.findOne({ user: userId });
+  if (!userStats) {
+    console.log("UserStats表不存在，创建新的记录");
+    const newUserStats = new UserStats({ user: userId });
+    await newUserStats.save();
+    console.log("✅ 创建成功");
+  } else {
+    console.log("UserStats表已存在");
+  }
 }
 //统计User
 export async function SyncUser(userId) {
