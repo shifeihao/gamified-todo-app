@@ -57,7 +57,7 @@ const RepositoryPanel = ({
                                     : 'text-gray-500 hover:text-amber-500'
                             }`}
                         >
-                            {tab === 'store' ? 'Store' : tab === 'blank' ? 'Rewards' : 'Template'}
+                            {tab === 'store' ? 'Vault' : tab === 'blank' ? 'Rewards' : 'Template'}
                         </button>
                     ))}
                 </div>

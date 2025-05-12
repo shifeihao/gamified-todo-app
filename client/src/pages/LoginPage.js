@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Navbar } from '../components/navbar';
 import AuthContext from '../context/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { AuthNavbar } from '../components/navbar';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -46,7 +46,7 @@ const LoginPage = () => {
 
   return (
     <div>
-      <Navbar />
+      <AuthNavbar />
       
       <div className="max-w-md mx-auto mt-10 px-4 sm:px-6 lg:px-8">
         <div className="card">
