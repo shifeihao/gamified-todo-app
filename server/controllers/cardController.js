@@ -11,17 +11,130 @@ import { checkCardNumber } from "../utils/userStatsSync.js";
 const getCardInventory = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).populate("cardInventory");
 
-  // 检查并重置每日卡片配额
+  // 检查并重置每日卡片配额（短期卡片）
   const today = new Date().setHours(0, 0, 0, 0);
   const lastIssued = user.dailyCards.lastIssued
     ? new Date(user.dailyCards.lastIssued).setHours(0, 0, 0, 0)
     : null;
 
+  // 如果今天还没发放过卡片，发放新的短期卡片
   if (lastIssued !== today) {
-    user.dailyCards.blank = 3; // 重置为每日3张空白卡
+    console.log("今日未发放短期卡片，准备清理旧卡片并发放新卡片");
+    
+    // 1. 删除所有已有的短期卡片（如果有）
+    // 找出所有属于该用户、类型为blank、持续时间为short的卡片ID
+    const shortCardIds = user.cardInventory
+      .filter(card => card.type === 'blank' && card.taskDuration === 'short')
+      .map(card => card._id);
+    
+    if (shortCardIds.length > 0) {
+      // 从用户的库存中移除这些短期卡片
+      user.cardInventory = user.cardInventory.filter(card => 
+        !shortCardIds.includes(card._id)
+      );
+      
+      // 从数据库中删除这些卡片
+      await Card.deleteMany({
+        _id: { $in: shortCardIds },
+        user: user._id
+      });
+      
+      console.log(`删除了${shortCardIds.length}张旧的短期卡片`);
+    }
+    
+    // 2. 创建3张新的短期卡片
+    const shortCards = await Promise.all(
+      [...Array(3)].map(() =>
+        Card.create({
+          user: user._id,
+          type: "blank",
+          title: "空白短期卡片",
+          description: "每日自动发放的短期卡片",
+          taskDuration: "short", // 限定为短期卡片
+          issuedAt: new Date(),
+        })
+      )
+    );
+    
+    // 3. 将新卡片添加到用户的库存中
+    user.cardInventory.push(...shortCards.map((card) => card._id));
+    user.dailyCards.blank = 3;
     user.dailyCards.lastIssued = new Date();
-    await user.save();
+    
+    console.log("成功发放3张新的短期卡片");
   }
+  
+  // 检查并重置每周卡片配额（长期卡片）
+  const today2 = new Date();
+  const dayOfWeek = today2.getDay(); // 0是周日，1是周一
+  const isWeeklyRefreshDay = dayOfWeek === 1; // 设定周一为刷新日
+  
+  // 获取上次发放周卡的日期
+  const lastWeeklyIssued = user.weeklyCards?.lastIssued
+    ? new Date(user.weeklyCards.lastIssued)
+    : null;
+  
+  // 判断是否需要刷新周卡
+  const needWeeklyRefresh = isWeeklyRefreshDay && (
+    !lastWeeklyIssued || 
+    lastWeeklyIssued.getDay() !== dayOfWeek || 
+    (today2 - lastWeeklyIssued) > 7 * 24 * 60 * 60 * 1000
+  );
+  
+  if (needWeeklyRefresh) {
+    console.log("本周未发放长期卡片，准备清理旧卡片并发放新卡片");
+    
+    // 1. 删除所有已有的长期卡片（类型为blank，持续时间为long）
+    const longCardIds = user.cardInventory
+      .filter(card => card.type === 'blank' && card.taskDuration === 'long')
+      .map(card => card._id);
+    
+    if (longCardIds.length > 0) {
+      // 从用户的库存中移除这些长期卡片
+      user.cardInventory = user.cardInventory.filter(card => 
+        !longCardIds.includes(card._id)
+      );
+      
+      // 从数据库中删除这些卡片
+      await Card.deleteMany({
+        _id: { $in: longCardIds },
+        user: user._id
+      });
+      
+      console.log(`删除了${longCardIds.length}张旧的长期卡片`);
+    }
+    
+    // 2. 创建2张新的长期卡片
+    const longCards = await Promise.all(
+      [...Array(2)].map(() =>
+        Card.create({
+          user: user._id,
+          type: "blank",
+          title: "空白长期卡片",
+          description: "每周自动发放的长期卡片",
+          taskDuration: "long", // 限定为长期卡片
+          issuedAt: new Date(),
+        })
+      )
+    );
+    
+    // 3. 将新卡片添加到用户的库存中
+    user.cardInventory.push(...longCards.map((card) => card._id));
+    
+    // 4. 更新用户的周卡发放时间
+    if (!user.weeklyCards) {
+      user.weeklyCards = {};
+    }
+    user.weeklyCards.lastIssued = new Date();
+    
+    console.log("成功发放2张新的长期卡片");
+  }
+  
+  // 保存用户信息
+  await user.save();
+  
+  // 更新用户卡片统计
+  await checkCardNumber(req.user.id);
 
   // 检查周期性卡片冷却
   const periodicCards = user.cardInventory.filter(
@@ -38,6 +151,7 @@ const getCardInventory = asyncHandler(async (req, res) => {
 
   res.json({
     dailyCards: user.dailyCards,
+    weeklyCards: user.weeklyCards || {},
     inventory: user.cardInventory,
   });
 });

@@ -56,34 +56,60 @@ const TasksPage = () => {
   // 拉取任务与卡片库存
   const fetchTasks = async () => {
     try {
-      // 先尝试获取每日卡片（对于新用户很重要）
+      // 优先尝试获取当前卡片库存
+      let cardData = { inventory: [] };
       try {
-        await getNewDailyCards(user.token);
+        cardData = await getCardInventory(user.token);
+        console.log("获取到的卡片库存数据:", cardData);
       } catch (err) {
-        console.log("尝试获取每日卡片失败，可能已经获取过", err);
+        console.error("获取卡片库存失败:", err);
+      }
+      
+      // 如果卡片库存为空或少于5张，尝试初始化新用户卡片
+      if (!cardData.inventory || cardData.inventory.length < 5) {
+        console.log("卡片库存不足，尝试获取每日卡片和补充卡片...");
+        
+        // 先尝试获取每日卡片（对于新用户很重要）
+        try {
+          await getNewDailyCards(user.token);
+          console.log("成功获取每日卡片");
+        } catch (err) {
+          console.log("尝试获取每日卡片失败，可能已经获取过", err);
+        }
+        
+        // 如果卡片仍然不足，尝试通过login/register中的初始化逻辑获取卡片
+        if (!cardData.inventory || cardData.inventory.length < 2) {
+          console.log("新用户可能需要初始化卡片，尝试创建额外的空白卡片...");
+          
+          // 创建空白短期卡片
+          try {
+            await createBlankCard(user.token);
+            console.log("成功创建补充空白卡片");
+          } catch (err) {
+            console.log("创建空白卡片失败", err);
+          }
+        }
+        
+        // 重新获取卡片库存
+        try {
+          cardData = await getCardInventory(user.token);
+          console.log("更新后的卡片库存:", cardData);
+        } catch (err) {
+          console.error("重新获取卡片库存失败:", err);
+        }
       }
 
-      // 如果每日卡片获取失败，尝试创建一些空白卡片（确保新用户有卡可用）
-      try {
-        // 创建一张空白卡片确保用户有卡可用
-        await createBlankCard(user.token);
-      } catch (err) {
-        console.log("创建空白卡片失败", err);
-      }
-
-      const [allTasks, equipped, shortTasks, longTasks, cardData, levelInfo] =
+      // 获取任务和其他必要数据
+      const [allTasks, equipped, shortTasks, longTasks, levelInfo] =
         await Promise.all([
           getTasks(user.token),
           getEquippedTasks(user.token),
           getEquippedShortTasks(user.token),
           getEquippedLongTasks(user.token),
-          getCardInventory(user.token),
           axios.get("/api/levels/userLevelBar", {
             headers: { Authorization: `Bearer ${user.token}` },
           }),
         ]);
-      
-      console.log("获取到的卡片数据:", cardData);
       
       setTasks(allTasks);
       setEquippedShortTasks(shortTasks);
@@ -93,7 +119,7 @@ const TasksPage = () => {
       setError("");
     } catch (err) {
       console.error("获取任务数据出错:", err);
-      showError("Failed to obtain task data");
+      showError("获取任务数据失败");
     }
   };
 

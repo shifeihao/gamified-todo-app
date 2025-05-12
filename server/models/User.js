@@ -71,6 +71,13 @@ const userSchema = new mongoose.Schema(
         default: null, // 上次发放日期
       },
     },
+    // 每周长期卡片配额
+    weeklyCards: {
+      lastIssued: {
+        type: Date,
+        default: null, // 上次发放日期
+      },
+    },
     // 指向用户拥有的所有卡片
     cardInventory: [
       {

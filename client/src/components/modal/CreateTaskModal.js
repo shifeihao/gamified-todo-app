@@ -23,7 +23,8 @@ export const CreateTaskModal = ({
   const [useReward, setUseReward] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
   const [cardError, setCardError] = useState('');
-  const [dailyCards, setDailyCards] = useState(0);
+  const [shortBlankCards, setShortBlankCards] = useState(0);
+  const [longBlankCards, setLongBlankCards] = useState(0);
   const [rewardCardCount, setRewardCardCount] = useState(0);
 
   // 将 Date 转为本地 'YYYY-MM-DDTHH:mm' 格式
@@ -53,31 +54,62 @@ export const CreateTaskModal = ({
   useEffect(() => {
     const fetchInventory = async () => {
       try {
+        console.log("获取卡片库存，当前任务类型:", taskType, "来自卡槽:", slotIndex >= 0, "卡槽索引:", slotIndex);
+        
         const res = await axios.get('/api/cards/inventory', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
-        // ✅ 从 cardInventory 中筛选 blank 卡，区分长/短期
-        const blanks = res.data.inventory.filter(c =>
+        
+        if (res.data && res.data.inventory) {
+          // 计算短期空白卡片数量
+          const shortBlanks = res.data.inventory.filter(c =>
             c.type === 'blank' &&
-            !c.used && // ✅ 只统计未使用的
-            (taskType === 'short'
-                ? ['short', 'general'].includes(c.taskDuration)
-                : ['long', 'general'].includes(c.taskDuration))
-        ).length;
-        setDailyCards(blanks);
-
-        const rewards = res.data.inventory.filter(card =>
-            card.type === 'special' &&
-            !card.used && // ✅ 只统计未使用的
-            ['general', taskType].includes(card.taskDuration)
-        ).length;
-        setRewardCardCount(rewards);
+            !c.used &&
+            c.taskDuration === 'short'
+          ).length;
+          
+          // 计算长期空白卡片数量
+          const longBlanks = res.data.inventory.filter(c =>
+            c.type === 'blank' &&
+            !c.used &&
+            c.taskDuration === 'long'
+          ).length;
+          
+          // 设置对应数量
+          setShortBlankCards(shortBlanks);
+          setLongBlankCards(longBlanks);
+          
+          // 筛选与当前任务类型匹配的奖励卡 - 无论是来自普通创建还是卡槽创建
+          const currentType = taskType;  // 确保使用当前任务类型
+          
+          // 不使用查询列表方式筛选，而是直接遍历数组手动筛选并打印每个卡片信息，方便排查问题
+          let matchingRewards = 0;
+          console.log("筛选可用奖励卡片, 当前任务类型:", currentType);
+          
+          res.data.inventory.forEach(card => {
+            if (card.type === 'special' && !card.used) {
+              const isMatch = card.taskDuration === currentType || card.taskDuration === 'general';
+              console.log(`卡片ID: ${card._id}, 标题: ${card.title}, 类型: ${card.type}, 任务时长: ${card.taskDuration}, 匹配: ${isMatch}`);
+              if (isMatch) {
+                matchingRewards++;
+              }
+            }
+          });
+          
+          console.log(`匹配的奖励卡片总数: ${matchingRewards}`);
+          setRewardCardCount(matchingRewards);
+          
+          console.log(`短期空白卡: ${shortBlanks}, 长期空白卡: ${longBlanks}, 奖励卡: ${matchingRewards}`);
+        }
       } catch (err) {
-        console.error('Failed to obtain card inventory:', err);
+        console.error('获取卡片库存失败:', err);
       }
     };
-    if (isOpen && user) fetchInventory();
-  }, [isOpen, user, taskType]);
+    
+    if (isOpen && user) {
+      fetchInventory();
+    }
+  }, [isOpen, user, taskType, slotIndex]);  // 添加slotIndex作为依赖项，确保卡槽变化时重新获取
 
   const handleSubmit = async formFields => {
     try {
@@ -140,6 +172,11 @@ export const CreateTaskModal = ({
 
   const isFromSlot = slotIndex >= 0;
 
+  // 获取当前任务类型对应的空白卡片数量
+  const getCurrentBlankCardCount = () => {
+    return taskType === 'short' ? shortBlankCards : longBlankCards;
+  };
+
   return (
       <Modal
           isOpen={isOpen}
@@ -188,8 +225,11 @@ export const CreateTaskModal = ({
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
               {useReward
-                  ? `Available Reward Cards（${taskType}）: ${rewardCardCount}`
-                  : `Available Blank Cards（${taskType}）: ${dailyCards}`}
+                ? `Available Reward Cards（${taskType === 'short' ? 'short' : 'long'}）: ${rewardCardCount}`
+                : taskType === 'short'
+                  ? `Available Blank Quick Quest Cards: ${shortBlankCards}`
+                  : `Available Blank Long-Term Cards: ${longBlankCards}`
+              }
             </div>
             <label className="flex items-center space-x-2 text-sm text-gray-700">
               <input
@@ -198,7 +238,7 @@ export const CreateTaskModal = ({
                   onChange={e => setUseReward(e.target.checked)}
                   className="h-4 w-4 text-purple-600 border-gray-300 rounded"
               />
-              <span>Use a reward card?</span>
+              <span>Use a Reward Card?</span>
             </label>
           </div>
 
@@ -206,6 +246,7 @@ export const CreateTaskModal = ({
           {useReward && (
               <div>
                 <CardSelector
+                    key={`card-selector-${taskType}-${slotIndex}`}
                     onSelect={setSelectedCard}
                     selectedCard={selectedCard}
                     showRewards
