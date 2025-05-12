@@ -9,7 +9,7 @@ import { useToast } from '../../contexts/ToastContext';
 import DailyTaskPanel from "./DailyTaskPanel";
 import TimetablePanel from "./TimetablePanel";
 import RepositoryPanel from "./RepositoryPanel";
-import { getCardInventory } from "../../services/cardService";
+import { getCardInventory, getNewDailyCards, createBlankCard } from "../../services/cardService";
 import axios from "axios";
 
 // 仅用于读数据，不纳入 useApiAction
@@ -56,7 +56,22 @@ const TasksPage = () => {
   // 拉取任务与卡片库存
   const fetchTasks = async () => {
     try {
-      const [allTasks, equipped, shortTasks, longTasks, inventory, levelInfo] =
+      // 先尝试获取每日卡片（对于新用户很重要）
+      try {
+        await getNewDailyCards(user.token);
+      } catch (err) {
+        console.log("尝试获取每日卡片失败，可能已经获取过", err);
+      }
+
+      // 如果每日卡片获取失败，尝试创建一些空白卡片（确保新用户有卡可用）
+      try {
+        // 创建一张空白卡片确保用户有卡可用
+        await createBlankCard(user.token);
+      } catch (err) {
+        console.log("创建空白卡片失败", err);
+      }
+
+      const [allTasks, equipped, shortTasks, longTasks, cardData, levelInfo] =
         await Promise.all([
           getTasks(user.token),
           getEquippedTasks(user.token),
@@ -67,14 +82,17 @@ const TasksPage = () => {
             headers: { Authorization: `Bearer ${user.token}` },
           }),
         ]);
+      
+      console.log("获取到的卡片数据:", cardData);
+      
       setTasks(allTasks);
       setEquippedShortTasks(shortTasks);
       setEquippedLongTasks(longTasks);
-      setCards(inventory);
+      setCards(cardData.inventory || []); // 确保使用正确的数据结构
       setRewardInfo(levelInfo.data);
       setError("");
     } catch (err) {
-      console.error(err);
+      console.error("获取任务数据出错:", err);
       showError("Failed to obtain task data");
     }
   };
