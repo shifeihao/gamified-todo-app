@@ -207,7 +207,7 @@ export const TaskCard = ({
   // 普通态卡片（仓库中）
   return (
     <div
-      className={`flex rounded-lg overflow-hidden backdrop-blur-sm bg-white bg-opacity-40 border ${typeStyles.borderColor} shadow-lg transition-all duration-300 ${className}`}
+      className={`flex rounded-lg overflow-hidden backdrop-blur-sm bg-white bg-opacity-40 border ${typeStyles.borderColor} shadow-lg transition-all duration-300 task-card ${className}`}
       draggable={draggable && task.status !== 'Completed'}
       onDragStart={onDragStart ? e => onDragStart(e, task) : undefined}
     >

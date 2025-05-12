@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {TaskCard} from './TaskCard';
+import { Filter, Search, ChevronDown, ChevronUp, X, ArrowDownAZ, ArrowUpAZ } from 'lucide-react';
 
 export const TaskRepository = ({
                           tasks,
@@ -18,10 +19,19 @@ export const TaskRepository = ({
   const [selectedType, setSelectedType] = useState('All');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // 清除所有筛选条件
+  const clearFilters = () => {
+    setSelectedCategory('All');
+    setSelectedType('All');
+    setSortBy('createdAt');
+    setSortOrder('desc');
+  };
 
   // 分类与类型选项
-  const categories = ['All', ...new Set(unequippedTasks.map(t => t.category))];
-  const types = ['All', 'short', 'long'];
+  const categories = ['All', 'Default'];
+  const types = ['All', 'Short-term', 'Long-term'];
 
   // 拖拽开始
   const handleDragStart = (e, task) => {
@@ -42,11 +52,14 @@ export const TaskRepository = ({
         ) {
           return false;
         }
-        if (selectedCategory !== 'All' && task.category !== selectedCategory) {
+        if (selectedCategory !== 'All' && task.category !== (selectedCategory === 'Default' ? 'Default' : selectedCategory)) {
           return false;
         }
-        if (selectedType !== 'All' && task.type !== selectedType) {
-          return false;
+        if (selectedType !== 'All') {
+          const typeMap = { 'Short-term': 'short', 'Long-term': 'long' };
+          if (task.type !== typeMap[selectedType]) {
+            return false;
+          }
         }
         return true;
       })
@@ -56,16 +69,17 @@ export const TaskRepository = ({
           valA = a.dueDate ? new Date(a.dueDate) : new Date(8640000000000000);
           valB = b.dueDate ? new Date(b.dueDate) : new Date(8640000000000000);
         } else if (sortBy === 'priority') {
-          const map = { 高: 3, 中: 2, 低: 1 };
-          valA = map[a.priority];
-          valB = map[b.priority];
+          const map = { '高': 3, '中': 2, '低': 1 };
+          valA = map[a.priority] || 0;
+          valB = map[b.priority] || 0;
         } else if (sortBy === 'experienceReward') {
-          valA = a.experienceReward;
-          valB = b.experienceReward;
+          valA = a.experienceReward || 0;
+          valB = b.experienceReward || 0;
         } else {
-          valA = new Date(a[sortBy]);
-          valB = new Date(b[sortBy]);
+          valA = new Date(a[sortBy] || Date.now());
+          valB = new Date(b[sortBy] || Date.now());
         }
+        
         if (sortOrder === 'asc') {
           return valA > valB ? 1 : -1;
         } else {
@@ -73,92 +87,125 @@ export const TaskRepository = ({
         }
       });
 
+  // 获取活跃筛选器数量
+  const activeFilterCount = [
+    selectedCategory !== 'All',
+    selectedType !== 'All',
+    sortBy !== 'createdAt' || sortOrder !== 'desc'
+  ].filter(Boolean).length;
+
   return (
       <div className="mb-8">
-        {/* 搜索与过滤 */}
-        <div className="card mb-6 p-4">
-          {/* 始终保持2x2的布局，不管是否折叠 */}
-          <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
-            {/* 搜索 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Search
-              </label>
-              <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  placeholder="Enter Task Title..."
-                  className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none text-xs sm:text-sm"
-              />
+        {/* 搜索条 */}
+        <div className="card mb-4 p-4">
+          <div className="relative flex items-center">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={18} className="text-gray-400" />
             </div>
-            {/* 分类 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Tag
-              </label>
-              <select
-                  value={selectedCategory}
-                  onChange={e => setSelectedCategory(e.target.value)}
-                  className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none text-xs sm:text-sm"
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Search for tasks..."
+              className="pl-10 pr-10 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <div className="absolute inset-y-0 right-0 flex items-center">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="h-full px-3 flex items-center text-gray-500 hover:text-amber-600 relative"
               >
+                <Filter size={18} />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 筛选面板 - 可折叠 */}
+        {showFilters && (
+          <div className="flex items-center gap-2 mb-4 bg-gray-50 p-3 rounded-lg">
+            {/* 分类筛选 */}
+            <div className="flex items-center mr-6">
+              <span className="text-sm text-gray-600 mr-2">Category:</span>
+              <div className="flex gap-1">
                 {categories.map(cat => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-2 py-1 rounded-md text-xs transition-colors 
+                      ${selectedCategory === cat 
+                        ? 'bg-blue-100 text-blue-600 font-medium' 
+                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                      }`}
+                  >
+                    {cat}
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
-            {/* 类型 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Type
-              </label>
-              <select
-                  value={selectedType}
-                  onChange={e => setSelectedType(e.target.value)}
-                  className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none text-xs sm:text-sm"
-              >
-                {types.map(t => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
+
+            {/* 类型筛选 */}
+            <div className="flex items-center mr-6">
+              <span className="text-sm text-gray-600 mr-2">Type:</span>
+              <div className="flex gap-1">
+                {types.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedType(type)}
+                    className={`px-2 py-1 rounded-md text-xs transition-colors 
+                      ${selectedType === type 
+                        ? 'bg-blue-100 text-blue-600 font-medium' 
+                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                      }`}
+                  >
+                    {type}
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
-            {/* 排序 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Sort
-              </label>
-              <div className="flex">
+
+            {/* 排序方式 */}
+            <div className="flex items-center ml-auto">
+              <span className="text-sm text-gray-600 mr-2">Sort By:</span>
+              <div className="flex items-center">
                 <select
-                    value={sortBy}
-                    onChange={e => setSortBy(e.target.value)}
-                    className="flex-1 px-2 py-1 border border-gray-300 rounded-l-md focus:outline-none text-xs sm:text-sm"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="text-xs py-1 px-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
                 >
-                  <option value="createdAt">Created</option>
-                  <option value="dueDate">Due</option>
+                  <option value="createdAt">Created Date</option>
+                  <option value="dueDate">Due Date</option>
                   <option value="priority">Priority</option>
-                  <option value="experienceReward">EXP</option>
+                  <option value="experienceReward">Experience</option>
                 </select>
                 <button
-                    onClick={() =>
-                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-                    }
-                    className="px-2 py-1 border border-gray-300 border-l-0 rounded-r-md bg-gray-50 hover:bg-gray-100"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="p-1 text-gray-500 hover:text-blue-600 ml-1"
+                  title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
                 >
-                  {sortOrder === 'asc' ? '↑' : '↓'}
+                  {sortOrder === 'asc' ? <ArrowUpAZ size={14} /> : <ArrowDownAZ size={14} />}
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 任务列表展示 */}
         {filtered.length === 0 ? (
             <div className="text-center py-10 bg-gray-50 rounded-lg">
               <p className="text-gray-500">No matching tasks found</p>
+              {(searchTerm || selectedCategory !== 'All' || selectedType !== 'All' || sortBy !== 'createdAt' || sortOrder !== 'desc') && (
+                <button 
+                  onClick={clearFilters}
+                  className="mt-2 text-amber-600 hover:text-amber-700 text-sm"
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
         ) : (
             <div className="grid gap-4 justify-items-center" 

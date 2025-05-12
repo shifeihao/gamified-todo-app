@@ -1,6 +1,7 @@
 // src/pages/TasksPage/DailyTaskPanel.js
 import React from "react";
 import { TaskSlots } from "../../components";
+import { Zap } from "lucide-react";
 
 const DailyTaskPanel = ({
   equippedTasks,
@@ -18,9 +19,7 @@ const DailyTaskPanel = ({
   return (
         <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-4 border-2 border-purple-300 backdrop-blur-sm">
             <h2 className="text-xl font-bold mb-4 text-purple-900 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <Zap className="h-6 w-6 mr-2" />
                 Quick Quests
             </h2>
       <TaskSlots

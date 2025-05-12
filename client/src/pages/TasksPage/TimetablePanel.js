@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { TaskSlots } from "../../components";
 import { TaskCalendar } from "../../components";
+import { Clipboard, Calendar, LayoutList } from "lucide-react";
 import "react-calendar/dist/Calendar.css";
 
 const TimetablePanel = ({
@@ -19,31 +20,33 @@ const TimetablePanel = ({
         <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-4 border-2 border-blue-300 backdrop-blur-sm">
       <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-blue-900 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
+                    <Clipboard className="h-6 w-6 mr-2" />
                     Quest Chains
                 </h2>
                 <div className="flex space-x-2">
           <button
-onClick={() => setActiveTab("list")}
-className={`px-3 py-1 rounded text-sm transition-all duration-150 ${
-    activeTab === "list"
-        ? "text-blue-600 border-b-2 border-blue-600 font-semibold"
-        : "text-gray-500 hover:text-blue-500"
-}`}
+            onClick={() => setActiveTab("list")}
+            className={`px-3 py-1.5 rounded-md flex flex-col items-center transition-colors duration-200 ${
+              activeTab === "list"
+                ? "text-blue-600 bg-blue-50 font-semibold"
+                : "text-gray-500 hover:text-blue-500 hover:bg-blue-50"
+            }`}
+            title="List"
           >
-            List
+            <LayoutList size={18} />
+            <span className="text-xs mt-1">List</span>
           </button>
           <button
-onClick={() => setActiveTab("calendar")}
-className={`px-3 py-1 rounded text-sm transition-all duration-150 ${
-    activeTab === "calendar"
-        ? "text-blue-600 border-b-2 border-blue-600 font-semibold"
-        : "text-gray-500 hover:text-blue-500"
-}`}
+            onClick={() => setActiveTab("calendar")}
+            className={`px-3 py-1.5 rounded-md flex flex-col items-center transition-colors duration-200 ${
+              activeTab === "calendar"
+                ? "text-blue-600 bg-blue-50 font-semibold"
+                : "text-gray-500 hover:text-blue-500 hover:bg-blue-50"
+            }`}
+            title="Timetable"
           >
-            Timetable
+            <Calendar size={18} />
+            <span className="text-xs mt-1">Timetable</span>
           </button>
         </div>
       </div>
