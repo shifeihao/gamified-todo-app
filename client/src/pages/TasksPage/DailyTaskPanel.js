@@ -44,7 +44,7 @@ const DailyTaskPanel = ({
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            <p className="text-sm text-purple-600">Click to create Short term Task</p>
+            <p className="text-sm text-purple-600">Click to create short term Task</p>
           </>
         )}
         onCreate={onCreateTask}

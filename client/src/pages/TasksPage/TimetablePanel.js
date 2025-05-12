@@ -54,6 +54,7 @@ className={`px-3 py-1 rounded text-sm transition-all duration-150 ${
           totalSlots={5}
           activeCount={user?.longCardSlot || 2}
           slotHeight="h-24"
+          themeColor = 'blue'
           renderCreateContent={() => (
             <>
               <svg
@@ -70,7 +71,7 @@ className={`px-3 py-1 rounded text-sm transition-all duration-150 ${
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-                            <p className="text-sm text-blue-600">Click to create Long term Task</p>
+                            <p className="text-sm text-blue-600">Click to create long term Task</p>
             </>
           )}
           onCreate={onCreateTask}
