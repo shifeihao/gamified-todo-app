@@ -261,6 +261,7 @@ const updateTask = async (req, res) => {
         return res.status(400).json({ message: "The short-term task has expired and cannot be completed" });
       }
 
+      // 仅设置完成时间，但不标记奖励已领取，让handleTaskCompletion处理奖励发放
       task.completedAt = task.completedAt || Date.now();
       await task.save(); // ✅ 保存更新（包括 status 字段）
       console.log("Task ID:", task._id); // 应该是 ObjectId 类型

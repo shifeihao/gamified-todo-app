@@ -17,6 +17,7 @@ import { useRemainingTime } from "../hooks/useRemainingTime";
 import axios from "axios";
 import toast from "react-hot-toast";
 import AuthContext from "../../context/AuthContext";
+import { SUBTASK_COMPLETED_EVENT } from "../navbar/Navbar";
 
 // 图标映射对象，将图标名映射到图标组件
 const iconComponents = {
@@ -164,7 +165,7 @@ export const TaskCard = ({
       }
 
       // 触发子任务完成事件，更新等级条
-      window.dispatchEvent(new CustomEvent('subtaskCompleted'));
+      window.dispatchEvent(new CustomEvent(SUBTASK_COMPLETED_EVENT));
     } catch (error) {
       console.error("Failed to complete subtask:", error);
       toast.error(error.response?.data?.message || "Failed to complete subtask");
@@ -327,9 +328,14 @@ export const TaskCard = ({
             <div className="flex items-center space-x-2 pt-2">
               <button
                 onClick={() => onComplete && onComplete(task._id)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 text-xs rounded"
+                className={`${task.type === 'long' ? 'bg-purple-500 hover:bg-purple-600' : 'bg-blue-500 hover:bg-blue-600'} text-white px-2 py-1 text-xs rounded flex items-center space-x-1`}
               >
-                Complete
+                {task.type === 'long' ? (
+                  <>
+                    <Award className="h-3 w-3" />
+                    <span>Complete Quest</span>
+                  </>
+                ) : 'Complete'}
               </button>
               <button
                 onClick={() => setDetailOpen(true)}

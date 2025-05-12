@@ -207,3 +207,29 @@ export const completeSubtask = async (taskId, subtaskIndex, token) => {
     );
   }
 };
+
+// 完成长期任务（专用端点）
+export const completeLongTask = async (id, token) => {
+  try {
+    console.log(`正在调用长期任务完成API，任务ID: ${id}`);
+    
+    const config = getConfig(token);
+    console.log('请求配置:', config);
+    
+    const { data } = await axios.post(
+      `/api/tasks/${id}/complete`,
+      {},
+      config
+    );
+    
+    console.log('长期任务完成API响应:', data);
+    return data;
+  } catch (error) {
+    console.error('长期任务完成API错误:', error.response || error);
+    throw new Error(
+      error.response && error.response.data.message
+        ? error.response.data.message
+        : '完成长期任务失败'
+    );
+  }
+};

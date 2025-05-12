@@ -7,6 +7,7 @@ import axios from 'axios';
 
 // Create custom event for task completion notification
 export const TASK_COMPLETED_EVENT = 'taskCompleted';
+export const SUBTASK_COMPLETED_EVENT = 'subtaskCompleted';
 
 export const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -59,17 +60,19 @@ export const Navbar = () => {
       }
     };
 
-    // Add event listener
+    // Add event listeners for both task and subtask completion
     window.addEventListener(TASK_COMPLETED_EVENT, handleTaskCompleted);
+    window.addEventListener(SUBTASK_COMPLETED_EVENT, handleTaskCompleted);
 
     // Initial fetch of level info
     if (user?.token) {
       fetchLevelInfo();
     }
 
-    // Cleanup event listener
+    // Cleanup event listeners
     return () => {
       window.removeEventListener(TASK_COMPLETED_EVENT, handleTaskCompleted);
+      window.removeEventListener(SUBTASK_COMPLETED_EVENT, handleTaskCompleted);
     };
   }, [user]);
 

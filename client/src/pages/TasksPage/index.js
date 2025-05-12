@@ -6,6 +6,7 @@ import AuthContext from "../../context/AuthContext";
 import { NewTaskCard } from '../../components/task/NewTaskCard';
 import { useToast } from '../../contexts/ToastContext';
 import toast from 'react-hot-toast';
+import { TASK_COMPLETED_EVENT, SUBTASK_COMPLETED_EVENT } from "../../components/navbar/Navbar";
 
 import DailyTaskPanel from "./DailyTaskPanel";
 import TimetablePanel from "./TimetablePanel";
@@ -27,6 +28,7 @@ import {
   updateTask as updateTaskService,
   deleteTask as deleteTaskService,
   completeTask as completeTaskService,
+  completeLongTask as completeLongTaskService,
   equipTask as equipTaskService,
   unequipTask as unequipTaskService,
 } from "../../services/taskService";
@@ -130,19 +132,21 @@ const TasksPage = () => {
     }
   }, [user]);
 
-  // 监听子任务完成事件，刷新任务数据
+  // 监听任务和子任务完成事件，刷新任务数据
   useEffect(() => {
     // 创建事件处理函数
-    const handleSubtaskCompleted = () => {
+    const handleTaskOrSubtaskCompleted = () => {
       fetchTasks();
     };
 
     // 添加事件监听器
-    window.addEventListener('subtaskCompleted', handleSubtaskCompleted);
+    window.addEventListener(SUBTASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
+    window.addEventListener(TASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
 
     // 清理函数
     return () => {
-      window.removeEventListener('subtaskCompleted', handleSubtaskCompleted);
+      window.removeEventListener(SUBTASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
+      window.removeEventListener(TASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
     };
   }, []);
 
@@ -204,20 +208,25 @@ const TasksPage = () => {
       
       // 显示更详细的完成信息和奖励通知
       if (reward) {
-        showTaskCompletedToast(task.title, reward.expGained, reward.goldGained);
+        const xp = reward.expGained || 0;
+        const gold = reward.goldGained || 0;
+        showTaskCompletedToast(task.title, xp, gold);
+        console.log(`任务完成奖励: ${xp} XP, ${gold} Gold`);
       } else {
         // 特殊处理：如果没有收到奖励信息但任务已完成
         if (task && task.status === "completed") {
           // 使用默认奖励值
-          showTaskCompletedToast(task.title, 10, 5);
-          console.log("任务已完成但未收到奖励信息，使用默认值");
+          const defaultXp = task.type === 'long' ? 30 : 10;
+          const defaultGold = task.type === 'long' ? 15 : 5;
+          showTaskCompletedToast(task.title, defaultXp, defaultGold);
+          console.log(`使用默认奖励值: ${defaultXp} XP, ${defaultGold} Gold`);
         } else {
           showSuccess("Task Completed");
         }
       }
 
       // 触发等级更新事件
-      window.dispatchEvent(new CustomEvent('taskCompleted'));
+      window.dispatchEvent(new CustomEvent(TASK_COMPLETED_EVENT));
 
       // 确保任务完成后自动卸下任务
       if (task && task._id) {
@@ -239,8 +248,62 @@ const TasksPage = () => {
   });
 
   const handleComplete = (id) => {
-    doCompleteTask(id, user.token);
+    // 找到对应的任务
+    const taskToComplete = tasks.find(t => t._id === id) || 
+                          equippedShortTasks.find(t => t._id === id) ||
+                          equippedLongTasks.find(t => t._id === id);
+
+    // 如果是长期任务，使用专用的完成方法
+    if (taskToComplete && taskToComplete.type === 'long') {
+      doCompleteLongTask(id, user.token);
+    } else {
+      // 否则使用普通完成方法
+      doCompleteTask(id, user.token);
+    }
   };
+
+  // -----------------------------
+  // 2.1. 完成长期任务（专用方法）
+  // -----------------------------
+  const {
+    execute: doCompleteLongTask,
+    isLoading: completingLong,
+    error: completeLongError,
+  } = useApiAction(completeLongTaskService, {
+    onSuccess: async (response) => {
+      console.log("长期任务完成响应:", response); // 添加日志来调试
+      
+      if (response.success) {
+        const { task, reward } = response;
+        if (reward) {
+          showTaskCompletedToast(task.title, reward.expGained, reward.goldGained);
+          console.log(`长期任务完成奖励: ${reward.expGained} XP, ${reward.goldGained} Gold`);
+        }
+
+        // 触发等级更新事件
+        window.dispatchEvent(new CustomEvent(TASK_COMPLETED_EVENT));
+
+        // 确保任务完成后自动卸下任务
+        if (task && task._id) {
+          try {
+            await unequipTaskService(task._id, user.token);
+            console.log("Successfully unequipped long task after completion");
+          } catch (err) {
+            console.error("Failed to unequip completed long task:", err);
+          }
+        }
+      } else {
+        showError("Failed to complete long task");
+      }
+      
+      // 更新任务列表
+      fetchTasks();
+    },
+    onError: (err) => {
+      console.error("长期任务完成错误:", err);
+      showError("Failed to complete the long task");
+    },
+  });
 
   // -----------------------------
   // 3. 创建任务
