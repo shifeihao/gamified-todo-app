@@ -170,9 +170,10 @@ export const Navbar = () => {
             <div className="hidden md:flex md:items-center md:space-x-4">
               {user ? (
                   <>
-                    <Link to="/dashboard" className="px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold">
-                      Dashboard
+                    <Link to="/game" className="px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold">
+                      Game
                     </Link>
+
                     <Link to="/tasks" className="px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold">
                       Tasks
                     </Link>
