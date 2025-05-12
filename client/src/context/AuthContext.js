@@ -20,6 +20,32 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  // 尝试为新用户获取卡片
+  const initializeUserCards = async (token) => {
+    try {
+      // 首先尝试获取每日卡片
+      await axios.post("/api/cards/issue-daily", {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log("成功获取每日卡片");
+    } catch (error) {
+      console.log("获取每日卡片失败，可能已获取过:", error.response?.data?.message || error.message);
+      
+      // 如果获取每日卡片失败，尝试创建一张测试卡片
+      try {
+        await axios.post("/api/cards/issue-blank", {
+          title: "初始卡片",
+          description: "新用户自动获得的卡片"
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log("成功创建初始空白卡片");
+      } catch (innerError) {
+        console.error("创建初始卡片失败:", innerError.response?.data?.message || innerError.message);
+      }
+    }
+  };
+
   // 登录函数
   const login = async (email, password) => {
     try {
@@ -32,6 +58,10 @@ export const AuthProvider = ({ children }) => {
       // 将用户信息保存到本地存储
       localStorage.setItem("userInfo", JSON.stringify(data));
       setUser(data);
+      
+      // 尝试初始化卡片
+      await initializeUserCards(data.token);
+      
       return data;
     } catch (error) {
       setError(
@@ -60,6 +90,10 @@ export const AuthProvider = ({ children }) => {
       // 将用户信息保存到本地存储
       localStorage.setItem("userInfo", JSON.stringify(data));
       setUser(data);
+      
+      // 新注册用户一定要尝试初始化卡片
+      console.log("新用户注册成功，初始化卡片...");
+      await initializeUserCards(data.token);
 
       return data;
     } catch (error) {

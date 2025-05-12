@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../../context/AuthContext';
+import axios from 'axios';
 
 // 卡片选择组件：可显示空白卡片数或奖励卡片列表
 export const CardSelector = ({
@@ -15,17 +16,40 @@ export const CardSelector = ({
   useEffect(() => {
     const fetchCards = async () => {
       try {
-        const response = await fetch('/api/cards/inventory', {
+        // 直接使用axios，确保获取完整数据
+        const response = await axios.get('/api/cards/inventory', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
-        const data = await response.json();
-        setCards(data.inventory);
-        setDailyCards(data.dailyCards.blank || 0);
+        
+        const data = response.data;
+        console.log("CardSelector - 获取到的完整卡片数据:", data);
+        
+        // 确保数据存在再设置
+        if (data && data.inventory) {
+          setCards(data.inventory || []);
+        } else {
+          console.warn("卡片库存数据为空");
+          setCards([]);
+        }
+        
+        // 设置每日卡片数量
+        if (data && data.dailyCards) {
+          setDailyCards(data.dailyCards.blank || 0);
+        } else {
+          console.warn("每日卡片数据为空");
+          setDailyCards(0);
+        }
+        
+        console.log("CardSelector - 设置空白卡数量:", data?.dailyCards?.blank || 0);
+        console.log("CardSelector - 卡片库存数量:", data?.inventory?.length || 0);
       } catch (error) {
-        console.error('Failed to obtain card:', error);
+        console.error('CardSelector - 获取卡片失败:', error);
       }
     };
-    if (user) fetchCards();
+    
+    if (user && user.token) {
+      fetchCards();
+    }
   }, [user]);
 
   const getCardColor = (type) => {
