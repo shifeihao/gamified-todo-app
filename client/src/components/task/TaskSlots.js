@@ -13,7 +13,7 @@ export const TaskSlots = ({
                               onDelete,
                               onEdit,
                               onUnequip,
-                              slotHeight = 'h-28',
+                              slotHeight = 'min-h-28',  // 已修改为min-height而不是height
                               themeColor = 'purple'  // 新增主题色参数
                           }) => {
     const slots = useMemo(() => {
@@ -77,13 +77,12 @@ export const TaskSlots = ({
                 idx < activeCount ? (
                     <div
                         key={idx}
-                    className={`border-2 border-dashed border-gray-300 rounded-lg relative w-full min-h-[180px] p-2`}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={e => handleDrop(e, idx)}
                         className={`
     relative ${slotHeight} w-full rounded-xl transition-all duration-300
-    border-l-4
+    border-l-4 p-2
     ${task
                             ? `${theme.border} shadow-[0_6px_10px_rgba(0,0,0,0.06)] bg-white`
                             : `
@@ -98,7 +97,7 @@ export const TaskSlots = ({
                     >
                         {task ? (
                             <TaskCard
-                          className="w-full h-full"
+                                className="w-full h-full"
                                 task={task}
                                 onComplete={onComplete}
                                 onDelete={onDelete}
@@ -120,7 +119,7 @@ export const TaskSlots = ({
                     <div
                         key={idx}
                         className={`
-              ${slotHeight} w-full rounded-xl  bg-gray-100
+              ${slotHeight} w-full rounded-xl bg-gray-100
               flex items-center justify-center text-gray-400
               shadow-inner
             `}

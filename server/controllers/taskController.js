@@ -16,7 +16,7 @@ const getTasks = async (req, res) => {
     res.json(tasks);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -28,27 +28,54 @@ const createTask = async (req, res) => {
     // 校验必要字段
     console.log(req.body);
     if (!req.body.title || !req.body.experienceReward || !req.body.goldReward) {
-      return res.status(400).json({ message: "缺少必要的任务信息" });
+      return res.status(400).json({ message: "Missing required task information" });
     }
     if (!req.body.cardUsed) {
-      return res.status(400).json({ message: "必须指定使用的卡片（cardUsed）" });
+      return res.status(400).json({ message: "Must specify a card to use (cardUsed)" });
+    }
+
+    // 验证卡片是否存在且可用
+    const Card = (await import("../models/Card.js")).default;
+    const card = await Card.findOne({
+      _id: req.body.cardUsed,
+      user: req.user._id,
+      used: false // 确保卡片未被使用
+    });
+
+    if (!card) {
+      return res.status(400).json({ message: "The specified card does not exist or has already been used" });
+    }
+
+    // 验证卡片类型与任务类型匹配
+    if (card.taskDuration !== 'general' && card.taskDuration !== req.body.type) {
+      return res.status(400).json({
+        message: `This card only supports ${card.taskDuration} type tasks and cannot be used for ${req.body.type} type tasks`
+      });
     }
 
     // 如果是长期任务，验证子任务
-    if (req.body.type === '长期') {
+    if (req.body.type === 'long') {
       if (!req.body.subTasks || !Array.isArray(req.body.subTasks) || req.body.subTasks.length === 0) {
-        return res.status(400).json({ message: "长期任务必须包含至少一个子任务" });
+        return res.status(400).json({ message: "Long-term tasks must include at least one subtask" });
       }
 
       // 验证每个子任务
       for (const subTask of req.body.subTasks) {
         if (!subTask.title || !subTask.title.trim()) {
-          return res.status(400).json({ message: "子任务必须包含标题" });
+          return res.status(400).json({ message: "Subtasks must include a title" });
         }
         if (!subTask.dueDate) {
-          return res.status(400).json({ message: "子任务必须设置截止时间" });
+          return res.status(400).json({ message: "Subtasks must have a deadline" });
         }
       }
+    }
+
+    // 为短期任务自动设置截止时间为创建时间+24小时
+    let taskDueDate = req.body.dueDate;
+    if (req.body.type === 'short') {
+      const now = new Date();
+      now.setHours(now.getHours() + 24);
+      taskDueDate = now.toISOString();
     }
 
     // 使用前端传来的任务数据创建任务
@@ -58,12 +85,23 @@ const createTask = async (req, res) => {
       description: req.body.description,
       type: req.body.type,
       category: req.body.category,
-      dueDate: req.body.dueDate,
+      dueDate: taskDueDate, // 使用自动计算或前端传入的截止时间
       experienceReward: req.body.experienceReward,
       goldReward: req.body.goldReward,
       subTasks: req.body.subTasks || [],
       cardUsed: req.body.cardUsed,
     });
+
+    // 标记卡片为已使用
+    card.used = true;
+    await card.save();
+
+    // 如果是空白卡片，从用户库存中减少计数
+    if (card.type === 'blank') {
+      await User.findByIdAndUpdate(req.user._id, {
+        $inc: { "dailyCards.blank": -1 }
+      });
+    }
 
     res.status(201).json(task);
 
@@ -71,7 +109,7 @@ const createTask = async (req, res) => {
     checkTaskNumber(req.user._id);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -84,18 +122,18 @@ const getTaskById = async (req, res) => {
 
     // 检查任务是否存在
     if (!task) {
-      return res.status(404).json({ message: "任务不存在" });
+      return res.status(404).json({ message: "Task not found" });
     }
 
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "No permission" });
     }
 
     res.json(task);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -107,11 +145,11 @@ const updateTask = async (req, res) => {
     const task = await Task.findById(req.params.id).populate("cardUsed");
     // 检查任务是否存在
     if (!task) {
-      return res.status(404).json({ message: "任务不存在" });
+      return res.status(404).json({ message: "Task not found" });
     }
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "No permission" });
     }
 
     // 如果更新包含子任务列表，进行验证
@@ -140,7 +178,7 @@ const updateTask = async (req, res) => {
       }
 
       // 检查子任务是否已完成
-if (task.subTasks[subTaskIndex].status === 'completed') {
+      if (task.subTasks[subTaskIndex].status === 'completed') {
         return res.status(400).json({ message: "Subtask has already been completed" });
       }
 
@@ -161,8 +199,8 @@ if (task.subTasks[subTaskIndex].status === 'completed') {
 
       return res.json({
         message: allSubTasksCompleted ?
-          "子任务完成！所有子任务已完成，点击完成长期任务按钮可获得额外奖励" :
-          "子任务完成",
+          "Subtask completed! All subtasks have been completed, click the Complete Quest button to get additional rewards" :
+          "Subtask completed",
         task: result.task,
         subTaskReward: result.subTaskReward,
         longTaskReward: result.longTaskReward,
@@ -210,7 +248,7 @@ if (task.subTasks[subTaskIndex].status === 'completed') {
 
     let rewardResult = null;
 
-if (req.body.status && req.body.status.toLowerCase() === "completed" && oldStatus !== "completed") {
+    if (req.body.status && req.body.status.toLowerCase() === "completed" && oldStatus !== "completed") {
       // 如果主任务变为已完成，处理奖励与历史记录
       if (
         task.type === "short" &&
@@ -225,8 +263,8 @@ if (req.body.status && req.body.status.toLowerCase() === "completed" && oldStatu
 
       task.completedAt = task.completedAt || Date.now();
       await task.save(); // ✅ 保存更新（包括 status 字段）
-      console.log("任务ID:", task._id); // 应该是 ObjectId 类型
-      console.log("传入 handleTaskCompletion 的 ID:", task._id?.toString());
+      console.log("Task ID:", task._id); // 应该是 ObjectId 类型
+      console.log("ID passed to handleTaskCompletion:", task._id?.toString());
       // ✅ 调用 handleTaskCompletion 并接收返回值
       const { handleTaskCompletion } = await import("./levelController.js");
 
@@ -243,24 +281,25 @@ if (req.body.status && req.body.status.toLowerCase() === "completed" && oldStatu
 
     // ✅ 最终统一响应
     return res.json({
-      message: "任务已更新",
+      message: "Task updated",
       task: updatedTask.toObject(), // 👈 确保 _id 是字符串存在的
       reward: rewardResult,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "服务器错误" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
+
 // @desc 删除任务（并归档到历史记录）
 // @route DELETE /api/tasks/:id
 // @access Private
 const deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate("cardUsed");
-    if (!task) return res.status(404).json({ message: "任务不存在" });
+    if (!task) return res.status(404).json({ message: "Task not found" });
     if (task.user.toString() !== req.user._id.toString())
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "No permission" });
 
     // 从用户卡片库存中移除
     if (task.cardUsed) {
@@ -272,13 +311,13 @@ const deleteTask = async (req, res) => {
 
     // 删除任务本身
     await task.deleteOne();
-    res.json({ message: "任务已归档并删除" });
+    res.json({ message: "Task archived and deleted" });
 
     //删除一个任务，计数一次
     await addDeletedTasksNum(req.user._id);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -305,7 +344,7 @@ const getEquippedTasks = async (req, res) => {
     res.json(tasks);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -317,29 +356,29 @@ const equipTask = async (req, res) => {
     const { slotPosition, slotType } = req.body;
     // 验证槽位位置
     if (slotPosition === undefined || slotPosition < 0 || slotPosition > 2) {
-      return res.status(400).json({ message: "无效的任务槽位置" });
+      return res.status(400).json({ message: "Invalid task slot position" });
     }
     // 验证槽位类型
     if (!["short", "long"].includes(slotType)) {
-      return res.status(400).json({ message: "无效的槽位类型" });
+      return res.status(400).json({ message: "Invalid slot type" });
     }
 
     // 查找要装备的任务
     const task = await Task.findById(req.params.id);
     // 检查任务是否存在
     if (!task) {
-      return res.status(404).json({ message: "任务不存在" });
+      return res.status(404).json({ message: "Task not found" });
     }
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "No permission" });
     }
     // 检查任务类型是否匹配槽位类型
     const expectedType = slotType === "long" ? "long" : "short";
     if (task.type !== expectedType) {
       return res
         .status(400)
-        .json({ message: `只能装备${expectedType}任务到该槽位` });
+        .json({ message: `Can only equip ${expectedType} tasks to this slot` });
     }
 
     // 检查该槽位是否已有同类型任务
@@ -351,7 +390,7 @@ const equipTask = async (req, res) => {
     });
 
     if (existingTask && existingTask._id.toString() !== task._id.toString()) {
-      return res.status(400).json({ message: "该槽位已被同类型任务占用" });
+      return res.status(400).json({ message: "This slot is occupied by a task of the same type" });
     }
     // 装备新任务
     task.equipped = true;
@@ -362,7 +401,7 @@ const equipTask = async (req, res) => {
     res.json(updatedTask);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -375,12 +414,12 @@ const unequipTask = async (req, res) => {
 
     // 检查任务是否存在
     if (!task) {
-      return res.status(404).json({ message: "任务不存在" });
+      return res.status(404).json({ message: "Task not found" });
     }
 
     // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "没有权限" });
+      return res.status(403).json({ message: "No permission" });
     }
 
     // 卸下任务
@@ -391,7 +430,7 @@ const unequipTask = async (req, res) => {
     res.json(updatedTask);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 

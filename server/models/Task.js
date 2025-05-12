@@ -115,6 +115,11 @@ const taskSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
+    // 标记任务奖励是否已领取
+    rewardClaimed: {
+      type: Boolean,
+      default: false
+    },
     subTasks: [subTaskSchema], // 长期任务的子任务
   },
   {

@@ -1,19 +1,22 @@
 // client/src/components/task/TaskCard.js
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import PropTypes from "prop-types";
-import { 
-  Award, Edit2, Info, Trash2, 
+import {
+  Award, Edit2, Info, Trash2,CheckSquare, Square,
   // 导入所有可能用到的图标
   BookOpen, BookMarked, GraduationCap,
   Microscope, Users, Kanban,
   Code, Palette, Wrench,
   Dumbbell, Trophy, Heart,
   Sparkles, Gamepad2, Share2,
-  FileText, Zap, CalendarDays 
+  FileText, Zap, CalendarDays
 } from "lucide-react";
 import { TaskDetailModal } from "../modal";
 import { tagStyleMap } from "./tagStyles";
 import { useRemainingTime } from "../hooks/useRemainingTime";
+import axios from "axios";
+import toast from "react-hot-toast";
+import AuthContext from "../../context/AuthContext";
 
 // 图标映射对象，将图标名映射到图标组件
 const iconComponents = {
@@ -49,7 +52,21 @@ export const TaskCard = ({
   /*  Local state                                                        */
   /* ------------------------------------------------------------------ */
   const [detailOpen, setDetailOpen] = useState(false);
+  const [completingSubtask, setCompletingSubtask] = useState(false);
+  const [processingSubtaskIndex, setProcessingSubtaskIndex] = useState(null);
+  const [localSubTasks, setLocalSubTasks] = useState(task.subTasks || []);
   const isExpired = isEquipped && task.expired === true;
+  const { user } = useContext(AuthContext);
+
+  // 当task.subTasks更新时，更新本地状态
+  useEffect(() => {
+    setLocalSubTasks(task.subTasks || []);
+  }, [task.subTasks]);
+
+  // 获取授权配置
+  const getAuthConfig = () => ({
+    headers: { Authorization: `Bearer ${user?.token}` }
+  });
 
   // Custom hook for calculating remaining time
   const timeLeft = useRemainingTime(isEquipped, task.dueDate);
@@ -59,10 +76,10 @@ export const TaskCard = ({
   /* ------------------------------------------------------------------ */
   /** % progress of completed subtasks */
   const progress = React.useMemo(() => {
-    if (!task.subTasks?.length) return 0;
-    const done = task.subTasks.filter((s) => s.status === "completed").length;
-    return Math.round((done / task.subTasks.length) * 100);
-  }, [task.subTasks]);
+    if (!localSubTasks?.length) return 0;
+    const done = localSubTasks.filter((s) => s.status === "completed").length;
+    return Math.round((done / localSubTasks.length) * 100);
+  }, [localSubTasks]);
 
   /** Color scheme derived from task.category */
   const typeStyles = React.useMemo(() => {
@@ -91,6 +108,74 @@ export const TaskCard = ({
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   }, [task.status]);
+
+  /* ------------------------------------------------------------------ */
+  /*  Event handlers                                                     */
+  /* ------------------------------------------------------------------ */
+  // 处理子任务完成
+  const handleSubtaskComplete = async (subtaskIndex) => {
+    if (completingSubtask || processingSubtaskIndex === subtaskIndex) return;
+
+    setCompletingSubtask(true);
+    setProcessingSubtaskIndex(subtaskIndex);
+
+    try {
+      // 检查子任务是否已完成
+      if (localSubTasks[subtaskIndex].status === "completed") {
+        toast.error("This subtask is already completed");
+        return;
+      }
+
+      // 立即在UI中更新子任务状态
+      const updatedSubTasks = [...localSubTasks];
+      updatedSubTasks[subtaskIndex] = {
+        ...updatedSubTasks[subtaskIndex],
+        status: "completed"
+      };
+      setLocalSubTasks(updatedSubTasks);
+
+      // 调用API完成子任务
+      const response = await axios.put(
+        `/api/tasks/${task._id}`,
+        { subTaskIndex: subtaskIndex },
+        getAuthConfig()
+      );
+
+      // 显示成功消息和奖励
+      const { subTaskReward, task: updatedTask } = response.data;
+      if (subTaskReward) {
+        toast.success(
+          <div className="flex flex-col space-y-1">
+            <span className="font-semibold text-sm">Subtask completed!</span>
+            <div className="flex items-center">
+              <span className="text-yellow-500 mr-1">🏅</span>
+              <span className="text-xs">Earned <span className="font-bold text-yellow-600">{subTaskReward.expGained} XP</span> and <span className="font-bold text-amber-500">{subTaskReward.goldGained} Gold</span></span>
+            </div>
+          </div>,
+          { duration: 5000, position: 'top-center' }
+        );
+      } else {
+        toast.success("Subtask completed!");
+      }
+
+      // 更新任务数据
+      if (onEdit && updatedTask) {
+        onEdit(updatedTask);
+      }
+
+      // 触发子任务完成事件，更新等级条
+      window.dispatchEvent(new CustomEvent('subtaskCompleted'));
+    } catch (error) {
+      console.error("Failed to complete subtask:", error);
+      toast.error(error.response?.data?.message || "Failed to complete subtask");
+
+      // 如果API调用失败，恢复本地状态
+      setLocalSubTasks(task.subTasks || []);
+    } finally {
+      setCompletingSubtask(false);
+      setProcessingSubtaskIndex(null);
+    }
+  };
 
   /* ------------------------------------------------------------------ */
   /*  UI Components                                                      */
@@ -139,18 +224,26 @@ export const TaskCard = ({
 
   // Subtasks list
   const SubTasks =
-    task.subTasks?.length > 0 ? (
+    localSubTasks?.length > 0 ? (
       <div className="mb-4">
         <div className="mb-2 font-semibold text-gray-800">Subtasks</div>
         <ul>
-          {task.subTasks.map((sub, idx) => (
+          {localSubTasks.map((sub, idx) => (
             <li key={idx} className="mb-1 flex items-center">
-              <input
-                type="checkbox"
-                checked={sub.status === "completed"}
-                readOnly
-                className="mr-2"
-              />
+              <div
+                className="cursor-pointer mr-2"
+                onClick={() => {
+                  if (sub.status !== "completed") {
+                    handleSubtaskComplete(idx);
+                  }
+                }}
+              >
+                {sub.status === "completed" ? (
+                  <CheckSquare className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Square className="h-4 w-4 text-gray-400" />
+                )}
+              </div>
               <span
                 className={
                   sub.status === "completed" ? "line-through text-gray-400" : ""
@@ -233,8 +326,8 @@ export const TaskCard = ({
             {/* actions */}
             <div className="flex items-center space-x-2 pt-2">
               <button
-                onClick={() => onComplete(task._id)}
-                className="btn-primary px-2 py-1 text-xs"
+                onClick={() => onComplete && onComplete(task._id)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 text-xs rounded"
               >
                 Complete
               </button>
@@ -245,7 +338,7 @@ export const TaskCard = ({
                 Check
               </button>
               <button
-                onClick={() => onUnequip(task._id)}
+                onClick={() => onUnequip && onUnequip(task._id)}
                 className="rounded p-1 text-red-600 transition-colors hover:bg-red-100"
                 title="Unequip Task"
               >

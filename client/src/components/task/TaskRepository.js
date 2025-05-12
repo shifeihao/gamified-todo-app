@@ -31,7 +31,7 @@ export const TaskRepository = ({
 
   // 分类与类型选项
   const categories = ['All', 'Default'];
-  const types = ['All', 'Short-term', 'Long-term'];
+  const types = ['All', 'short', 'long'];
 
   // 拖拽开始
   const handleDragStart = (e, task) => {

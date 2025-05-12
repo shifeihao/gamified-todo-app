@@ -25,7 +25,7 @@ const TemplatePage = () => {
             setTemplates(data);
         } catch (error) {
             console.error('Error fetching templates:', error);
-            toast.error('获取模板列表失败');
+            toast.error('Failed to Retrieve Template List');
         } finally {
             setIsLoading(false);
         }
@@ -41,10 +41,10 @@ const TemplatePage = () => {
         try {
             if (editingTemplate) {
                 await axios.put(`/api/templates/${editingTemplate._id}`, formData);
-                toast.success('模板更新成功');
+                toast.success('Template Updated Successfully');
             } else {
                 await axios.post('/api/templates', formData);
-                toast.success('模板创建成功');
+                toast.success('Template Created Successfully');
             }
             setShowForm(false);
             setEditingTemplate(null);
@@ -58,7 +58,7 @@ const TemplatePage = () => {
             fetchTemplates();
         } catch (error) {
             console.error('Error submitting template:', error);
-            toast.error(editingTemplate ? '更新模板失败' : '创建模板失败');
+            toast.error(editingTemplate ? 'Failed to Update Template' : 'Failed to Create Template');
         }
     };
 
@@ -77,14 +77,14 @@ const TemplatePage = () => {
 
     // 处理模板删除
     const handleDelete = async (template) => {
-        if (window.confirm('确定要删除这个模板吗？')) {
+        if (window.confirm('Are you sure you want to delete this template?')) {
             try {
                 await axios.delete(`/api/templates/${template._id}`);
-                toast.success('模板删除成功');
+                toast.success('Template Deleted Successfully');
                 fetchTemplates();
             } catch (error) {
                 console.error('Error deleting template:', error);
-                toast.error('删除模板失败');
+                toast.error('Failed to Delete Template');
             }
         }
     };
@@ -98,7 +98,7 @@ const TemplatePage = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">任务模板</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Quest Template</h1>
                 <button
                     onClick={() => {
                         setEditingTemplate(null);
@@ -113,12 +113,12 @@ const TemplatePage = () => {
                     }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                    创建模板
+                    Create Template
                 </button>
             </div>
 
             {isLoading ? (
-                <div className="text-center py-8">加载中...</div>
+                <div className="text-center py-8">Loading...</div>
             ) : (
                 <TemplateList
                     templates={templates}
@@ -134,11 +134,11 @@ const TemplatePage = () => {
                     setShowForm(false);
                     setEditingTemplate(null);
                 }}
-                title={editingTemplate ? '编辑模板' : '创建模板'}
+                title={editingTemplate ? 'Edit Template' : 'Create Template'}
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">标题</label>
+                        <label className="block text-sm font-medium text-gray-700">Title</label>
                         <input
                             type="text"
                             value={formData.title}
@@ -149,7 +149,7 @@ const TemplatePage = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">描述</label>
+                        <label className="block text-sm font-medium text-gray-700">Description</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -159,7 +159,7 @@ const TemplatePage = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">类型</label>
+                        <label className="block text-sm font-medium text-gray-700">Type</label>
                         <select
                             value={formData.type}
                             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
@@ -171,7 +171,7 @@ const TemplatePage = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">分类</label>
+                        <label className="block text-sm font-medium text-gray-700">Category</label>
                         <input
                             type="text"
                             value={formData.category}
@@ -189,13 +189,13 @@ const TemplatePage = () => {
                             }}
                             className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                         >
-                            取消
+                            Cancel
                         </button>
                         <button
                             type="submit"
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
-                            {editingTemplate ? '更新' : '创建'}
+                            {editingTemplate ? 'Update' : 'Create'}
                         </button>
                     </div>
                 </form>

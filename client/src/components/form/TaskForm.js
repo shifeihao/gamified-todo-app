@@ -11,6 +11,7 @@ export const TaskForm = ({
   initialData = null,
   taskType = 'short',
   defaultDueDateTime = '',
+  disableSubmit = false,
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -57,7 +58,7 @@ export const TaskForm = ({
 
   const validateForm = () => {
     const newErrors = {};
-    if (!title.trim()) newErrors.title = 'Task title is required.';
+    if (!title.trim()) newErrors.title = 'Task title cannot be empty';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -96,6 +97,8 @@ export const TaskForm = ({
     setSubTasks(prev => prev.filter((_, i) => i !== index));
   };
 
+  const isButtonDisabled = loading || disableSubmit;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -132,19 +135,19 @@ export const TaskForm = ({
           disabled={taskType === 'short'}
         />
         {taskType === 'short' && (
-          <p className="text-gray-500 text-sm mt-1">Expires in 24h</p>
+          <p className="text-gray-500 text-sm mt-1">Valid for 24 hours after being equipped</p>
         )}
       </div>
 
       {taskType === 'long' && (
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="font-medium">Sub-tasks</h3>
+            <h3 className="font-medium">Subtasks</h3>
             <button type="button" onClick={addSubTask} className="text-primary-600 flex items-center">
               <PlusCircle className="mr-1" /> Add
             </button>
           </div>
-          {subTasks.length === 0 && <p className="text-gray-500 text-sm">No steps added.</p>}
+          {subTasks.length === 0 && <p className="text-gray-500 text-sm">No subtasks yet</p>}
           <div className="space-y-2">
             {subTasks.map((st, i) => (
               <div key={st.id} className="flex items-center space-x-2">
@@ -176,7 +179,12 @@ export const TaskForm = ({
             <XCircle className="inline mr-1" /> Cancel
           </button>
         )}
-        <button type="submit" disabled={loading} className="px-4 py-2 bg-primary-600 text-white rounded flex items-center">
+        <button 
+          type="submit" 
+          disabled={isButtonDisabled} 
+          className={`px-4 py-2 text-white rounded flex items-center ${isButtonDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700'}`}
+          title={disableSubmit ? 'You must select a card to create a task' : ''}
+        >
           {loading ? 'Processing...' : (<><Save className="inline mr-1"/> {initialData ? 'Save' : 'Create'}</>)}
         </button>
       </div>

@@ -13,44 +13,38 @@ export const handleTaskCompletion = async (req) => {
 
     const task = await Task.findById(taskId).populate("cardUsed");
     if (!task || task.user.toString() !== userId.toString()) {
-      throw new Error("任务无效或不属于当前用户");
+      throw new Error("Task is invalid or does not belong to the current user");
     }
     
-    // 只检查任务存在性，不再检查状态
-    // 任务状态可能已被设置为Completed
+    // 检查任务是否已完成并且已经发放过奖励 (通过检查completedAt字段)
+    if (task.completedAt && task.status === "completed" && task.rewardClaimed) {
+      throw new Error("Task has already been completed and reward claimed");
+    }
 
     const user = await User.findById(userId);
-    if (!user) throw new Error("用户未找到");
+    if (!user) throw new Error("User not found");
 
     let totalExp = 0;
     let totalGold = 0;
 
     // 计算奖励（区分长期与short）
     if (task.type === "long") {
-      // 检查子任务完成情况
+      // 检查子任务完成情况，但不再要求所有子任务必须完成
       const completedSubTasks = task.subTasks.filter(st => st.status === 'completed');
-      const allSubTasksCompleted = completedSubTasks.length === task.subTasks.length;
       
-      console.log("长期任务手动完成 - 任务ID:", task._id);
-      console.log("长期任务手动完成 - 任务标题:", task.title);
-      console.log("长期任务手动完成 - 使用卡片:", task.cardUsed?.type, "加成:", task.cardUsed?.bonus);
-      console.log("长期任务手动完成 - 子任务总数:", task.subTasks.length);
-      console.log("长期任务手动完成 - 已完成子任务数:", completedSubTasks.length);
-      
-      // 确保所有子任务都标记为已完成
-      let anySubTaskCompleted = false;
-      task.subTasks.forEach(subTask => {
-        if (subTask.status !== 'completed') {
-          subTask.status = 'completed';
-          subTask.completedAt = new Date();
-        } else {
-          anySubTaskCompleted = true;
-        }
-      });
+      console.log("Long-term task completion - Task ID:", task._id);
+      console.log("Long-term task completion - Task title:", task.title);
+      console.log("Long-term task completion - Card used:", task.cardUsed?.type, "Bonus:", task.cardUsed?.bonus);
+      console.log("Long-term task completion - Total subtasks:", task.subTasks.length);
+      console.log("Long-term task completion - Completed subtasks:", completedSubTasks.length);
       
       // 如果任务之前未完成，设置完成状态
       if (task.status !== "completed") {
         task.status = "completed";
+      }
+
+      // 记录完成时间（如果未设置）
+      if (!task.completedAt) {
         task.completedAt = new Date();
       }
       
@@ -58,8 +52,8 @@ export const handleTaskCompletion = async (req) => {
       const bonusExp = task.finalBonusExperience || 10;
       const bonusGold = task.finalBonusGold || 5;
       
-      console.log("长期任务额外奖励 - 经验:", bonusExp);
-      console.log("长期任务额外奖励 - 金币:", bonusGold);
+      console.log("Long-term task bonus - XP:", bonusExp);
+      console.log("Long-term task bonus - Gold:", bonusGold);
       
       // 应用卡片加成到额外奖励
       const { experience: finalExp, gold: finalGold } = calculateReward(
@@ -68,8 +62,8 @@ export const handleTaskCompletion = async (req) => {
         task.cardUsed?.bonus
       );
       
-      console.log("长期任务额外奖励(加成后) - 经验:", finalExp);
-      console.log("长期任务额外奖励(加成后) - 金币:", finalGold);
+      console.log("Long-term task bonus (with multiplier) - XP:", finalExp);
+      console.log("Long-term task bonus (with multiplier) - Gold:", finalGold);
       
       // 设置总奖励为额外奖励
       totalExp = finalExp;
@@ -85,6 +79,12 @@ export const handleTaskCompletion = async (req) => {
       totalExp = experience;
       totalGold = gold;
     }
+
+    // 设置已完成状态和完成时间（如果未设置）
+    task.status = "completed";
+    task.completedAt = task.completedAt || new Date();
+    // 标记奖励已发放
+    task.rewardClaimed = true;
 
     // 发放奖励
     user.experience += totalExp;
@@ -141,21 +141,29 @@ export const handleTaskCompletion = async (req) => {
     // ✅ 返回结果对象，由调用者决定是否发送给前端
     return {
       success: true,
-      message: '奖励与等级更新成功',
-      experience: newExp,
-
-      level: currentLevel.level,
-      nextLevelExp,
-      expProgress,
-      expRemaining,
-      progressRate,
-      leveledUp,
-      expGained: totalExp,
-      goldGained: totalGold,
+      message: 'Rewards and level updated successfully',
+      task: {
+        _id: task._id,
+        title: task.title,
+        type: task.type,
+        status: task.status,
+        completedAt: task.completedAt
+      },
+      reward: {
+        expGained: totalExp,
+        goldGained: totalGold,
+        leveledUp: leveledUp,
+        newLevel: currentLevel.level,
+        currentExp: newExp,
+        nextLevelExp,
+        expProgress,
+        expRemaining,
+        progressRate
+      }
     };
   } catch (error) {
-    console.error("❌ 奖励与等级更新失败:", error);
-    throw new Error("奖励与等级更新失败: " + error.message);
+    console.error("❌ Rewards and level update failed:", error);
+    throw new Error("Rewards and level update failed: " + error.message);
   }
 };
 
@@ -177,7 +185,7 @@ export const handleSubTaskCompletion = async (req) => {
     }
 
     // 如果子任务已经完成，返回错误
-    if (task.subTasks[subTaskIndex].status === "Completed") {
+    if (task.subTasks[subTaskIndex].status === "completed") {
       throw new Error("Subtask already completed");
     }
 
@@ -185,7 +193,7 @@ export const handleSubTaskCompletion = async (req) => {
     if (!user) throw new Error("User not found");
 
     // 2. 设置子任务为已完成状态
-    task.subTasks[subTaskIndex].status = "Completed";
+    task.subTasks[subTaskIndex].status = "completed";
     task.subTasks[subTaskIndex].completedAt = new Date();
     
     // 3. 计算子任务的奖励（与短期任务相同）
@@ -226,15 +234,15 @@ export const handleSubTaskCompletion = async (req) => {
 
     // 7. 检查主任务是否全部子任务都已完成
     const allSubTasksCompleted = task.subTasks.every(
-      (sub) => sub.status === "Completed"
+      (sub) => sub.status === "completed"
     );
     
     let longTaskReward = null;
     
     // 8. 如果所有子任务已完成，只将主任务标记为已完成，但不自动发放额外奖励
-    if (allSubTasksCompleted && task.status !== "Completed") {
+    if (allSubTasksCompleted && task.status !== "completed") {
       // 将任务状态标记为完成
-      task.status = "Completed";
+      task.status = "completed";
       task.completedAt = new Date();
       
       console.log("所有子任务已完成，长期任务标记为已完成状态，需手动点击完成按钮获取额外奖励");
@@ -252,19 +260,35 @@ export const handleSubTaskCompletion = async (req) => {
     return {
       success: true,
       message: 'Subtask completed successfully',
-      task,
+      task: {
+        _id: task._id,
+        title: task.title,
+        type: task.type,
+        status: task.status,
+        subTasks: task.subTasks,
+        completedAt: task.completedAt,
+        equipped: task.equipped,
+        slotPosition: task.slotPosition
+      },
       subTaskReward: {
         expGained: experience,
-        goldGained: gold
+        goldGained: gold,
+        subTaskIndex: subTaskIndex,
+        subTaskTitle: task.subTasks[subTaskIndex].title
       },
       longTaskReward,
-      level: currentLevel.level,
-      experience: newExp,
-      nextLevelExp,
-      expProgress,
-      expRemaining,
-      progressRate,
-      leveledUp
+      userInfo: {
+        level: currentLevel.level,
+        experience: newExp,
+        nextLevelExp,
+        expProgress,
+        expRemaining,
+        progressRate,
+        leveledUp
+      },
+      allSubTasksCompleted: task.subTasks.every(
+        (sub) => sub.status === "completed"
+      )
     };
   } catch (error) {
     console.error("❌ Subtask completion failed:", error);
@@ -275,7 +299,7 @@ export const handleSubTaskCompletion = async (req) => {
 export const getUserLevelBar = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: '用户不存在' });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const currentLevel = await Level.findOne({ expRequired: { $lte: user.experience } }).sort({ level: -1 });
     const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
@@ -298,6 +322,6 @@ export const getUserLevelBar = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: '获取等级信息失败' });
+    return res.status(500).json({ message: 'Failed to get level information' });
   }
 };

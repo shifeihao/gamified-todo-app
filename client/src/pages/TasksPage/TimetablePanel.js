@@ -12,6 +12,7 @@ const TimetablePanel = ({
   onEdit,
   onCreateTask,
   onDrop,
+  onUnequip,
   user,
 }) => {
   const [activeTab, setActiveTab] = useState("list");
@@ -57,7 +58,7 @@ const TimetablePanel = ({
           items={longTasks}
           totalSlots={5}
           activeCount={user?.longCardSlot || 2}
-          slotHeight="h-24"
+          slotHeight="min-h-28"
           themeColor = 'blue'
           renderCreateContent={() => (
             <>
@@ -84,6 +85,7 @@ const TimetablePanel = ({
           onComplete={onComplete}
           onDelete={onDelete}
           onEdit={onEdit}
+          onUnequip={onUnequip}
         />
       ) : (
                 <TaskCalendar tasks={equippedTasks} />

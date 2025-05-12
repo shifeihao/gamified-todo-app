@@ -141,7 +141,7 @@ export const completeTask = async (id, token) => {
   try {
     const { data } = await axios.put(
       `/api/tasks/${id}`,
-      { status: 'Completed' },
+      { status: 'completed' },
       getConfig(token)
     );
     return data;
@@ -149,7 +149,7 @@ export const completeTask = async (id, token) => {
     throw new Error(
       error.response && error.response.data.message
         ? error.response.data.message
-        : '完成任务失败'
+        : 'Failed to complete task'
     );
   }
 };
@@ -186,6 +186,24 @@ export const unequipTask = async (id, token) => {
       error.response && error.response.data.message
         ? error.response.data.message
         : '卸下任务失败'
+    );
+  }
+};
+
+// 完成子任务
+export const completeSubtask = async (taskId, subtaskIndex, token) => {
+  try {
+    const { data } = await axios.put(
+      `/api/tasks/${taskId}`,
+      { subTaskIndex: subtaskIndex },
+      getConfig(token)
+    );
+    return data;
+  } catch (error) {
+    throw new Error(
+      error.response && error.response.data.message
+        ? error.response.data.message
+        : '完成子任务失败'
     );
   }
 };

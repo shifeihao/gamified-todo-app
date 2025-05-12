@@ -5,6 +5,7 @@ import { CreateTaskModal } from "../../components";
 import AuthContext from "../../context/AuthContext";
 import { NewTaskCard } from '../../components/task/NewTaskCard';
 import { useToast } from '../../contexts/ToastContext';
+import toast from 'react-hot-toast';
 
 import DailyTaskPanel from "./DailyTaskPanel";
 import TimetablePanel from "./TimetablePanel";
@@ -129,10 +130,40 @@ const TasksPage = () => {
     }
   }, [user]);
 
+  // 监听子任务完成事件，刷新任务数据
+  useEffect(() => {
+    // 创建事件处理函数
+    const handleSubtaskCompleted = () => {
+      fetchTasks();
+    };
+
+    // 添加事件监听器
+    window.addEventListener('subtaskCompleted', handleSubtaskCompleted);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener('subtaskCompleted', handleSubtaskCompleted);
+    };
+  }, []);
+
   // 显示成功信息
   const showSuccessMessage = (msg) => {
     setSuccessMessage(msg);
     setTimeout(() => setSuccessMessage(""), 3000);
+  };
+
+  // 显示任务完成通知
+  const showTaskCompletedToast = (title, expGained, goldGained, isSubtask = false) => {
+    toast.success(
+      <div className="flex flex-col space-y-1">
+        <span className="font-semibold text-sm">{isSubtask ? "Subtask completed!" : "Quest Completed!"}</span>
+        <div className="flex items-center">
+          <span className="text-yellow-500 mr-1">🏅</span>
+          <span className="text-xs">Earned <span className="font-bold text-yellow-600">{expGained} XP</span> and <span className="font-bold text-amber-500">{goldGained} Gold</span></span>
+        </div>
+      </div>,
+      { duration: 5000, position: 'top-center' }
+    );
   };
 
   // -----------------------------
@@ -166,13 +197,39 @@ const TasksPage = () => {
     isLoading: completing,
     error: completeError,
   } = useApiAction(completeTaskService, {
-    onSuccess: async (task) => {
-      showSuccess("Task Completed");
+    onSuccess: async (response) => {
+      const { task, reward } = response;
+      
+      console.log("任务完成响应:", response); // 添加日志来调试
+      
+      // 显示更详细的完成信息和奖励通知
+      if (reward) {
+        showTaskCompletedToast(task.title, reward.expGained, reward.goldGained);
+      } else {
+        // 特殊处理：如果没有收到奖励信息但任务已完成
+        if (task && task.status === "completed") {
+          // 使用默认奖励值
+          showTaskCompletedToast(task.title, 10, 5);
+          console.log("任务已完成但未收到奖励信息，使用默认值");
+        } else {
+          showSuccess("Task Completed");
+        }
+      }
 
       // 触发等级更新事件
       window.dispatchEvent(new CustomEvent('taskCompleted'));
 
-      await unequipTaskService(task.task._id, user.token);
+      // 确保任务完成后自动卸下任务
+      if (task && task._id) {
+        try {
+          await unequipTaskService(task._id, user.token);
+          console.log("Successfully unequipped task after completion");
+        } catch (err) {
+          console.error("Failed to unequip completed task:", err);
+        }
+      }
+      
+      // 更新任务列表
       fetchTasks();
     },
     onError: (err) => {

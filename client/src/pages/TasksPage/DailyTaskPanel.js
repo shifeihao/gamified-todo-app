@@ -33,7 +33,7 @@ const DailyTaskPanel = ({
         items={shortTasks}
         totalSlots={5}
         activeCount={user?.shortCardSlot || 2}
-        slotHeight="h-24"
+        slotHeight="min-h-28"
         renderCreateContent={() => (
           <>
             <svg

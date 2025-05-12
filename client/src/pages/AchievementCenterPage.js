@@ -23,8 +23,8 @@ const AchievementCenterPage = () => {
         setAchievements(achievements);
         setUserStats(stats);
       } catch (error) {
-        console.error("❌ 获取数据失败:", error);
-        showError('获取成就数据失败');
+        console.error("❌ Failed to Retrieve Data:", error);
+        showError('Failed to Retrieve Achievement Data');
       }
     };
     fetchAll();
