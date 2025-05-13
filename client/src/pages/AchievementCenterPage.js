@@ -4,9 +4,9 @@ import {
   checkAchievements,
 } from "../services/achievement.js";
 import { fetchUserStat, syncUserStat } from "../services/userStat.js";
-import AchievementSidebar from "../components/AchievementSidebar.js";
-import OverviewTab from "../components/OverviewTab.js";
-import CategoryTab from "../components/CategoryTab.js";
+import AchievementSidebar from "../components/achievement/AchievementSidebar.js";
+import OverviewTab from "../components/achievement/OverviewTab.js";
+import CategoryTab from "../components/achievement/CategoryTab.js";
 import { Navbar } from "../components/navbar/Navbar.js";
 import { useToast } from "../contexts/ToastContext";
 
