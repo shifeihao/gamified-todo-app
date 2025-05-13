@@ -124,11 +124,18 @@ export const TaskCard = ({
         toast.success("Subtask completed!");
       }
 
-      onEdit?.(updatedTask);
+      // 更新任务数据
+      if (onEdit && updatedTask) {
+        onEdit(updatedTask);
+      }
+
+      // 触发子任务完成事件，更新等级条
       window.dispatchEvent(new CustomEvent('subtaskCompleted'));
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to complete subtask");
+    } catch (error) {
+      console.error("Failed to complete subtask:", error);
+      toast.error(error.response?.data?.message || "Failed to complete subtask");
+
+      // 如果API调用失败，恢复本地状态
       setLocalSubTasks(task.subTasks || []);
     } finally {
       setCompletingSubtask(false);
@@ -252,11 +259,10 @@ export const TaskCard = ({
             {/* 操作按钮区 */}
             <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
               <button
-                onClick={() => setDetailOpen(true)}
-                className="rounded p-1 text-blue-600 hover:bg-blue-100 transition-colors"
-                title="View Details"
+                onClick={() => onComplete && onComplete(task._id)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 text-xs rounded"
               >
-                <Info className="h-4 w-4" />
+                Complete
               </button>
               <div className="flex space-x-2">
                 <button
@@ -273,7 +279,7 @@ task.type==='short' ? 'text-purple-600 hover:bg-purple-100' : 'text-blue-600 hov
                   className="rounded p-1 text-red-600 hover:bg-red-100 transition-colors"
                   title="Unequip"
                 >
-                  <Trash2 className="h-4 w-4" /> 
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>

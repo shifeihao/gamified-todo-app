@@ -11,18 +11,25 @@ export const handleTaskCompletion = async (req) => {
     const userId = req.user._id;
     const { taskId } = req.body;
 
+    console.log(`开始处理任务完成 - 任务ID: ${taskId}, 用户ID: ${userId}`);
+
     const task = await Task.findById(taskId).populate("cardUsed");
     if (!task || task.user.toString() !== userId.toString()) {
       throw new Error("Task is invalid or does not belong to the current user");
     }
     
-    // 检查任务是否已完成并且已经发放过奖励 (通过检查completedAt字段)
-    if (task.completedAt && task.status === "completed" && task.rewardClaimed) {
+    console.log(`任务详情 - 标题: ${task.title}, 类型: ${task.type}, 状态: ${task.status}, 奖励已领取: ${task.rewardClaimed}`);
+    
+    // 检查任务是否已完成并且已经发放过奖励 (通过检查rewardClaimed字段)
+    if (task.rewardClaimed === true) {
+      console.log(`任务 ${taskId} 已经完成并领取过奖励，不再重复发放`);
       throw new Error("Task has already been completed and reward claimed");
     }
 
     const user = await User.findById(userId);
     if (!user) throw new Error("User not found");
+
+    console.log(`用户信息 - 等级: ${user.level}, 经验: ${user.experience}, 金币: ${user.gold}`);
 
     let totalExp = 0;
     let totalGold = 0;
@@ -41,16 +48,18 @@ export const handleTaskCompletion = async (req) => {
       // 如果任务之前未完成，设置完成状态
       if (task.status !== "completed") {
         task.status = "completed";
+        console.log(`将任务 ${taskId} 状态设置为completed`);
       }
 
       // 记录完成时间（如果未设置）
       if (!task.completedAt) {
         task.completedAt = new Date();
+        console.log(`设置任务 ${taskId} 完成时间为 ${task.completedAt}`);
       }
       
-      // 主任务的额外奖励
-      const bonusExp = task.finalBonusExperience || 10;
-      const bonusGold = task.finalBonusGold || 5;
+      // 主任务的奖励，尝试多种来源获取奖励值
+      const bonusExp = task.experienceReward || task.finalBonusExperience || 30;
+      const bonusGold = task.goldReward || task.finalBonusGold || 15;
       
       console.log("Long-term task bonus - XP:", bonusExp);
       console.log("Long-term task bonus - Gold:", bonusGold);
@@ -85,10 +94,14 @@ export const handleTaskCompletion = async (req) => {
     task.completedAt = task.completedAt || new Date();
     // 标记奖励已发放
     task.rewardClaimed = true;
+    
+    console.log(`将向用户 ${userId} 发放奖励: ${totalExp} XP, ${totalGold} Gold`);
 
     // 发放奖励
     user.experience += totalExp;
     user.gold += totalGold;
+    
+    console.log(`用户新状态 - 经验: ${user.experience} (+${totalExp}), 金币: ${user.gold} (+${totalGold})`);
 
     const newExp = user.experience;
 
@@ -147,7 +160,8 @@ export const handleTaskCompletion = async (req) => {
         title: task.title,
         type: task.type,
         status: task.status,
-        completedAt: task.completedAt
+        completedAt: task.completedAt,
+        rewardClaimed: true
       },
       reward: {
         expGained: totalExp,
