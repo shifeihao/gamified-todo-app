@@ -12,7 +12,7 @@ export const selectClass = async (req, res) => {
       return res.status(400).json({ error: "Class slug is required" });
     }
 
-    // 获取选择的职业
+    // Get the selected character class
     const characterClass = await CharacterClass.findOne({
       slug: classSlug,
     }).populate("defaultSkills");
@@ -21,12 +21,12 @@ export const selectClass = async (req, res) => {
       return res.status(404).json({ error: "Character class not found" });
     }
 
-    // 查找或创建用户统计信息
+    // Find or create user dungeon stats
     let stats = await UserDungeonStats.findOne({ user: userId });
     if (!stats) {
       stats = new UserDungeonStats({
         user: userId,
-        dungeonSlug: "echo-labyrinth", // 默认迷宫
+        dungeonSlug: "echo-labyrinth", // Default dungeon
         baseTaskLevel: 1,
         dungeonLevel: 1,
         dungeonExp: 0,
@@ -36,14 +36,14 @@ export const selectClass = async (req, res) => {
       });
     }
 
-    // 应用职业基础属性
+    // Apply base stats from class
     stats.assignedStats = { ...characterClass.baseStats };
 
-    // 保存职业名称和slug - 关键修改点
+    // Save class name and slug - key modification
     stats.className = characterClass.name;
-    stats.classSlug = classSlug; // 添加职业slug保存
+    stats.classSlug = classSlug; // Save class slug
 
-    // 分配职业默认技能
+    // Assign default skills
     if (
       characterClass.defaultSkills &&
       characterClass.defaultSkills.length > 0
@@ -51,8 +51,8 @@ export const selectClass = async (req, res) => {
       stats.Skills = characterClass.defaultSkills.map((skill) => skill._id);
     }
 
-    // 添加调试日志
-    console.log("正在保存职业选择:", {
+    // Debug log
+    console.log("Saving class selection:", {
       userId,
       className: stats.className,
       classSlug: stats.classSlug,
@@ -60,9 +60,9 @@ export const selectClass = async (req, res) => {
 
     await stats.save();
 
-    // 确认保存后的数据
+    // Confirm saved data
     const savedStats = await UserDungeonStats.findOne({ user: userId });
-    console.log("已保存的职业信息:", {
+    console.log("Saved class info:", {
       className: savedStats.className,
       classSlug: savedStats.classSlug,
     });
@@ -72,7 +72,7 @@ export const selectClass = async (req, res) => {
       message: `You have selected the ${characterClass.name} class`,
       class: {
         name: characterClass.name,
-        slug: classSlug, // 添加slug到返回值
+        slug: classSlug,
         description: characterClass.description,
         baseStats: characterClass.baseStats,
         skills: characterClass.defaultSkills.map((skill) => ({
@@ -88,7 +88,6 @@ export const selectClass = async (req, res) => {
   }
 };
 
-// controllers/characterController.js
 export const getAvailableClasses = async (req, res) => {
   try {
     const classes = await CharacterClass.find({}).populate("defaultSkills");
@@ -117,22 +116,22 @@ export const getAvailableClasses = async (req, res) => {
   }
 };
 
-// controllers/characterController.js
 export const getUserStats = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // 获取用户统计信息
+    // Get user stats
     const stats = await UserDungeonStats.findOne({ user: userId })
       .populate({
-       path: "Skills",
-     // 明确指定要包含的字段，确保不会遗漏
-      select: "_id name description icon trigger effect effectValue cooldown once priority triggerCondition allowedClasses"
-    })
-    
-    console.log('getUserStats found stats:', !!stats);
-    
-    // 如果没有统计或职业属性不完整
+        path: "Skills",
+        // Explicitly specify fields to include
+        select:
+          "_id name description icon trigger effect effectValue cooldown once priority triggerCondition allowedClasses",
+      });
+
+    console.log("getUserStats found stats:", !!stats);
+
+    // If stats are missing or class not selected
     if (!stats || !stats.assignedStats || !stats.assignedStats.hp) {
       console.log("User needs to select a class");
       return res.status(200).json({
@@ -141,14 +140,12 @@ export const getUserStats = async (req, res) => {
       });
     }
 
-    // 记录详细信息
     console.log("User has class with stats:", {
       hp: stats.assignedStats.hp,
       attack: stats.assignedStats.attack,
       defense: stats.assignedStats.defense,
     });
 
-    // 获取用户的技能信息
     const skills =
       stats.Skills && stats.Skills.length > 0
         ? await Skill.find({ _id: { $in: stats.Skills } })
@@ -156,16 +153,14 @@ export const getUserStats = async (req, res) => {
 
     return res.json({
       hasClass: true,
-      name: stats.className || 'Unknown Class',
+      name: stats.className || "Unknown Class",
       classSlug: stats.classSlug,
-      className: stats.className, // 修正了拼写错误 clsssName -> className
+      className: stats.className,
       level: stats.dungeonLevel,
       exp: stats.dungeonExp,
       unspentPoints: stats.unspentStatPoints,
       baseStats: stats.assignedStats,
-      
-      // 修改这部分，返回更完整的技能信息
-      skills: skills.map(s => ({
+      skills: skills.map((s) => ({
         id: s._id,
         name: s.name,
         description: s.description,
@@ -177,8 +172,8 @@ export const getUserStats = async (req, res) => {
         once: s.once || false,
         priority: s.priority || 0,
         triggerCondition: s.triggerCondition,
-        allowedClasses: s.allowedClasses
-      }))
+        allowedClasses: s.allowedClasses,
+      })),
     });
   } catch (err) {
     console.error("getUserStats error:", err);
@@ -187,100 +182,89 @@ export const getUserStats = async (req, res) => {
 };
 
 const STAT_MULTIPLIERS = {
-  hp: 15, // 1点 = 15点HP
-  attack: 1, // 1点 = 1点攻击
-  defense: 1, // 1点 = 1点防御
-  magicPower: 1, // 1点 = 1点魔法
-  speed: 0.5, // 1点 = 0.5点速度
-  critRate: 0.2, // 1点 = 0.2%暴击率
-  evasion: 0.2, // 1点 = 0.2%闪避率
+  hp: 15, // 1 point = 15 HP
+  attack: 1, // 1 point = 1 Attack
+  defense: 1, // 1 point = 1 Defense
+  magicPower: 1, // 1 point = 1 Magic Power
+  speed: 0.5, // 1 point = 0.5 Speed
+  critRate: 0.2, // 1 point = 0.2% Critical Rate
+  evasion: 0.2, // 1 point = 0.2% Evasion Rate
 };
 
-// 分配属性点
+// Allocate stat points
 export const allocateStatPoints = async (req, res) => {
   try {
     const userId = req.user._id;
     const { allocation } = req.body;
 
-    // 验证输入
+    // Validate input
     if (!allocation || typeof allocation !== "object") {
-      return res.status(400).json({ error: "无效的属性分配" });
+      return res.status(400).json({ error: "Invalid stat allocation" });
     }
 
-    // 获取用户统计信息
     const stats = await UserDungeonStats.findOne({ user: userId });
     if (!stats) {
-      return res.status(404).json({ error: "未找到用户数据" });
+      return res.status(404).json({ error: "User data not found" });
     }
 
-    // 验证用户有足够的未分配点数
     const totalAllocated = Object.values(allocation).reduce(
       (sum, value) => sum + value,
       0
     );
     if (totalAllocated <= 0) {
-      return res.status(400).json({ error: "没有分配任何属性点" });
+      return res.status(400).json({ error: "No stat points allocated" });
     }
 
     if (totalAllocated > stats.unspentStatPoints) {
-      return res.status(400).json({ error: "未分配属性点不足" });
+      return res.status(400).json({ error: "Not enough unspent stat points" });
     }
 
-    // 确保assignedStats存在
     if (!stats.assignedStats) {
       stats.assignedStats = {};
     }
 
-    // 应用属性点分配
     Object.entries(allocation).forEach(([stat, points]) => {
       if (points > 0 && STAT_MULTIPLIERS[stat] !== undefined) {
-        // 初始化属性如果不存在
         stats.assignedStats[stat] = stats.assignedStats[stat] || 0;
-
-        // 根据乘数应用属性点
         stats.assignedStats[stat] += points * STAT_MULTIPLIERS[stat];
       }
     });
 
-    // 减少未分配点数
     stats.unspentStatPoints -= totalAllocated;
 
-    // 保存更改
     await stats.save();
 
-    // 返回更新后的统计数据
     return res.json({
       success: true,
-      message: "属性点分配成功",
+      message: "Stat points allocated successfully",
       assignedStats: stats.assignedStats,
       unspentPoints: stats.unspentStatPoints,
     });
   } catch (err) {
     console.error("allocateStatPoints error:", err);
-    return res.status(500).json({ error: "服务器内部错误" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// 获取当前属性点分配情况
+// Get current stat allocation
 export const getStatAllocation = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // 获取用户统计信息
     const stats = await UserDungeonStats.findOne({ user: userId });
     if (!stats) {
-      return res.status(404).json({ error: "未找到用户数据" });
+      return res.status(404).json({ error: "User data not found" });
     }
 
     return res.json({
       assignedStats: stats.assignedStats || {},
       unspentPoints: stats.unspentStatPoints || 0,
-      statMultipliers: STAT_MULTIPLIERS, // 返回乘数，前端可以显示加点效果
+      statMultipliers: STAT_MULTIPLIERS, // Return multipliers for front-end display
     });
   } catch (err) {
     console.error("getStatAllocation error:", err);
-    return res.status(500).json({ error: "服务器内部错误" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
-// 在路由中添加
-// routes/characterRoutes.js
+
+// Add routes in routes/characterRoutes.js

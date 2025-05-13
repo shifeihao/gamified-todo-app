@@ -391,7 +391,7 @@ const consumeCard = asyncHandler(async (req, res) => {
       ...taskData,
       experienceReward: experience,
       goldReward: gold,
-      cardUsed: card._id.toString(), // ✅ 确保是字符串
+      cardUsed: card._id.toString(), 
     },
   });
 });
@@ -402,20 +402,19 @@ const processDrops = asyncHandler(async (req, res) => {
   const { monsterIds } = req.body;
   const user = req.user;
   
-  // 验证输入
   if (!monsterIds || !Array.isArray(monsterIds)) {
     res.status(400);
-    throw new Error('需要提供怪物ID数组');
+    throw new Error('Monster ID array is required');
   }
   
   console.log('Received monster IDs:', monsterIds);
   
   try {
-    // 获取怪物信息
+    //  Retrieve monster data
     const monsters = await Monster.find({ _id: { $in: monsterIds } });
     console.log('Found monsters count:', monsters.length);
     
-    // 修复的比较逻辑：比较唯一ID的数量
+    // Fix comparison logic: ensure uniqueness of IDs
     const uniqueRequestedIds = [...new Set(monsterIds)];
     const foundIds = monsters.map(m => m._id.toString());
     const uniqueFoundIds = [...new Set(foundIds)];
@@ -423,17 +422,17 @@ const processDrops = asyncHandler(async (req, res) => {
     console.log('Unique requested IDs:', uniqueRequestedIds);
     console.log('Unique found IDs:', uniqueFoundIds);
     
-    // 检查是否所有唯一的ID都被找到
+    // Check if all unique requested IDs are found
     const missingIds = uniqueRequestedIds.filter(id => !uniqueFoundIds.includes(id));
     
     if (missingIds.length > 0) {
       console.error('Missing IDs:', missingIds);
       res.status(400);
-      throw new Error('部分怪物ID无效');
+      throw new Error('Some monster IDs are invalid');
     }
     
-    // 由于可能有重复的ID，我们需要确保返回正确数量的怪物
-    // 根据请求的ID数组，构建包含重复怪物的数组
+    // Ensure duplicates are handled correctly by preserving request order
+    // Construct ordered array of monsters with possible duplicates
     const orderedMonsters = [];
     for (const requestedId of monsterIds) {
       const monster = monsters.find(m => m._id.toString() === requestedId);
@@ -445,22 +444,22 @@ const processDrops = asyncHandler(async (req, res) => {
     console.log('Ordered monsters count:', orderedMonsters.length);
     console.log('Expected monsters count:', monsterIds.length);
     
-    // 构建玩家信息
+    // Construct player object
     const player = {
       userId: user._id,
       level: user.level || 1,
       classSlug: user.classSlug || 'warrior'
     };
     
-    // 处理掉落 - 使用有序的怪物数组
+    // Process drops using ordered monster list
     const dropResults = await calculateAndProcessDrops(orderedMonsters, player);
     
-    // 刷新用户卡片库存统计
+    // Refresh user card inventory statistics
     if (dropResults.cards.length > 0) {
       await checkCardNumber(user._id);
     }
     
-    // 返回结果
+    // Return drop results
     res.json({
       success: true,
       data: {
@@ -469,7 +468,7 @@ const processDrops = asyncHandler(async (req, res) => {
         items: dropResults.items,
         cards: dropResults.cards
       },
-      message: '掉落处理完成'
+      message: 'Drop processing completed'
     });
     
   } catch (error) {
