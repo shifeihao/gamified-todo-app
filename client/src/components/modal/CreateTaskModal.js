@@ -6,7 +6,10 @@ import { CardSelector } from '../base/CardSelector';
 import { Tooltip } from '../base/Tooltip';
 import axios from 'axios';
 import AuthContext from '../../context/AuthContext';
-import { HelpCircle, Loader2, Clock, Calendar } from 'lucide-react';
+import { 
+  HelpCircle, Loader2, Clock, Calendar, Check, 
+  CreditCard, ArrowLeft, ArrowRight, X 
+} from 'lucide-react';
 
 export const CreateTaskModal = ({
   isOpen,
@@ -19,32 +22,73 @@ export const CreateTaskModal = ({
   defaultDueDateTime
 }) => {
   const { user } = useContext(AuthContext);
-
   const isFromSlot = slotIndex >= 0;
-  const initialTaskType = initialData?.type || (isFromSlot && initialData?.slotInfo?.type) || defaultType;
+  
+  // Properly calculate initial task type
+  const getInitialTaskType = () => {
+    if (initialData?.type) return initialData.type;
+    if (isFromSlot) return defaultType;
+    return defaultType;
+  };
 
-  const [taskType, setTaskType] = useState(initialTaskType);
+  // Form state
+  const [taskType, setTaskType] = useState(getInitialTaskType());
   const [useReward, setUseReward] = useState(initialData?.cardId ? true : false);
   const [selectedCard, setSelectedCard] = useState(initialData?.cardDetails || null);
+  const [selectedBlankCard, setSelectedBlankCard] = useState(null);
+  const [formValues, setFormValues] = useState(null);
+  
+  // UI state
+  const [currentStep, setCurrentStep] = useState(1);
   const [cardError, setCardError] = useState('');
+  const [isFetchingInventory, setIsFetchingInventory] = useState(false);
+  const [dueDate, setDueDate] = useState('');
+  
+  // Inventory state
   const [shortBlankCards, setShortBlankCards] = useState(0);
   const [longBlankCards, setLongBlankCards] = useState(0);
   const [rewardCardCount, setRewardCardCount] = useState(0);
-  const [isFetchingInventory, setIsFetchingInventory] = useState(false);
-  const [dueDate, setDueDate] = useState('');
-  const [selectedBlankCard, setSelectedBlankCard] = useState(null);
+  const [shortRewardCount, setShortRewardCount] = useState(0);
+  const [longRewardCount, setLongRewardCount] = useState(0);
   const [blankCards, setBlankCards] = useState([]);
+  const [rewardCards, setRewardCards] = useState([]);
 
-  // Effect to initialize or update taskType based on props
+  // Effect to initialize task type and handle card selection when task type changes
   useEffect(() => {
-    const newType = initialData?.type || (isFromSlot && initialData?.slotInfo?.type) || defaultType;
-    if (newType !== taskType) {
-      setTaskType(newType);
-      setSelectedBlankCard(null); // Reset blank card selection
+    // Only set initial task type when component first loads or when initialData/defaultType changes
+    if (initialData?.type) {
+      setTaskType(initialData.type);
+    } else if (isFromSlot) {
+      setTaskType(defaultType); // Use the slot's default type when creating from a slot
     }
-  }, [initialData, defaultType, isFromSlot, taskType]);
+    // We don't reset the task type here if the user has manually changed it
+    
+    // Automatically switch to reward cards if blank cards are not available
+    const hasShortBlankCards = shortBlankCards > 0;
+    const hasLongBlankCards = longBlankCards > 0;
+    const hasShortReward = shortRewardCount > 0;
+    const hasLongReward = longRewardCount > 0;
+    
+    const hasCurrentTypeBlank = taskType === 'short' ? hasShortBlankCards : hasLongBlankCards;
+    const hasCurrentTypeReward = taskType === 'short' ? hasShortReward : hasLongReward;
+    
+    // If blank cards are not available but reward cards are, switch to reward mode
+    if (!hasCurrentTypeBlank && hasCurrentTypeReward) {
+      setUseReward(true);
+    }
+  }, [initialData, defaultType, isFromSlot, shortBlankCards, longBlankCards, shortRewardCount, longRewardCount]);
 
-  // Effect to initialize or update dueDate based on taskType or defaultDueDateTime prop
+  // Effect to handle card selection when task type changes
+  useEffect(() => {
+    // Reset card selection when task type changes
+    setSelectedBlankCard(null);
+    setSelectedCard(null);
+    
+    // This effect will trigger fetchInventory via the dependency array in that effect
+    // which will then update the card selection based on the new task type
+  }, [taskType]);
+
+  // Effect to handle due date
   useEffect(() => {
     if (defaultDueDateTime) {
       setDueDate(defaultDueDateTime);
@@ -60,6 +104,13 @@ export const CreateTaskModal = ({
     }
   }, [taskType, defaultDueDateTime, initialData]);
 
+  // Reset step when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(1);
+    }
+  }, [isOpen]);
+
   // Fetch card inventory
   useEffect(() => {
     const fetchInventory = async () => {
@@ -72,54 +123,83 @@ export const CreateTaskModal = ({
         });
         const inventory = res.data.inventory || [];
 
-        // Get matching blank cards for task type
-        const currentTypeBlankCards = inventory.filter(c =>
-          c.type === 'blank' &&
-          !c.used &&
-          (taskType === 'short'
-            ? ['short', 'general'].includes(c.taskDuration)
-            : ['long', 'general'].includes(c.taskDuration))
-        );
-        
-        setBlankCards(currentTypeBlankCards);
-
-        const longBlanks = inventory.filter(c =>
-          c.type === 'blank' &&
-          !c.used &&
-          c.taskDuration === 'long'
-        ).length;
+        // Calculate short and long term cards (both blank and reward)
         const shortBlanks = inventory.filter(c =>
           c.type === 'blank' &&
           !c.used &&
           c.taskDuration === 'short'
-        ).length;
-
-        // Update blank card states
-        setShortBlankCards(shortBlanks);
-        setLongBlankCards(longBlanks);
-
-        // Auto-select first available blank card (if any)
-        if (currentTypeBlankCards.length > 0 && !useReward) {
-          setSelectedBlankCard(currentTypeBlankCards[0]);
-        } else if (currentTypeBlankCards.length === 0) {
-          setSelectedBlankCard(null);
-        }
-
-        // Calculate matching reward cards
-        const matchingRewards = inventory.filter(card =>
-          card.type === 'special' &&
-          !card.used &&
-          ['general', taskType].includes(card.taskDuration)
         );
         
-        setRewardCardCount(matchingRewards.length);
+        const longBlanks = inventory.filter(c =>
+          c.type === 'blank' &&
+          !c.used &&
+          c.taskDuration === 'long'
+        );
         
-        // If no blank cards but reward cards available, auto-switch to reward card
-        if (currentTypeBlankCards.length === 0 && matchingRewards.length > 0 && !useReward) {
+        const shortRewards = inventory.filter(c => 
+          c.type === 'special' && 
+          !c.used && 
+          (c.taskDuration === 'short' || c.taskDuration === 'general')
+        );
+        
+        const longRewards = inventory.filter(c => 
+          c.type === 'special' && 
+          !c.used && 
+          (c.taskDuration === 'long' || c.taskDuration === 'general')
+        );
+
+        // Update card count statistics
+        setShortBlankCards(shortBlanks.length);
+        setLongBlankCards(longBlanks.length);
+        setShortRewardCount(shortRewards.length);
+        setLongRewardCount(longRewards.length);
+        
+        // Get cards for current task type
+        const currentTypeBlankCards = taskType === 'short' ? shortBlanks : longBlanks;
+        const currentTypeRewardCards = taskType === 'short' ? shortRewards : longRewards;
+        
+        // Update card lists
+        setBlankCards(currentTypeBlankCards);
+        setRewardCards(currentTypeRewardCards);
+        setRewardCardCount(currentTypeRewardCards.length);
+        
+        console.log(`${taskType} task available cards - Blank:${currentTypeBlankCards.length}, Reward:${currentTypeRewardCards.length}`);
+        
+        // Card selection logic
+        const hasBlankCards = currentTypeBlankCards.length > 0;
+        const hasRewardCards = currentTypeRewardCards.length > 0;
+        
+        // Check if previously selected cards are still valid
+        const prevSelectedCardStillValid = useReward && selectedCard && 
+          currentTypeRewardCards.some(c => c._id === selectedCard._id);
+        
+        const prevBlankCardStillValid = !useReward && selectedBlankCard && 
+          currentTypeBlankCards.some(c => c._id === selectedBlankCard._id);
+         
+        // 1. If previous selection is still valid, keep it
+        if (prevSelectedCardStillValid || prevBlankCardStillValid) {
+          // Keep current selection
+        }
+        // 2. If no blank cards but reward cards available, auto-switch to reward card mode
+        else if (!hasBlankCards && hasRewardCards) {
           setUseReward(true);
-          if (matchingRewards.length > 0) {
-            setSelectedCard(matchingRewards[0]);
-          }
+          setSelectedCard(currentTypeRewardCards[0]);
+          setSelectedBlankCard(null);
+        } 
+        // 3. If blank cards available and not in reward mode, select blank card
+        else if (hasBlankCards && !useReward) {
+          setSelectedBlankCard(currentTypeBlankCards[0]);
+          setSelectedCard(null);
+        }
+        // 4. If reward cards available and in reward mode, select reward card
+        else if (hasRewardCards && useReward) {
+          setSelectedCard(currentTypeRewardCards[0]);
+          setSelectedBlankCard(null);
+        }
+        // 5. If no cards available, clear all selections
+        else {
+          setSelectedBlankCard(null);
+          setSelectedCard(null);
         }
         
         setIsFetchingInventory(false);
@@ -132,14 +212,16 @@ export const CreateTaskModal = ({
     if (isOpen && user) {
       fetchInventory();
     }
-  }, [isOpen, user, taskType, slotIndex, useReward]); // Added useReward as dependency
+  }, [isOpen, user, taskType, slotIndex, useReward]);
 
   const resetFormState = () => {
-    setTaskType(initialData?.type || defaultType);
+    setTaskType(getInitialTaskType());
     setUseReward(initialData?.cardId ? true : false);
     setSelectedCard(initialData?.cardDetails || null);
     setSelectedBlankCard(null);
     setCardError('');
+    setCurrentStep(1);
+    setFormValues(null);
   };
 
   const handleClose = () => {
@@ -147,8 +229,20 @@ export const CreateTaskModal = ({
     onClose();
   };
 
+  const handleTaskFormChange = (values) => {
+    setFormValues(values);
+  };
+
   const handleSubmitForm = async (formFields) => {
-    // Validate card selection
+    // Check if ANY cards are available for this task type
+    const hasCurrentTypeCards = getCurrentBlankCardCount() > 0 || getCurrentRewardCardCount() > 0;
+    
+    if (!hasCurrentTypeCards) {
+      setCardError(`You need cards for ${taskType === 'short' ? 'Daily Quests' : 'Quest Chains'} to create this task. Please obtain cards first.`);
+      return;
+    }
+    
+    // Validate the selected card based on the card type (blank or reward)
     if (useReward) {
       if (!selectedCard?._id) {
         setCardError('Please select a reward card');
@@ -156,14 +250,19 @@ export const CreateTaskModal = ({
       }
     } else {
       if (!selectedBlankCard?._id) {
-        setCardError('No available blank cards');
+        // If no blank cards but reward cards are available, suggest switching
+        if (getCurrentRewardCardCount() > 0) {
+          setCardError('No blank cards available. Please use a reward card instead.');
+          return;
+        }
+        setCardError('No available cards');
         return;
       }
     }
     
     setCardError('');
 
-    // Only process due date for long-term tasks
+    // Handle due date
     let finalDueDate = null;
     if (taskType === 'long' && formFields.dueDate) {
       if (formFields.dueDate.length === 10) {
@@ -173,16 +272,25 @@ export const CreateTaskModal = ({
       }
     }
 
+    // If creating/editing from a slot, verify task type matches slot type
+    if (isFromSlot) {
+      const slotTaskType = defaultType || 'short';
+      if (taskType !== slotTaskType) {
+        setCardError(`When adding to a ${slotTaskType === 'short' ? 'Daily Quest' : 'Quest Chain'} slot, you must create a matching task type.`);
+        return;
+      }
+    }
+
     const taskPayload = {
       ...formFields,
       title: formFields.title,
       type: taskType,
-      dueDate: finalDueDate,  // Short-term tasks' dueDate is null, backend handles 24h from equip time
+      dueDate: finalDueDate,
       fromSlot: isFromSlot,
       slotIndex: isFromSlot ? slotIndex : undefined,
       experienceReward: formFields.experienceReward || 10,
       goldReward: formFields.goldReward || 5,
-      cardUsed: useReward ? selectedCard._id : selectedBlankCard._id // Use selected card ID
+      cardUsed: useReward ? selectedCard._id : selectedBlankCard._id
     };
 
     try {
@@ -194,19 +302,41 @@ export const CreateTaskModal = ({
     }
   };
 
+  const handleNextStep = () => {
+    if (currentStep < 2) {
+      // Even if there are no available cards, allow proceeding to next step
+      // This will show a warning in the next step instead of blocking progress
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const modalTitle = initialData
-    ? `${isFromSlot ? `Edit Task in Slot ${slotIndex + 1}` : 'Edit Task'}`
-    : `${isFromSlot ? `Create Task for Slot ${slotIndex + 1}` : 'Create Task'}`;
+    ? `${isFromSlot ? `Edit Slot ${slotIndex + 1} Task` : 'Edit Task'}`
+    : `${isFromSlot ? `New Slot ${slotIndex + 1} Task` : 'New Task'}`;
 
   // Get current task type blank card count
   const getCurrentBlankCardCount = () => {
     return taskType === 'short' ? shortBlankCards : longBlankCards;
   };
 
+  // Get current task type reward card count
+  const getCurrentRewardCardCount = () => {
+    return taskType === 'short' ? shortRewardCount : longRewardCount;
+  };
+
   // Check if any cards are available
   const hasAvailableCards = useReward 
-    ? rewardCardCount > 0 
+    ? getCurrentRewardCardCount() > 0 
     : getCurrentBlankCardCount() > 0;
+  
+  // Check if ANY cards of the current task type are available (either blank or reward)
+  const hasAnyCardForCurrentType = getCurrentRewardCardCount() > 0 || getCurrentBlankCardCount() > 0;
 
   // Calculate task expiration time
   const getExpirationInfo = () => {
@@ -224,154 +354,264 @@ export const CreateTaskModal = ({
 
   const expirationInfo = getExpirationInfo();
 
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title={modalTitle}
-      size="lg"
-    >
-      <div className="py-4 space-y-6">
-        {/* Section 1: Task Basics */}
-        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50/50">
-          <h3 className="text-md font-semibold text-gray-800 mb-3">1. Task Type</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-            <div>
-              <label htmlFor="taskTypeSelect" className="block text-sm font-medium text-gray-700 mb-1">
-                Select Task Type *
+  // Render task type selector
+  const renderTaskTypeSelector = () => (
+    <div className="flex flex-wrap gap-3 mb-6">
+      <div 
+        className={`flex-1 min-w-[120px] p-3 border rounded-lg cursor-pointer transition-all flex flex-col ${
+          taskType === 'short' 
+            ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200' 
+            : 'border-gray-200 hover:border-purple-300'
+        }`}
+        onClick={() => setTaskType('short')}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <Clock className="w-4 h-4 text-purple-500" />
+          <span className="font-medium text-sm">Daily Quest</span>
+        </div>
+        <span className="text-xs text-gray-500 flex-grow">24h short-term task</span>
+        <div className="mt-2 text-xs">
+          <span className={shortBlankCards > 0 ? "text-green-600" : "text-red-500"}>
+            {shortBlankCards} blank
+          </span>
+          {shortRewardCount > 0 && (
+            <span className="text-blue-600 ml-2">
+              {shortRewardCount} reward
+            </span>
+          )}
+        </div>
+      </div>
+      
+      <div 
+        className={`flex-1 min-w-[120px] p-3 border rounded-lg cursor-pointer transition-all flex flex-col ${
+          taskType === 'long' 
+            ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200' 
+            : 'border-gray-200 hover:border-teal-300'
+        }`}
+        onClick={() => setTaskType('long')}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <Calendar className="w-4 h-4 text-teal-500" />
+          <span className="font-medium text-sm">Quest Chain</span>
+        </div>
+        <span className="text-xs text-gray-500 flex-grow">Long-term with steps</span>
+        <div className="mt-2 text-xs">
+          <span className={longBlankCards > 0 ? "text-green-600" : "text-red-500"}>
+            {longBlankCards} blank
+          </span>
+          {longRewardCount > 0 && (
+            <span className="text-blue-600 ml-2">
+              {longRewardCount} reward
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render card selection
+  const renderCardSelector = () => (
+    <div className="mb-6">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-gray-500" />
+            <span className="font-medium">Card Type Selection</span>
+            {isFetchingInventory && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+          </div>
+          
+          {/* Card type toggle */}
+          <div className="flex items-center">
+            {/* Show toggle when reward cards are available */}
+            {getCurrentRewardCardCount() > 0 && (
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox"
+                  checked={useReward}
+                  onChange={e => {
+                    setUseReward(e.target.checked);
+                    if (!e.target.checked) {
+                      setSelectedCard(null);
+                      if (blankCards.length > 0) {
+                        setSelectedBlankCard(blankCards[0]);
+                      }
+                    } else {
+                      setSelectedBlankCard(null);
+                      if (rewardCards.length > 0) {
+                        setSelectedCard(rewardCards[0]);
+                      }
+                    }
+                    setCardError('');
+                  }}
+                  className="sr-only peer"
+                />
+                <div className={`w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer ${useReward ? 'peer-checked:after:translate-x-full peer-checked:after:border-white peer-checked:bg-blue-600' : ''} after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all`}></div>
+                <span className="ml-2 text-xs text-gray-700">Use special reward card</span>
               </label>
-              <div className="flex items-center gap-2">
-                <select
-                  id="taskTypeSelect"
-                  value={taskType}
-                  onChange={e => setTaskType(e.target.value)}
-                  disabled={isFromSlot}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="short">Daily Quest (Short-term)</option>
-                  <option value="long">Quest Chain (Long-term)</option>
-                </select>
-                {isFromSlot && (
-                  <Tooltip content="Task type is determined by the slot and cannot be modified">
-                    <HelpCircle className="h-5 w-5 text-gray-400" />
-                  </Tooltip>
+            )}
+            
+            {/* Show hint when no cards are available */}
+            {getCurrentRewardCardCount() === 0 && getCurrentBlankCardCount() === 0 && (
+              <div className="text-xs text-red-500">
+                No cards available. Get cards first.
+              </div>
+            )}
+            
+            {/* Show hint when only blank cards are available */}
+            {getCurrentRewardCardCount() === 0 && getCurrentBlankCardCount() > 0 && (
+              <div className="text-xs text-gray-500">
+                Only blank cards available
+              </div>
+            )}
+            
+            {/* Show hint when only reward cards are available */}
+            {getCurrentRewardCardCount() > 0 && getCurrentBlankCardCount() === 0 && !useReward && (
+              <div className="text-xs text-gray-500">
+                Only reward cards available
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Card selector */}
+        {useReward ? (
+          <div>
+            {getCurrentRewardCardCount() === 0 && !isFetchingInventory ? (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm rounded-md">
+                No reward cards available for {taskType === 'short' ? 'daily quests' : 'quest chains'}
+              </div>
+            ) : (
+              <CardSelector
+                key={`card-selector-${taskType}-${slotIndex}`}
+                onSelect={setSelectedCard}
+                selectedCard={selectedCard}
+                showRewards
+                taskType={taskType}
+                disabled={getCurrentRewardCardCount() === 0 && !selectedCard}
+              />
+            )}
+          </div>
+        ) : (
+          <div>
+            {getCurrentBlankCardCount() === 0 && !isFetchingInventory ? (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm rounded-md flex justify-between items-center">
+                <span>No blank cards available for {taskType === 'short' ? 'Daily Quest' : 'Quest Chain'}</span>
+                {getCurrentRewardCardCount() > 0 && (
+                  <button 
+                    onClick={() => setUseReward(true)}
+                    className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded"
+                  >
+                    Use reward card
+                  </button>
                 )}
               </div>
-            </div>
-            
-            {/* Card inventory info */}
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-              <div className="flex items-center">
-                <span>Long Blank Cards: <span className="font-semibold">{longBlankCards}</span></span>
-                {isFetchingInventory && taskType === 'long' && <Loader2 className="h-4 w-4 ml-2 animate-spin text-primary-500" />}
+            ) : selectedBlankCard ? (
+              <div className="p-3 border border-gray-200 rounded-md bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium">Standard {taskType === 'short' ? 'Daily Quest' : 'Quest Chain'} Card</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Basic task card without special effects</div>
+                  </div>
+                  <Check className="text-green-500 h-4 w-4" />
+                </div>
               </div>
-              <div className="flex items-center">
-                <span>Short Blank Cards: <span className="font-semibold">{shortBlankCards}</span></span>
-                {isFetchingInventory && taskType === 'short' && <Loader2 className="h-4 w-4 ml-2 animate-spin text-primary-500" />}
+            ) : (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm rounded-md">
+                No blank cards found. Please refresh or obtain cards first.
               </div>
-            </div>
+            )}
+          </div>
+        )}
+        
+        {cardError && (
+          <div className="text-red-500 text-xs mt-1">{cardError}</div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Add missing cards warning at the top of step 2
+  const renderMissingCardsWarning = () => {
+    if (hasAnyCardForCurrentType) return null;
+    
+    return (
+      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm rounded-md">
+        <div className="font-medium mb-1">Warning: No Cards Available</div>
+        <p>You don't have any {taskType === 'short' ? 'Daily Quest' : 'Quest Chain'} cards available. 
+        Please obtain cards first to create this task.</p>
+      </div>
+    );
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle}>
+      <div className="px-4 py-4">
+        {/* Task Type & Card Selection (Step 1) */}
+        {currentStep === 1 && (
+          <>
+            {/* Always render the task type selector, but add warning for slot-based tasks */}
+            {renderTaskTypeSelector()}
             
-            {/* Task expiration info */}
+            {isFromSlot && taskType !== defaultType && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm rounded-md">
+                <div className="font-medium mb-1">Warning: Task Type Mismatch</div>
+                <p>You are creating a task for a {defaultType === 'short' ? 'Daily Quest' : 'Quest Chain'} slot. 
+                The task type must match the slot type when equipped.</p>
+              </div>
+            )}
+            
+            {/* Task Information */}
             {taskType === 'short' && expirationInfo && (
-              <div className="col-span-2 bg-blue-50 p-3 rounded-md border border-blue-100 flex items-start space-x-2">
-                <Clock className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-blue-800">Task Expiration</p>
-                  <p className="text-sm text-blue-600">
-                    Short-term tasks are valid for <span className="font-semibold">24 hours</span> after being equipped
-                    (Expires: {expirationInfo.date} {expirationInfo.time})
-                  </p>
+              <div className="p-3 bg-blue-50 border border-blue-100 rounded-md flex items-start gap-2 mb-6">
+                <Clock className="w-4 h-4 text-blue-500 mt-0.5" />
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-blue-700">Daily Quest Information</div>
+                  <div className="text-xs text-blue-600 mt-1">
+                    Task expires in <span className="font-semibold">{expirationInfo.hours} hours</span> ({expirationInfo.date} {expirationInfo.time})
+                  </div>
                 </div>
               </div>
             )}
             
-            <div className="text-sm text-gray-700">
-              {useReward
-                ? `Available Reward Cards (${taskType === 'short' ? 'short' : 'long'}): ${rewardCardCount}`
-                : `Available Cards (${taskType === 'short' ? 'short' : 'long'}): ${getCurrentBlankCardCount()}`}
-            </div>
-          </div>
+            {/* Card Selector */}
+            {renderCardSelector()}
 
-          {/* Reward card option */}
-          <div className="mt-4">
-            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={useReward}
-                onChange={e => {
-                  setUseReward(e.target.checked);
-                  if (!e.target.checked) {
-                    setSelectedCard(null);
-                    // Auto select first blank card
-                    if (blankCards.length > 0) {
-                      setSelectedBlankCard(blankCards[0]);
-                    }
-                  } else {
-                    setSelectedBlankCard(null);
-                  }
-                  setCardError('');
-                }}
-                className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-              />
-              <span>Use a Reward Card (does not consume a Blank Card)</span>
-            </label>
-            {useReward && rewardCardCount === 0 && !isFetchingInventory && (
-                <p className="text-xs text-orange-600 mt-1">You have no reward cards available for this task type</p>
-            )}
-          </div>
-
-          {/* Only show reward card selection */}
-          {useReward && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium text-gray-800 mb-2">
-                Select Reward Card *
-              </h4>
-              
-              {rewardCardCount === 0 && !isFetchingInventory ? (
-                <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md">
-                  You don't have any reward cards available for {taskType === 'short' ? 'short-term' : 'long-term'} tasks
-                </div>
-              ) : (
-                <div className="mt-3">
-                  <CardSelector
-                    key={`card-selector-${taskType}-${slotIndex}`}
-                    onSelect={setSelectedCard}
-                    selectedCard={selectedCard}
-                    showRewards
-                    taskType={taskType}
-                    disabled={rewardCardCount === 0 && !selectedCard}
-                  />
-                </div>
-              )}
+            <div className="flex justify-end space-x-3">
+              <button 
+                type="button" 
+                onClick={handleClose} 
+                className="px-3 py-1.5 text-xs border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleNextStep}
+                className="px-3 py-1.5 text-xs rounded text-white flex items-center bg-blue-500 hover:bg-blue-600"
+              >
+                Next <ArrowRight className="ml-1 w-3 h-3" />
+              </button>
             </div>
-          )}
-          
-          {/* Show card operation related error messages */}
-          {cardError && <p className="text-red-600 text-sm mt-2">{cardError}</p>}
-          
-          {/* If no cards available, show message */}
-          {!hasAvailableCards && !isFetchingInventory && (
-            <div className="mt-4 bg-red-50 border border-red-200 text-red-600 p-3 rounded-md">
-              No cards available for creating {taskType === 'short' ? 'short-term' : 'long-term'} tasks.
-              Please obtain cards first or try creating a different type of task.
-            </div>
-          )}
-        </div>
+          </>
+        )}
 
-        {/* Section 3: Task Details */}
-        <div className="pt-4">
-          <h3 className="text-md font-semibold text-gray-800 mb-3">3. Task Details</h3>
-          <TaskForm
-            onSubmit={handleSubmitForm}
-            onCancel={handleClose}
-            loading={loading}
-            initialData={initialData}
-            taskType={taskType}
-            defaultDueDateTime={dueDate}
-            key={taskType + (initialData?._id || 'new')}
-            disableSubmit={!hasAvailableCards || isFetchingInventory}
-          />
-        </div>
+        {/* Task Details (Step 2) */}
+        {currentStep === 2 && (
+          <>
+            {renderMissingCardsWarning()}
+            <TaskForm
+              onSubmit={handleSubmitForm}
+              onCancel={handlePreviousStep}
+              loading={loading}
+              initialData={initialData}
+              taskType={taskType}
+              defaultDueDateTime={dueDate}
+              key={taskType + (initialData?._id || 'new')}
+              disableSubmit={!hasAnyCardForCurrentType || isFetchingInventory}
+              onChange={handleTaskFormChange}
+              compact={true}
+            />
+          </>
+        )}
       </div>
     </Modal>
   );

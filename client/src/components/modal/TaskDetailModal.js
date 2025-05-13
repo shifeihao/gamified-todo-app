@@ -1,523 +1,623 @@
-// src/components/modal/TaskDetailModal.js
-import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { Modal } from '../base/Modal';
-import { TaskForm } from '../form/TaskForm';
-import { Tooltip } from '../base/Tooltip';
-import { Edit3, Trash2, CheckCircle, XCircle, Loader2, Calendar, Repeat as RepeatIcon, AlertTriangle, Info } from 'lucide-react';
-import { format, parseISO, isValid } from 'date-fns'; // For date formatting
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { Dialog } from '@headlessui/react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { 
+  CheckCircle, 
+  Circle, 
+  X, 
+  Trash2, 
+  Edit2, 
+  Clock,
+  Calendar,
+  Award,
+  CreditCard,
+  Hourglass,
+  BookOpen,
+  BarChart4,
+  Trophy,
+  Sparkles
+} from 'lucide-react';
+import axios from 'axios';
 import AuthContext from '../../context/AuthContext';
+import toast from 'react-hot-toast';
 
-const API_SIMULATION_DELAY = 500; // For simulating API calls
-
-// Dummy API functions (replace with your actual API calls)
-const fetchTaskById = async (taskId, token) => {
-  try {
-    const response = await fetch(`/api/tasks/${taskId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch task');
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching task:', error);
-    throw error;
-  }
+// Unified status colors
+const statusColor = {
+  completed: 'bg-green-100 text-green-800',
+  'in-progress': 'bg-blue-100 text-blue-800',
+  pending: 'bg-yellow-100 text-yellow-800',
+  expired: 'bg-red-100 text-red-800',
 };
 
-const updateTaskAPI = async (taskId, data, token) => {
-  try {
-    // 确保所有状态相关的字段都是小写
-    const processedData = {
-      ...data,
-      status: (data.status || 'pending').toLowerCase(),
-      subTasks: data.subTasks?.map(st => ({
-        ...st,
-        status: (st.status || 'pending').toLowerCase()
-      }))
-    };
-
-    console.log('Sending task update with data:', processedData);
-
-    const response = await fetch(`/api/tasks/${taskId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(processedData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to update task');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error updating task:', error);
-    throw error;
-  }
-};
-
-const deleteTaskAPI = async (taskId, token) => {
-  try {
-    const response = await fetch(`/api/tasks/${taskId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    if (!response.ok) {
-      throw new Error('Failed to delete task');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error deleting task:', error);
-    throw error;
-  }
-};
-
-const toggleSubtaskAPI = async (taskId, subtaskId, isCompleted, token) => {
-  try {
-    const response = await fetch(`/api/tasks/${taskId}/subtasks/${subtaskId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ isCompleted }),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to toggle subtask');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error toggling subtask:', error);
-    throw error;
-  }
-};
-// End of dummy API functions
-
-const formatDate = (dateString, taskType = 'short') => {
-  if (!dateString) return 'Not set';
-  const date = parseISO(dateString);
-  if (!isValid(date)) return 'Invalid Date';
-
-  // Check if the time is midnight (00:00:00), which might indicate a date-only "long" task
-  const isDateOnly = date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0;
-
-  if (taskType === 'long' || isDateOnly) {
-    return format(date, 'MMMM d, yyyy');
-  }
-  return format(date, 'MMMM d, yyyy, h:mm a');
-};
-
-const WEEK_DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-const formatRepeatInfo = (task) => {
-    if (!task.isRepeating) return null;
-    let info = `Repeats ${task.repeatFrequency}`;
-    if (task.repeatFrequency === 'weekly' && task.repeatDaysOfWeek?.length > 0) {
-        const days = task.repeatDaysOfWeek.map(d => WEEK_DAYS_SHORT[d]).join(', ');
-        info += ` on ${days}`;
-    } else if (task.repeatFrequency === 'monthly' && task.repeatDayOfMonth) {
-        info += ` on day ${task.repeatDayOfMonth}`;
-    }
-    if (task.repeatEndDate) {
-        info += ` until ${format(parseISO(task.repeatEndDate), 'MMM d, yyyy')}`;
-    } else {
-        info += ` indefinitely`;
-    }
-    return info;
-};
-
-
-export const TaskDetailModal = ({
-  isOpen,
-  onClose,
-  taskId,
-  onTaskUpdated, // Callback after task is successfully updated
-  onTaskDeleted, // Callback after task is successfully deleted
-}) => {
+export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTaskDeleted }) => {
+  const closeBtnRef = useRef(null);
   const { user } = useContext(AuthContext);
-  const [taskData, setTaskData] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [task, setTask] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingIdx, setLoadingIdx] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false); // For delete confirmation
+  const [cardDetails, setCardDetails] = useState(null);
+  const [timeElapsed, setTimeElapsed] = useState(null);
 
-  const loadTask = useCallback(async () => {
-    if (!taskId || !user?.token) {
-      setTaskData(null);
-      setError(null);
-      return;
-    }
-
-    setIsLoading(true);
+  // Fetch task details
+  const fetchTaskDetails = async () => {
+    if (!taskId || !user?.token) return;
+    
+    setLoading(true);
     setError(null);
-
+    
     try {
-      const data = await fetchTaskById(taskId, user.token);
-      if (!data) {
-        throw new Error('Task not found');
-      }
-      setTaskData(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error loading task:', err);
-      setError(err.message || 'Failed to load task details.');
-      setTaskData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [taskId, user?.token]);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadTask();
-      setIsEditing(false);
-      setIsDeleting(false);
-    }
-  }, [isOpen, loadTask]);
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    setError(null); // Clear previous errors when entering edit mode
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    // Optionally reload task data if there's a chance it was "dirtied" by optimistic updates not yet saved
-    // loadTask();
-  };
-
-  const handleSaveTask = async (formData) => {
-    if (!user?.token) {
-      setError('Authentication required');
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // 处理表单数据
-      const processedFormData = {
-        ...formData,
-        status: (formData.status || 'pending').toLowerCase(),
-        isCompleted: formData.status?.toLowerCase() === 'completed',
-        subTasks: formData.subTasks?.map(st => ({
-          ...st,
-          status: st.isCompleted ? 'completed' : 'pending'
-        }))
-      };
-
-      console.log('Saving task with data:', processedFormData);
+      const response = await axios.get(`/api/tasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      setTask(response.data);
       
-      const updatedTask = await updateTaskAPI(taskId, processedFormData, user.token);
-      setTaskData(updatedTask);
-      setIsEditing(false);
-      if (onTaskUpdated) onTaskUpdated(updatedTask);
+      // Fetch card details if available
+      if (response.data.cardUsed) {
+        try {
+          const cardResponse = await axios.get(`/api/cards/${response.data.cardUsed}`, {
+            headers: { Authorization: `Bearer ${user.token}` }
+          });
+          setCardDetails(cardResponse.data);
+        } catch (cardErr) {
+          console.error('Failed to fetch card details:', cardErr);
+        }
+      }
     } catch (err) {
-      console.error('Failed to save task:', err);
-      setError(err.message || 'Failed to save task.');
+      console.error('Failed to fetch task details:', err);
+      setError('Unable to load task details');
+      toast.error('Failed to load task details');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleDeleteRequest = () => {
-    setIsDeleting(true); // Show confirmation
+  // Fetch data when modal opens or taskId changes
+  useEffect(() => {
+    if (isOpen && taskId) {
+      fetchTaskDetails();
+    }
+    
+    // Reset delete confirmation state
+    if (!isOpen) {
+      setConfirmDelete(false);
+    }
+  }, [isOpen, taskId, user?.token]);
+
+  // Calculate time elapsed for equipped tasks
+  useEffect(() => {
+    if (task && task.slotEquippedAt) {
+      const calculateElapsed = () => {
+        const now = new Date();
+        const equippedAt = new Date(task.slotEquippedAt);
+        const diffMs = now - equippedAt;
+        
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        
+        let timeString = '';
+        if (days > 0) timeString += `${days}d `;
+        if (hours > 0) timeString += `${hours}h `;
+        timeString += `${minutes}m`;
+        
+        setTimeElapsed(timeString);
+      };
+      
+      calculateElapsed();
+      const timer = setInterval(calculateElapsed, 60000); // Update every minute
+      
+      return () => clearInterval(timer);
+    }
+  }, [task]);
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not set';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric'
+    });
   };
 
-  const handleConfirmDelete = async () => {
-    if (!user?.token) {
-      setError('Authentication required');
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
+  // Complete subtask
+  const handleCompleteSubtask = async (subTaskIndex) => {
+    if (!task || !user?.token || loadingIdx !== null) return;
+    
+    setLoadingIdx(subTaskIndex);
+    
     try {
-      await deleteTaskAPI(taskId, user.token);
-      if (onTaskDeleted) onTaskDeleted(taskId);
+      const response = await axios.put(
+        `/api/tasks/${taskId}`,
+        { subTaskIndex },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      
+      const { task: updatedTask } = response.data;
+      
+      if (updatedTask) {
+        setTask(updatedTask);
+        if (onTaskUpdated) {
+          onTaskUpdated(updatedTask);
+        }
+        
+        // Show reward information
+        if (response.data.subTaskReward) {
+          const { expGained, goldGained } = response.data.subTaskReward;
+          toast.success(
+            <div className="flex flex-col space-y-1">
+              <span className="font-semibold text-sm">Subtask completed!</span>
+              <div className="flex items-center">
+                <span className="text-yellow-500 mr-1">🏅</span>
+                <span className="text-xs">
+                  Earned <span className="font-bold text-yellow-600">{expGained} XP</span>
+                  and <span className="font-bold text-amber-500">{goldGained} Gold</span>
+                </span>
+              </div>
+            </div>,
+            { duration: 5000, position: 'top-center' }
+          );
+        } else {
+          toast.success('Subtask completed!');
+        }
+        
+        // Trigger task completion event
+        window.dispatchEvent(new CustomEvent('subtaskCompleted'));
+      }
+    } catch (err) {
+      console.error('Failed to complete subtask:', err);
+      toast.error(err.response?.data?.message || 'Failed to complete subtask');
+    } finally {
+      setLoadingIdx(null);
+    }
+  };
+
+  // Handle complete main task
+  const handleCompleteTask = async () => {
+    if (!task || !user?.token || loading) return;
+    
+    setLoading(true);
+    
+    try {
+      const response = await axios.put(
+        `/api/tasks/${taskId}`,
+        { status: 'completed' },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      
+      const { task: updatedTask, reward } = response.data;
+      
+      if (updatedTask) {
+        setTask(updatedTask);
+        if (onTaskUpdated) {
+          onTaskUpdated(updatedTask);
+        }
+        
+        // Show reward information
+        if (reward) {
+          const { expGained, goldGained, leveledUp, newLevel } = reward;
+          
+          toast.success(
+            <div className="flex flex-col space-y-1">
+              <span className="font-semibold text-sm">Task Completed!</span>
+              <div className="flex items-center">
+                <span className="text-yellow-500 mr-1">🏅</span>
+                <span className="text-xs">
+                  Earned <span className="font-bold text-yellow-600">{expGained} XP</span>
+                  and <span className="font-bold text-amber-500">{goldGained} Gold</span>
+                </span>
+              </div>
+              {leveledUp && (
+                <div className="flex items-center text-xs text-blue-600">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  <span>Level Up! You've reached level {newLevel}</span>
+                </div>
+              )}
+            </div>,
+            { duration: 5000, position: 'top-center' }
+          );
+        }
+        
+        // Trigger task completion event
+        window.dispatchEvent(new CustomEvent('taskCompleted'));
+        onClose();
+      }
+    } catch (err) {
+      console.error('Failed to complete task:', err);
+      toast.error(err.response?.data?.message || 'Failed to complete task');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete task
+  const handleDeleteTask = async () => {
+    if (!taskId || !user?.token) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await axios.delete(`/api/tasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      
+      if (onTaskDeleted) {
+        onTaskDeleted(taskId);
+      }
+      
+      toast.success('Task deleted');
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to delete task.');
-      setIsDeleting(false);
+      console.error('Failed to delete task:', err);
+      toast.error(err.response?.data?.message || 'Failed to delete task');
+      setConfirmDelete(false);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleToggleSubtask = async (subtaskId, currentStatus) => {
-    if (!taskData || !user?.token) return;
-    const originalSubTasks = [...taskData.subTasks];
-
-    // Optimistic update
-    const updatedSubTasks = taskData.subTasks.map(st =>
-      st._id === subtaskId ? {
-        ...st,
-        isCompleted: !currentStatus,
-        status: !currentStatus ? 'completed' : 'pending' // 使用小写的状态值
-      } : st
-    );
-    setTaskData(prev => ({ ...prev, subTasks: updatedSubTasks }));
-
-    try {
-      await toggleSubtaskAPI(taskId, subtaskId, !currentStatus, user.token);
-      if (onTaskUpdated) onTaskUpdated({...taskData, subTasks: updatedSubTasks});
-    } catch (err) {
-      setError(err.message || 'Failed to update subtask.');
-      setTaskData(prev => ({ ...prev, subTasks: originalSubTasks }));
+  // Edit task
+  const handleEditTask = () => {
+    if (task && onTaskUpdated) {
+      onTaskUpdated(task, true); // Pass second parameter to indicate edit mode
+      onClose();
     }
   };
 
-  const handleToggleMainTaskCompletion = async () => {
-    if (!taskData || !user?.token) return;
-    setIsLoading(true);
-    setError(null);
-    const newCompletedStatus = !taskData.isCompleted;
+  if (!isOpen) return null;
 
-    try {
-      // 移除可能导致问题的字段
-      const { _id, createdAt, updatedAt, __v, ...cleanTaskData } = taskData;
-
-      const updatedTaskData = {
-        ...cleanTaskData,
-        isCompleted: newCompletedStatus,
-        status: newCompletedStatus ? 'completed' : 'pending',
-        subTasks: cleanTaskData.subTasks?.map(({ _id, createdAt, updatedAt, __v, ...rest }) => ({
-          ...rest,
-          status: rest.isCompleted ? 'completed' : 'pending'
-        }))
-      };
-
-      console.log('Updating task with data:', updatedTaskData);
-
-      const updatedTask = await updateTaskAPI(taskId, updatedTaskData, user.token);
-      setTaskData(updatedTask);
-      if (onTaskUpdated) onTaskUpdated(updatedTask);
-    } catch (err) {
-      console.error('Failed to update task:', err);
-      setError(err.message || 'Failed to update task completion status.');
-    } finally {
-      setIsLoading(false);
-    }
+  // Calculate progress for progress bar
+  const calculateProgress = () => {
+    if (!task) return 0;
+    if (task.type === 'short') return task.status === 'completed' ? 100 : 0;
+    if (!task.subTasks || task.subTasks.length === 0) return 0;
+    
+    const completedSubtasks = task.subTasks.filter(st => st.status === 'completed').length;
+    return Math.round((completedSubtasks / task.subTasks.length) * 100);
   };
-
-  const renderContent = () => {
-    // 初始加载状态
-    if (isLoading && !taskData) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64">
-          <Loader2 className="h-12 w-12 animate-spin text-primary-600" />
-          <p className="mt-4 text-gray-500">Loading task details...</p>
-        </div>
-      );
-    }
-
-    // 错误状态
-    if (error && !taskData && !isEditing) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 p-4 bg-red-50 border border-red-200 rounded-md">
-          <AlertTriangle className="h-12 w-12 text-red-500" />
-          <p className="mt-4 text-red-700 font-semibold">Error Loading Task</p>
-          <p className="text-red-600 text-sm text-center mt-2">{error}</p>
-          <button
-            onClick={loadTask}
-            className="mt-4 px-4 py-2 text-sm font-medium text-primary-700 bg-primary-100 hover:bg-primary-200 rounded-md border border-primary-300 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      );
-    }
-
-    // 无数据状态
-    if (!taskData && !isEditing) {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-          <Info className="h-12 w-12 text-yellow-500" />
-          <p className="mt-4 text-yellow-700 font-semibold">No Task Data</p>
-          <p className="text-yellow-600 text-sm text-center mt-2">
-            The requested task could not be found or has been deleted.
-          </p>
-        </div>
-      );
-    }
-
-    // 编辑状态
-    if (isEditing && taskData) {
-      return (
-        <div className="space-y-4">
-<div>
-  {error && (
-    <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-      <p className="text-sm text-red-700">{error}</p>
-    </div>
-  )}
-  <h3 className="text-lg font-semibold mb-2">Quest Description</h3>
-  <p className="text-gray-600">
-    {taskData.description || 'Currently no description available'}
-  </p>
-</div>
-        </div>
-      );
-    }
-
-    // 显示状态
-    if (taskData) {
-      return (
-        <div className="space-y-4">
-          {/* 任务标题和完成状态 */}
-          <div className="flex items-start justify-between">
-            <h2 className={`text-2xl font-semibold ${taskData.isCompleted ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-              {taskData.title}
-            </h2>
-            <div className="flex items-center space-x-2">
-              {isLoading && (
-                <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
-              )}
-              <Tooltip content={taskData.isCompleted ? "Mark as Incomplete" : "Mark as Complete"}>
-                <button
-                  onClick={handleToggleMainTaskCompletion}
-                  disabled={isLoading}
-                  className={`p-1.5 rounded-full hover:bg-gray-200 transition-colors ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
-                >
-                  {taskData.isCompleted ? (
-                    <XCircle className="h-6 w-6 text-orange-500" />
-                  ) : (
-                    <CheckCircle className="h-6 w-6 text-green-500" />
-                  )}
-                </button>
-              </Tooltip>
-            </div>
-          </div>
-
-          {/* 描述 */}
-          {taskData.description && (
-            <p className="text-gray-600 whitespace-pre-wrap">{taskData.description}</p>
-          )}
-
-          {/* 元数据：截止日期和重复信息 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-700 border-t border-b border-gray-200 py-3">
-            <div className="flex items-center">
-              <Calendar size={16} className="mr-2 text-gray-500" />
-              <strong>Due:</strong>&nbsp;
-              <span className={new Date(taskData.dueDate) < new Date() && !taskData.isCompleted ? 'text-red-600 font-medium' : ''}>
-                {formatDate(taskData.dueDate, taskData.taskType)}
-              </span>
-            </div>
-          </div>
-
-          {/* 子任务（任务步骤） */}
-          {taskData.taskType === 'long' && (
-            <div>
-              <h4 className="text-md font-medium text-gray-700 mb-2">Quest Steps:</h4>
-              {taskData.subTasks && taskData.subTasks.length > 0 ? (
-                <ul className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                  {taskData.subTasks.map((subtask) => (
-                    <li key={subtask._id} className="flex items-center p-2.5 bg-gray-50 rounded-md border border-gray-200 hover:bg-gray-100 transition-colors">
-                      <input
-                        type="checkbox"
-                        id={`subtask-${subtask._id}`}
-                        checked={subtask.isCompleted}
-                        onChange={() => handleToggleSubtask(subtask._id, subtask.isCompleted)}
-                        className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 mr-3 cursor-pointer"
-                      />
-                      <label
-                        htmlFor={`subtask-${subtask._id}`}
-                        className={`flex-grow text-sm cursor-pointer ${subtask.isCompleted ? 'line-through text-gray-500' : 'text-gray-700'}`}
-                      >
-                        {subtask.title}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-gray-500 italic">No quest steps for this task.</p>
-              )}
-            </div>
-          )}
-
-          {/* 错误显示 */}
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return null;
-  };
-
-  const modalTitle = isEditing
-    ? `Edit Task: ${taskData?.title || ''}`
-    : (taskData?.title || 'Task Details');
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={modalTitle}
-      size={isEditing ? "2xl" : "xl"}
-    >
-      <div className="p-1">
-        {renderContent()}
+    <AnimatePresence>
+      <Dialog
+        open={isOpen}
+        onClose={onClose}
+        initialFocus={closeBtnRef}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" onClick={onClose} />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel
+            as={motion.div}
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="mx-auto w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg"
+          >
+            {loading && !task ? (
+              <div className="flex justify-center items-center h-48">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : error && !task ? (
+              <div className="p-4 text-center">
+                <div className="text-red-500 mb-4">{error}</div>
+                <button 
+                  onClick={fetchTaskDetails}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : task ? (
+              <>
+                {/* Top Bar - Title, Type, Status */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 mb-4 gap-2">
+                  <div>
+                    <Dialog.Title className="text-2xl font-bold mb-1">{task.title}</Dialog.Title>
+                    <div className="flex gap-2 mt-1">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${task.type === 'long' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                        {task.type === 'long' ? 'Quest Chains' : 'Daily Quest'}
+                      </span>
+                      {task.category && (
+                        <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                          {task.category}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-2 md:mt-0">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor[task.status?.toLowerCase()] || 'bg-gray-100 text-gray-800'}`}>
+                      {task.status === 'completed' ? 'Completed' : 
+                       task.status === 'in-progress' ? 'In Progress' : 
+                       task.status === 'expired' ? 'Expired' : 'Pending'}
+                    </span>
+                  </div>
+                </div>
 
-        {/* 操作按钮 */}
-        {taskData && !isEditing && !isDeleting && (
-          <div className="mt-6 flex justify-end space-x-3">
-            <button
-              onClick={handleEdit}
-              disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-primary-700 bg-primary-100 hover:bg-primary-200 rounded-md border border-primary-300 transition-colors flex items-center"
-            >
-              <Edit3 className="h-4 w-4 mr-2" />
-              Edit Task
-            </button>
-            <button
-              onClick={handleDeleteRequest}
-              disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-md border border-red-300 transition-colors flex items-center"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Task
-            </button>
-          </div>
-        )}
+                {/* Card and Progress Info Row */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  {/* Task Progress Card */}
+                  <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center">
+                      <BarChart4 className="h-4 w-4 mr-1 text-blue-500" />
+                      Task Progress
+                    </h3>
+                    <div className="mb-2 h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${task.type === 'long' ? 'bg-blue-500' : 'bg-purple-500'} rounded-full transition-all`}
+                        style={{ width: `${calculateProgress()}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>{calculateProgress()}% Complete</span>
+                      {task.type === 'long' && task.subTasks && (
+                        <span>{task.subTasks.filter(st => st.status === 'completed').length}/{task.subTasks.length} Subtasks</span>
+                      )}
+                    </div>
+                  </div>
 
-        {/* 删除确认对话框 */}
-        {isDeleting && (
-          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm font-medium text-red-700 mb-4">
-              Are you sure you want to delete this task? This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setIsDeleting(false)}
-                disabled={isLoading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 rounded-md border border-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                disabled={isLoading}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors flex items-center"
-              >
-                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Delete Task
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </Modal>
+                  {/* Card Used Info */}
+                  {cardDetails && (
+                    <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                      <h3 className="text-sm font-semibold mb-2 flex items-center">
+                        <CreditCard className="h-4 w-4 mr-1 text-blue-500" />
+                        Card Used
+                      </h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`w-2 h-2 rounded-full ${cardDetails.type === 'blank' ? 'bg-gray-400' : 'bg-yellow-400'}`}></span>
+                        <span className="text-sm font-medium">
+                          {cardDetails.title || (cardDetails.type === 'blank' ? 'Blank Card' : 'Special Card')}
+                        </span>
+                      </div>
+                      {cardDetails.description && (
+                        <p className="text-xs text-gray-600 mb-1">{cardDetails.description}</p>
+                      )}
+                      {cardDetails.bonus && (
+                        <div className="text-xs text-gray-600">
+                          {cardDetails.bonus.experienceMultiplier > 1 && (
+                            <span className="text-green-600 font-medium">
+                              +{Math.round((cardDetails.bonus.experienceMultiplier - 1) * 100)}% XP
+                            </span>
+                          )}
+                          {cardDetails.bonus.goldMultiplier > 1 && (
+                            <span className="text-amber-600 font-medium ml-2">
+                              +{Math.round((cardDetails.bonus.goldMultiplier - 1) * 100)}% Gold
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Reward Info & Time Info Row */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  {/* Reward Info */}
+                  <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center">
+                      <Trophy className="h-4 w-4 mr-1 text-amber-500" />
+                      Rewards
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center">
+                        <div className="w-6 h-6 flex items-center justify-center bg-yellow-100 rounded-full mr-2">
+                          <span className="text-yellow-600 text-xs">XP</span>
+                        </div>
+                        <span className="text-sm">
+                          {task.type === 'long' 
+                            ? `${task.finalBonusExperience || 10} (final)`
+                            : task.baseExperience || 10}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-6 h-6 flex items-center justify-center bg-amber-100 rounded-full mr-2">
+                          <span className="text-amber-600 text-xs">G</span>
+                        </div>
+                        <span className="text-sm">
+                          {task.type === 'long' 
+                            ? `${task.finalBonusGold || 5} (final)`
+                            : task.baseGold || 5}
+                        </span>
+                      </div>
+                    </div>
+                    {task.type === 'long' && task.subTasks?.length > 0 && (
+                      <div className="mt-2 text-xs text-gray-600">
+                        + {task.subTasks.length} x {task.subTasks[0]?.experience || 10} XP / {task.subTasks[0]?.gold || 5} Gold (per subtask)
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Time Info */}
+                  <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                    <h3 className="text-sm font-semibold mb-2 flex items-center">
+                      <Clock className="h-4 w-4 mr-1 text-blue-500" />
+                      Time Info
+                    </h3>
+                    <div className="grid grid-cols-1 gap-2">
+                      {task.dueDate && (
+                        <div className="flex items-center text-xs">
+                          <Calendar className="h-3 w-3 mr-1 text-gray-500" />
+                          <span className="text-gray-600 mr-1">Due:</span>
+                          <span>{formatDate(task.dueDate)}</span>
+                        </div>
+                      )}
+                      {task.slotEquippedAt && (
+                        <div className="flex items-center text-xs">
+                          <Hourglass className="h-3 w-3 mr-1 text-gray-500" />
+                          <span className="text-gray-600 mr-1">Equipped:</span>
+                          <span>{formatDate(task.slotEquippedAt)}</span>
+                        </div>
+                      )}
+                      {task.completedAt && (
+                        <div className="flex items-center text-xs">
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <span className="text-gray-600 mr-1">Completed:</span>
+                          <span>{formatDate(task.completedAt)}</span>
+                        </div>
+                      )}
+                      {timeElapsed && task.status !== 'completed' && (
+                        <div className="flex items-center text-xs">
+                          <Hourglass className="h-3 w-3 mr-1 text-blue-500" />
+                          <span className="text-gray-600 mr-1">Time Elapsed:</span>
+                          <span>{timeElapsed}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {task.description && (
+                  <div className="mb-6">
+                    <h3 className="text-md font-semibold mb-1 flex items-center">
+                      <BookOpen className="h-4 w-4 mr-1 text-blue-500" />
+                      Description
+                    </h3>
+                    <p className="text-gray-700 whitespace-pre-wrap min-h-[32px] bg-gray-50 p-3 rounded-md">{task.description}</p>
+                  </div>
+                )}
+
+                {/* Subtasks list */}
+                {task.subTasks && task.subTasks.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-md font-semibold mb-2 flex items-center">
+                      <Award className="h-4 w-4 mr-1 text-blue-500" />
+                      Subtasks
+                    </h3>
+                    <div className="space-y-2">
+                      {task.subTasks.map((subTask, idx) => {
+                        const isDone = subTask.status === 'completed';
+                        return (
+                          <div 
+                            key={subTask._id || idx} 
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200"
+                          >
+                            <div className="flex items-center gap-2 flex-1">
+                              {isDone ? (
+                                <CheckCircle className="h-5 w-5 text-green-500" />
+                              ) : (
+                                <Circle 
+                                  className="h-5 w-5 text-gray-400 cursor-pointer hover:text-blue-500" 
+                                  onClick={() => handleCompleteSubtask(idx)}
+                                />
+                              )}
+                              <div className="flex flex-col">
+                                <span className={isDone ? 'line-through text-gray-400' : 'font-medium'}>
+                                  {subTask.title}
+                                </span>
+                                {subTask.dueDate && (
+                                  <span className="text-xs text-gray-500">
+                                    Due: {formatDate(subTask.dueDate)}
+                                  </span>
+                                )}
+                                {subTask.completedAt && (
+                                  <span className="text-xs text-green-500">
+                                    Completed: {formatDate(subTask.completedAt)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {!isDone && (
+                              <button
+                                onClick={() => handleCompleteSubtask(idx)}
+                                disabled={loadingIdx === idx}
+                                className={`ml-4 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors ${loadingIdx === idx ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                {loadingIdx === idx ? 'Processing...' : 'Complete'}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                {!confirmDelete ? (
+                  <div className="mt-6 flex justify-between">
+                    <div>
+                      {/* Complete Task Button - Only for pending or in-progress tasks */}
+                      {task.status !== 'completed' && task.status !== 'expired' && (
+                        <button
+                          onClick={handleCompleteTask}
+                          disabled={loading}
+                          className={`px-4 py-2 flex items-center bg-green-500 text-white rounded hover:bg-green-600 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          {loading ? 'Processing...' : 'Complete Task'}
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="flex space-x-3">
+                      <button
+                        ref={closeBtnRef}
+                        onClick={onClose}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                      >
+                        Close
+                      </button>
+                      
+                      <button
+                        onClick={handleEditTask}
+                        className="px-4 py-2 flex items-center bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                      >
+                        <Edit2 className="h-4 w-4 mr-1" />
+                        Edit
+                      </button>
+                      
+                      <button
+                        onClick={() => setConfirmDelete(true)}
+                        className="px-4 py-2 flex items-center bg-red-100 text-red-700 rounded hover:bg-red-200"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm font-medium text-red-700 mb-4">
+                      Are you sure you want to delete this task? This action cannot be undone.
+                    </p>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => setConfirmDelete(false)}
+                        className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleDeleteTask}
+                        disabled={loading}
+                        className={`px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {loading ? 'Deleting...' : 'Confirm Delete'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : null}
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+    </AnimatePresence>
   );
 };
+
+// TaskDetailModal改进说明：
+// 1. 增加了任务进度显示卡片，清晰展示任务完成百分比 
+// 2. 添加了卡片详情展示，显示使用的卡片及其加成效果
+// 3. 增加了奖励信息区域，展示基础及额外奖励
+// 4. 添加了时间信息区域，显示任务时间轴包括创建、装备、完成时间
+// 5. 增加了任务完成按钮，直接在详情页完成任务
+// 6. 改进了子任务显示，添加了截止日期和完成时间
+// 7. 优化了整体布局和视觉设计，使用卡片布局和分区展示信息
+// 8. 加强了游戏化体验，显示详细奖励和完成效果

@@ -2,14 +2,14 @@
 import React, { useState, useContext, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
-  Award, Edit2, Info, Trash2,CheckSquare, Square,
-  // 导入所有可能用到的图标
+  Award, Edit2, Info, Trash2, CheckSquare, Square,
   BookOpen, BookMarked, GraduationCap,
   Microscope, Users, Kanban,
   Code, Palette, Wrench,
   Dumbbell, Trophy, Heart,
   Sparkles, Gamepad2, Share2,
-  FileText, Zap, CalendarDays
+  FileText, Zap, CalendarDays,
+  Clock, Calendar
 } from "lucide-react";
 import { TaskDetailModal } from "../modal";
 import { tagStyleMap } from "./tagStyles";
@@ -18,7 +18,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import AuthContext from "../../context/AuthContext";
 
-// 图标映射对象，将图标名映射到图标组件
+// 图标映射，用于渲染任务分类图标
 const iconComponents = {
   BookOpen, BookMarked, GraduationCap,
   Microscope, Users, Kanban,
@@ -28,29 +28,11 @@ const iconComponents = {
   FileText, Zap, CalendarDays
 };
 
-/**
- * TaskCard component renders a task card in three modes:
- * 1. Repository mode (inventory) - default
- * 2. Equipped mode (active slot)
- * 3. Expired mode (for equipped tasks that are past due)
- */
 export const TaskCard = ({
   task,
-  // actions
-  onComplete,
-  onDelete,
-  onEdit,
-  onEquip,
-  onUnequip,
-  // misc
-  onDragStart,
-  draggable = false,
-  isEquipped = false,
-  className = "",
+  onComplete, onDelete, onEdit, onEquip, onUnequip,
+  onDragStart, draggable = false, isEquipped = false, className = "",
 }) => {
-  /* ------------------------------------------------------------------ */
-  /*  Local state                                                        */
-  /* ------------------------------------------------------------------ */
   const [detailOpen, setDetailOpen] = useState(false);
   const [completingSubtask, setCompletingSubtask] = useState(false);
   const [processingSubtaskIndex, setProcessingSubtaskIndex] = useState(null);
@@ -58,42 +40,33 @@ export const TaskCard = ({
   const isExpired = isEquipped && task.expired === true;
   const { user } = useContext(AuthContext);
 
-  // 当task.subTasks更新时，更新本地状态
   useEffect(() => {
     setLocalSubTasks(task.subTasks || []);
   }, [task.subTasks]);
 
-  // 获取授权配置
   const getAuthConfig = () => ({
     headers: { Authorization: `Bearer ${user?.token}` }
   });
-
-  // Custom hook for calculating remaining time
   const timeLeft = useRemainingTime(isEquipped, task.dueDate);
 
-  /* ------------------------------------------------------------------ */
-  /*  Memoized values                                                    */
-  /* ------------------------------------------------------------------ */
-  /** % progress of completed subtasks */
+  // 计算子任务完成进度
   const progress = React.useMemo(() => {
-    if (!localSubTasks?.length) return 0;
-    const done = localSubTasks.filter((s) => s.status === "completed").length;
+    if (!localSubTasks.length) return 0;
+    const done = localSubTasks.filter(s => s.status === "completed").length;
     return Math.round((done / localSubTasks.length) * 100);
   }, [localSubTasks]);
 
-  /** Color scheme derived from task.category */
+  // 根据分类选择颜色和图标
   const typeStyles = React.useMemo(() => {
     const key = task.category?.toLowerCase() || "others";
     return tagStyleMap[key] ?? tagStyleMap.others;
   }, [task.category]);
-
-  // 获取对应的图标组件
   const CategoryIcon = React.useMemo(() => {
     const iconName = typeStyles.iconName || 'FileText';
     return iconComponents[iconName] || FileText;
   }, [typeStyles]);
 
-  /** Badge styles based on task.status */
+  // 根据任务状态映射 Badge 样式
   const statusStyles = React.useMemo(() => {
     switch (task.status) {
       case "completed":
@@ -109,47 +82,40 @@ export const TaskCard = ({
     }
   }, [task.status]);
 
-  /* ------------------------------------------------------------------ */
-  /*  Event handlers                                                     */
-  /* ------------------------------------------------------------------ */
-  // 处理子任务完成
-  const handleSubtaskComplete = async (subtaskIndex) => {
-    if (completingSubtask || processingSubtaskIndex === subtaskIndex) return;
-
+  // 处理子任务完成逻辑
+  const handleSubtaskComplete = async idx => {
+    if (completingSubtask || processingSubtaskIndex === idx) return;
     setCompletingSubtask(true);
-    setProcessingSubtaskIndex(subtaskIndex);
+    setProcessingSubtaskIndex(idx);
 
     try {
-      // 检查子任务是否已完成
-      if (localSubTasks[subtaskIndex].status === "completed") {
+      if (localSubTasks[idx].status === "completed") {
         toast.error("This subtask is already completed");
         return;
       }
+      // UI 先行更新
+      const updated = [...localSubTasks];
+      updated[idx] = { ...updated[idx], status: "completed" };
+      setLocalSubTasks(updated);
 
-      // 立即在UI中更新子任务状态
-      const updatedSubTasks = [...localSubTasks];
-      updatedSubTasks[subtaskIndex] = {
-        ...updatedSubTasks[subtaskIndex],
-        status: "completed"
-      };
-      setLocalSubTasks(updatedSubTasks);
-
-      // 调用API完成子任务
-      const response = await axios.put(
+      const { data } = await axios.put(
         `/api/tasks/${task._id}`,
-        { subTaskIndex: subtaskIndex },
+        { subTaskIndex: idx },
         getAuthConfig()
       );
+      const { subTaskReward, task: updatedTask } = data;
 
-      // 显示成功消息和奖励
-      const { subTaskReward, task: updatedTask } = response.data;
+      // 奖励提示
       if (subTaskReward) {
         toast.success(
           <div className="flex flex-col space-y-1">
             <span className="font-semibold text-sm">Subtask completed!</span>
             <div className="flex items-center">
               <span className="text-yellow-500 mr-1">🏅</span>
-              <span className="text-xs">Earned <span className="font-bold text-yellow-600">{subTaskReward.expGained} XP</span> and <span className="font-bold text-amber-500">{subTaskReward.goldGained} Gold</span></span>
+              <span className="text-xs">
+                Earned <span className="font-bold text-yellow-600">{subTaskReward.expGained} XP</span>
+                and <span className="font-bold text-amber-500">{subTaskReward.goldGained} Gold</span>
+              </span>
             </div>
           </div>,
           { duration: 5000, position: 'top-center' }
@@ -158,18 +124,11 @@ export const TaskCard = ({
         toast.success("Subtask completed!");
       }
 
-      // 更新任务数据
-      if (onEdit && updatedTask) {
-        onEdit(updatedTask);
-      }
-
-      // 触发子任务完成事件，更新等级条
+      onEdit?.(updatedTask);
       window.dispatchEvent(new CustomEvent('subtaskCompleted'));
-    } catch (error) {
-      console.error("Failed to complete subtask:", error);
-      toast.error(error.response?.data?.message || "Failed to complete subtask");
-
-      // 如果API调用失败，恢复本地状态
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to complete subtask");
       setLocalSubTasks(task.subTasks || []);
     } finally {
       setCompletingSubtask(false);
@@ -177,211 +136,177 @@ export const TaskCard = ({
     }
   };
 
-  /* ------------------------------------------------------------------ */
-  /*  UI Components                                                      */
-  /* ------------------------------------------------------------------ */
-  // Detail modal - shared across all renderings
   const DetailModal = (
     <TaskDetailModal
       isOpen={detailOpen}
       onClose={() => setDetailOpen(false)}
       taskId={task._id}
-      onTaskUpdated={(updatedTask) => {
-        // 如果有onEdit回调，则调用它
-        if (onEdit) {
-          onEdit(updatedTask);
-        }
-      }}
-      onTaskDeleted={(deletedTaskId) => {
-        // 如果有onDelete回调，则调用它
-        if (onDelete) {
-          onDelete(deletedTaskId);
-        }
-        setDetailOpen(false);
-      }}
+      onTaskUpdated={onEdit}
+      onTaskDeleted={id => { onDelete(id); setDetailOpen(false); }}
     />
   );
 
-  // 首字母大写的辅助函数
-  const capitalizeFirstLetter = (string) => {
-    if (!string) return '';
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  };
-
-  // Category indicator - left side of the card
-  const LeftTag = (
-    <div
-      className="w-1/6 bg-gray-100 bg-opacity-50 flex items-center justify-center"
-    >
-      <span
-        className="whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium flex items-center gap-1"
-      >
-        <CategoryIcon size={16} className={typeStyles.textColor} />
-        <span className={typeStyles.textColor}>{capitalizeFirstLetter(task.category) || "Task"}</span>
-      </span>
-    </div>
-  );
-
-  // Subtasks list
-  const SubTasks =
-    localSubTasks?.length > 0 ? (
-      <div className="mb-4">
-        <div className="mb-2 font-semibold text-gray-800">Subtasks</div>
-        <ul>
-          {localSubTasks.map((sub, idx) => (
-            <li key={idx} className="mb-1 flex items-center">
-              <div
-                className="cursor-pointer mr-2"
-                onClick={() => {
-                  if (sub.status !== "completed") {
-                    handleSubtaskComplete(idx);
-                  }
-                }}
-              >
-                {sub.status === "completed" ? (
-                  <CheckSquare className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Square className="h-4 w-4 text-gray-400" />
-                )}
-              </div>
-              <span
-                className={
-                  sub.status === "completed" ? "line-through text-gray-400" : ""
-                }
-              >
-                {sub.title}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    ) : null;
-
-  /* ------------------------------------------------------------------ */
-  /*  Render Branches                                                    */
-  /* ------------------------------------------------------------------ */
-
-  // EXPIRED MODE
+  // 已过期模式
   if (isExpired) {
     return (
-      <div
-        className={`card expires relative flex h-40 flex-col items-center justify-center p-4 text-sm transition-shadow hover:shadow-lg ${className}`}
-      >
-        <div className="absolute top-0 right-0 rounded-bl bg-red-600 px-3 py-1 text-sm font-bold text-white">
-          Expired
+      <div className={`flex overflow-hidden relative rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}>
+        {/* 左侧色条：红色表示过期 */}
+        <div className="w-1.5 md:w-2 flex-shrink-0 bg-red-500" />
+        <div className="relative w-full p-4 flex flex-col items-center justify-center">
+          {/* 红色角标 */}
+          <div className="absolute top-0 right-0 bg-red-500 px-2 py-1 text-xs font-bold text-white">
+            Expired
+          </div>
+          <h3 className="mb-4 mt-2 text-base font-bold text-gray-800 text-center">
+            {task.title}
+          </h3>
+          <button
+            onClick={() => onDelete(task._id)}
+            className="rounded bg-red-500 px-4 py-1.5 text-sm font-medium text-white shadow hover:bg-red-600 transition-colors"
+          >
+            Delete
+          </button>
         </div>
-
-        <h3 className="mb-4 truncate text-center text-base font-bold">
-          {task.title}
-        </h3>
-
-        <button
-          onClick={() => onDelete(task._id)}
-          className="rounded bg-red-500 px-4 py-2 font-semibold text-white shadow hover:bg-red-600"
-        >
-          Delete
-        </button>
       </div>
     );
   }
 
-  // EQUIPPED MODE (active slot)
+  // 装备中模式
   if (isEquipped) {
     return (
       <>
         <div
-          className={`flex h-full overflow-hidden rounded-lg border border-gray-300 bg-white bg-opacity-40 shadow-lg transition-all duration-300 ${className}`}
+          className={`flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md ${task.type==='short' ? 'hover:bg-purple-50' : 'hover:bg-blue-50'} transition-all duration-300 ${className}`}
           draggable={draggable}
-          onDragStart={(e) => onDragStart?.(e, task)}
+          onDragStart={e => onDragStart?.(e, task)}
         >
-          {LeftTag}
+          {/* 左侧类型色条：短期/连锁 */}
+          <div className={`w-1.5 md:w-2 flex-shrink-0 ${task.type==='short' ? 'bg-purple-500' : 'bg-blue-500'}`}/>
 
-          <div className="relative w-5/6 space-y-4 p-4">
-            {/* title & description */}
-            <div>
-              <h3 className="mb-2 text-lg font-bold text-gray-900">
-                {task.title}
-              </h3>
-              {task.description && (
-                <p className="text-sm text-gray-700">{task.description}</p>
-              )}
-            </div>
-
-            {/* subtasks (if any) */}
-            {SubTasks}
-
-            {/* footer */}
-            <div className="flex justify-between text-xs text-gray-600">
-              <span>
-                Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "None"}
-              </span>
-              <span>Remain: {timeLeft || "-"}</span>
-            </div>
-
-            {/* status badge */}
-            <div className="select-none absolute top-2 right-2 rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+          <div className="relative w-full space-y-2 p-2">
+            {/* 状态徽章 */}
+            <div className={`absolute top-2 right-2 rounded-full px-2 py-1 text-xs font-medium ${statusStyles}`}>
               {task.status}
             </div>
-
-            {/* actions */}
-            <div className="flex items-center space-x-2 pt-2">
-              <button
-                onClick={() => onComplete && onComplete(task._id)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 text-xs rounded"
-              >
-                Complete
-              </button>
+            {/* 标题 & 描述 */}
+            <div>
+              <h3 className="font-bold text-gray-900 line-clamp-1 mt-1">{task.title}</h3>
+              {task.description && (
+                <p className="line-clamp-2 text-xs text-gray-600 mt-1">{task.description}</p>
+              )}
+            </div>
+            {/* 子任务进度 & 列表 */}
+            {localSubTasks.length > 0 && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs font-medium text-gray-700">
+                  <span>Progress</span><span>{progress}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    className={`h-full rounded-full ${
+                      task.type==='short'?'bg-purple-500':'bg-blue-500'
+                    } transition-all duration-300`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <div className="space-y-1 mt-0.5">
+                  {localSubTasks.slice(0, 2).map((sub, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                      {sub.status==="completed" ? (
+                        <CheckSquare className="h-3 w-3 text-green-500 flex-shrink-0" />
+                      ) : (
+                        <Square
+                          className="h-3 w-3 text-gray-400 flex-shrink-0 cursor-pointer hover:text-blue-500"
+                          onClick={() => handleSubtaskComplete(idx)}
+                        />
+                      )}
+                      <span className={`text-xs ${
+                        sub.status==="completed"?"line-through text-gray-400":"text-gray-600"
+                      } line-clamp-1`}>
+                        {sub.title}
+                      </span>
+                    </div>
+                  ))}
+                  {localSubTasks.length > 2 && (
+                    <div
+                      className="text-xs text-blue-500 cursor-pointer hover:text-blue-600 mt-0.5"
+                      onClick={() => setDetailOpen(true)}
+                    >
+                      +{localSubTasks.length - 2} more
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* 底部时间信息 */}
+            <div className="flex justify-between items-center text-xs text-gray-500">
+              <div className="flex items-center">
+                <Calendar className="h-3 w-3 mr-1" />
+                <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date"}</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="h-3 w-3 mr-1" />
+                <span>{timeLeft || "-"}</span>
+              </div>
+            </div>
+            {/* 操作按钮区 */}
+            <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
               <button
                 onClick={() => setDetailOpen(true)}
-                className="text-blue-600 hover:text-blue-800"
+                className="rounded p-1 text-blue-600 hover:bg-blue-100 transition-colors"
+                title="View Details"
               >
-                Check
+                <Info className="h-4 w-4" />
               </button>
-              <button
-                onClick={() => onUnequip && onUnequip(task._id)}
-                className="rounded p-1 text-red-600 transition-colors hover:bg-red-100"
-                title="Unequip Task"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => onComplete?.(task._id)}
+className={`rounded p-1 ${
+task.type==='short' ? 'text-purple-600 hover:bg-purple-100' : 'text-blue-600 hover:bg-blue-100'
+} transition-colors`}
+                  title="Complete Task"
+                >
+                  <CheckSquare className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => onUnequip?.(task._id)}
+                  className="rounded p-1 text-red-600 hover:bg-red-100 transition-colors"
+                  title="Unequip"
+                >
+                  <Trash2 className="h-4 w-4" /> 
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
         {DetailModal}
       </>
     );
   }
 
-  // REPOSITORY MODE (default)
+  // 仓库模式（默认）
   return (
     <>
       <div
-        className={`flex overflow-hidden rounded-lg border border-gray-300 bg-white bg-opacity-40 shadow-lg transition-all duration-300 task-card ${className}`}
+        className={`flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 task-card ${className}`}
         draggable={draggable && task.status !== "completed"}
-        onDragStart={(e) => onDragStart?.(e, task)}
+        onDragStart={e => onDragStart?.(e, task)}
       >
-        {LeftTag}
-
-        <div className="relative w-5/6 space-y-4 p-4">
-          {/* status badge */}
-          <div
-            className={`absolute top-2 right-2 rounded-full px-2 py-1 text-xs font-medium ${statusStyles}`}
-          >
+        {/* 类型色条 */}
+          <div className={`w-1.5 md:w-2 flex-shrink-0 ${task.type==='short'?'bg-purple-500':'bg-blue-500'}`} />
+        <div className="relative w-full space-y-3 p-3">
+          {/* 状态徽章 */}
+          <div className={`absolute top-2 right-2 rounded-full px-2 py-1 text-xs font-medium ${statusStyles}`}>
             {task.status}
           </div>
-
-          {/* title & description */}
+          {/* 标题 & 描述 */}
           <div>
-            <h3 className="mb-2 font-bold text-gray-900">{task.title}</h3>
+            <h3 className="font-bold text-gray-900 line-clamp-1 mt-1">{task.title}</h3>
             {task.description && (
-              <p className="line-clamp-2 text-sm text-gray-600">
-                {task.description}
-              </p>
+              <p className="line-clamp-2 text-xs text-gray-600 mt-1">{task.description}</p>
             )}
           </div>
-
-          {/* progress bar (if subtasks) */}
+          {/* 进度条 */}
           {task.subTasks?.length > 0 && (
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs font-medium text-gray-700">
@@ -389,18 +314,19 @@ export const TaskCard = ({
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-gray-200">
                 <div
-                  className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                  className={`h-full rounded-full ${
+                    task.type==='short'?'bg-purple-500':'bg-blue-500'
+                  } transition-all duration-300`}
                   style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
           )}
-
-          {/* actions */}
+          {/* 操作区 */}
           <div className="flex items-center justify-between pt-2">
             <button
               onClick={() => setDetailOpen(true)}
-              className="rounded p-1 text-blue-600 transition-colors hover:bg-blue-100"
+              className="rounded p-1 text-blue-600 hover:bg-blue-100 transition-colors"
               title="View Details"
             >
               <Info className="h-4 w-4" />
@@ -410,24 +336,23 @@ export const TaskCard = ({
                 <>
                   <button
                     onClick={() => onEquip(task)}
-                    className="rounded p-1 text-purple-600 transition-colors hover:bg-purple-100"
+                    className="rounded p-1 text-blue-600 hover:bg-blue-100 transition-colors"
                     title="Equip Task"
                   >
                     <Award className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => onEdit(task)}
-                    className="rounded p-1 text-blue-600 transition-colors hover:bg-blue-100"
+                    className="rounded p-1 text-blue-600 hover:bg-blue-100 transition-colors"
                     title="Edit Task"
                   >
                     <Edit2 className="h-4 w-4" />
                   </button>
                 </>
               )}
-
               <button
                 onClick={() => onDelete(task._id)}
-                className="rounded p-1 text-red-600 transition-colors hover:bg-red-100"
+                className="rounded p-1 text-red-600 hover:bg-red-100 transition-colors"
                 title="Delete Task"
               >
                 <Trash2 className="h-4 w-4" />
@@ -436,13 +361,11 @@ export const TaskCard = ({
           </div>
         </div>
       </div>
-
       {DetailModal}
     </>
   );
 };
 
-// PropTypes for better type safety and documentation
 TaskCard.propTypes = {
   task: PropTypes.shape({
     _id: PropTypes.string.isRequired,

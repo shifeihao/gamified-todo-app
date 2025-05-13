@@ -398,6 +398,38 @@ const consumeCard = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    获取单张卡片详情
+// @route   GET /api/cards/:id
+// @access  Private
+const getCardById = asyncHandler(async (req, res) => {
+  try {
+    const cardId = req.params.id;
+    
+    // 验证ID格式
+    if (!mongoose.Types.ObjectId.isValid(cardId)) {
+      return res.status(400).json({ message: 'Invalid card ID format' });
+    }
+    
+    // 查找卡片
+    const card = await Card.findById(cardId);
+    
+    // 检查卡片是否存在
+    if (!card) {
+      return res.status(404).json({ message: 'Card not found' });
+    }
+    
+    // 检查卡片是否属于当前用户
+    if (card.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'You do not have permission to view this card' });
+    }
+    
+    res.json(card);
+  } catch (error) {
+    console.error('Error fetching card details:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 export {
   consumeCard,
   getCardInventory,
@@ -405,4 +437,5 @@ export {
   issueWeeklyCards,
   issueRewardCard,
   issueBlankCard,
+  getCardById,
 };

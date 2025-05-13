@@ -1,6 +1,7 @@
 // components/TaskSlots.js
 import React, { useMemo } from 'react';
 import { TaskCard } from './TaskCard';
+import { Plus, Lock } from 'lucide-react';
 
 export const TaskSlots = ({
                             items = [],             // 待填充的任务列表
@@ -34,36 +35,51 @@ export const TaskSlots = ({
     // 动态构建颜色类（text, bg, border）
     const colorMap = {
         purple: {
-            border: 'border-purple-500',
-            borderLite: 'border-purple-400',
+            primary: 'purple',
+            gradientFrom: 'from-purple-400',
+            gradientTo: 'to-indigo-600',
+            border: 'border-purple-200',
+            borderActive: 'border-purple-300',
+            ringColor: 'ring-purple-200',
             text: 'text-purple-500',
             textHover: 'hover:text-purple-600',
             bg: 'bg-purple-50',
             bgHover: 'hover:bg-purple-100',
+            iconBg: 'bg-purple-100',
+            iconColor: 'text-purple-600',
+            shadowColor: 'shadow-purple-100'
         },
         blue: {
-            border: 'border-blue-500',
-            borderLite: 'border-blue-400',
+            primary: 'blue',
+            gradientFrom: 'from-blue-400',
+            gradientTo: 'to-indigo-600',
+            border: 'border-blue-200',
+            borderActive: 'border-blue-300',
+            ringColor: 'ring-blue-200',
             text: 'text-blue-500',
             textHover: 'hover:text-blue-600',
             bg: 'bg-blue-50',
             bgHover: 'hover:bg-blue-100',
+            iconBg: 'bg-blue-100',
+            iconColor: 'text-blue-600',
+            shadowColor: 'shadow-blue-100'
         }
     };
     const theme = colorMap[themeColor] || colorMap.purple;
 
     const handleDragOver = e => {
         e.preventDefault();
-        e.currentTarget.classList.add(theme.bg);
+        // 拖拽悬停时添加更明显的视觉反馈
+        e.currentTarget.classList.add(theme.bg, theme.borderActive, 'ring-2', theme.ringColor);
     };
 
     const handleDragLeave = e => {
-        e.currentTarget.classList.remove(theme.bg);
+        e.currentTarget.classList.remove(theme.bg, theme.borderActive, 'ring-2', theme.ringColor);
     };
 
     const handleDrop = (e, idx) => {
         e.preventDefault();
-        e.currentTarget.classList.remove(theme.bg);
+        e.currentTarget.classList.remove(theme.bg, theme.borderActive, 'ring-2', theme.ringColor);
         try {
             const data = JSON.parse(e.dataTransfer.getData('task'));
             if (data.status === 'completed') return;
@@ -81,19 +97,17 @@ export const TaskSlots = ({
                         onDragLeave={handleDragLeave}
                         onDrop={e => handleDrop(e, idx)}
                         className={`
-    relative ${slotHeight} w-full rounded-xl transition-all duration-300
-    border-l-4 p-2
-    ${task
-                            ? `${theme.border} shadow-[0_6px_10px_rgba(0,0,0,0.06)] bg-white`
+                          relative ${slotHeight} w-full rounded-xl transition-all duration-300
+                          ${task
+                            ? 'bg-white shadow-md'
                             : `
-        ${theme.borderLite} bg-white
-        hover:${theme.bg}
-        hover:shadow-lg hover:shadow-${themeColor}-200
-        hover:-translate-y-[2px]
-        shadow-sm
-      `
-                        }
-  `}
+                              border border-dashed ${theme.border} bg-white/80 backdrop-blur-sm
+                              hover:${theme.bg}
+                              hover:shadow-lg hover:${theme.shadowColor}
+                              hover:-translate-y-[2px]
+                              shadow-sm
+                            `}
+                        `}
                     >
                         {task ? (
                             <TaskCard
@@ -108,35 +122,44 @@ export const TaskSlots = ({
                         ) : (
                             <button
                                 onClick={() => onCreate?.(idx)}
-                                className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center
-                            ${theme.text} ${theme.textHover} transition-all`}
+                                className={`group absolute inset-0 w-full h-full flex flex-col items-center justify-center
+                                ${theme.text} transition-all`}
                             >
-                                {renderCreateContent?.()}
+                                <div className={`${theme.iconBg} ${theme.iconColor} w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                    <Plus className="w-5 h-5" />
+                                </div>
+                                <p className={`text-sm ${theme.text} group-hover:${theme.textHover}`}>Create New Task</p>
+                                <p className="text-xs text-gray-400 mt-1">Slot {idx + 1}</p>
                             </button>
+                        )}
+                        
+                        {/* 添加槽位序号指示器 */}
+                        {task && (
+                            <div className={`absolute -bottom-2 -right-2 w-5 h-5 rounded-full ${theme.iconBg} ${theme.iconColor} text-xs flex items-center justify-center shadow-sm`}>
+                                {idx + 1}
+                            </div>
                         )}
                     </div>
                 ) : (
                     <div
                         key={idx}
                         className={`
-              ${slotHeight} w-full rounded-xl bg-gray-100
-              flex items-center justify-center text-gray-400
-              shadow-inner
-            `}
+                          ${slotHeight} w-full rounded-xl bg-gray-50
+                          border border-gray-200
+                          flex flex-col items-center justify-center
+                          shadow-sm
+                          relative
+                        `}
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                  d="M12 11c1.657 0 3-1.343 3-3V5a3 3 0 10-6 0v3c0 1.657 1.343 3 3 3z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                  d="M5 11h14a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2z" />
-                        </svg>
-                        <p className="ml-2">locked</p>
+                        <div className="flex flex-col items-center justify-center gap-2">
+                            <div className="bg-gray-100 rounded-full p-2.5 border border-gray-200">
+                                <Lock className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-sm text-gray-500">Slot Locked</p>
+                                <p className="text-xs text-gray-400 mt-1">Reach level {idx + 2} to unlock</p>
+                            </div>
+                        </div>
                     </div>
                 )
             )}

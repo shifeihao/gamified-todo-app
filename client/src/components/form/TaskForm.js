@@ -12,6 +12,7 @@ export const TaskForm = ({
   taskType = 'short',
   defaultDueDateTime = '',
   disableSubmit = false,
+  onChange = null
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -55,6 +56,23 @@ export const TaskForm = ({
   useEffect(() => {
     initializeForm();
   }, [initializeForm]);
+
+  // Notify parent component of form value changes
+  useEffect(() => {
+    if (onChange) {
+      const formData = {
+        title: title.trim(),
+        description: description.trim(),
+        subTasks: subTasks.map(st => ({
+          title: st.title,
+          dueDate: st.dueDate ? new Date(st.dueDate).toISOString() : null
+        })),
+        dueDate,
+        status: initialData?.status || 'pending'
+      };
+      onChange(formData);
+    }
+  }, [title, description, subTasks, dueDate, initialData?.status, onChange]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -101,71 +119,103 @@ export const TaskForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <label htmlFor="title" className="block mb-1 font-medium">Title *</label>
-        <input
-          id="title"
-          type="text"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          className={`w-full px-3 py-2 border rounded ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
-        />
-        {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title}</p>}
-        <label htmlFor="description" className="block mt-4 mb-1 font-medium">Description</label>
-        <textarea
-          id="description"
-          rows="3"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          className="w-full px-3 py-2 border rounded border-gray-300"
-        />
+      <div className="bg-white rounded-lg">
+        <div className="mb-4">
+          <label htmlFor="title" className="block mb-1 font-medium text-gray-700">Title *</label>
+          <input
+            id="title"
+            type="text"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="Enter task title"
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
+          />
+          {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title}</p>}
+        </div>
+        
+        <div className="mb-4">
+          <label htmlFor="description" className="block mb-1 font-medium text-gray-700">Description</label>
+          <textarea
+            id="description"
+            rows="3"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Enter task description (optional)"
+            className="w-full px-3 py-2 border rounded-md shadow-sm border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <h3 className="font-medium mb-2">Schedule</h3>
-        <label htmlFor="dueDate" className="block mb-1 flex items-center">
-          <CalendarDays className="mr-2" /> Due Date
-        </label>
+      <div className="bg-white rounded-lg">
+        <h3 className="font-medium mb-2 text-gray-700">Schedule</h3>
+        <div className="flex items-center mb-4">
+          <CalendarDays className="mr-2 h-5 w-5 text-gray-500" />
+          <label htmlFor="dueDate" className="font-medium text-gray-700">Due Date</label>
+        </div>
         <input
           id="dueDate"
           type="date"
           value={taskType === 'short' ? getTomorrowDate() : dueDate}
           onChange={e => setDueDate(e.target.value)}
-          className="w-full px-3 py-2 border rounded border-gray-300"
+          className="w-full px-3 py-2 border rounded-md shadow-sm border-gray-300 focus:ring-blue-500 focus:border-blue-500"
           disabled={taskType === 'short'}
         />
         {taskType === 'short' && (
-          <p className="text-gray-500 text-sm mt-1">Valid for 24 hours after being equipped</p>
+          <div className="flex items-center mt-2 text-gray-600 text-sm">
+            <Clock className="h-4 w-4 mr-2 text-gray-500" />
+            <span>Daily quests are valid for 24 hours after being equipped</span>
+          </div>
         )}
       </div>
 
       {taskType === 'long' && (
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-medium">Subtasks</h3>
-            <button type="button" onClick={addSubTask} className="text-primary-600 flex items-center">
-              <PlusCircle className="mr-1" /> Add
+        <div className="bg-white rounded-lg">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-medium text-gray-700">Quest Steps</h3>
+            <button 
+              type="button" 
+              onClick={addSubTask} 
+              className="text-blue-600 hover:text-blue-700 flex items-center text-sm font-medium"
+            >
+              <PlusCircle className="mr-1 h-4 w-4" /> Add Step
             </button>
           </div>
-          {subTasks.length === 0 && <p className="text-gray-500 text-sm">No subtasks yet</p>}
-          <div className="space-y-2">
+          
+          {subTasks.length === 0 && (
+            <div className="text-gray-500 text-sm p-4 bg-gray-50 rounded-md border border-dashed border-gray-300 text-center mb-4">
+              No quest steps yet. Add steps to break down your quest into manageable parts.
+            </div>
+          )}
+          
+          <div className="space-y-3">
             {subTasks.map((st, i) => (
-              <div key={st.id} className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={st.title}
-                  onChange={e => updateSubTask(i, 'title', e.target.value)}
-                  placeholder={`Step ${i+1}`}
-                  className="flex-grow px-3 py-2 border rounded border-gray-300"
-                />
-                <input
-                  type="datetime-local"
-                  value={st.dueDate || ''}
-                  onChange={e => updateSubTask(i, 'dueDate', e.target.value)}
-                  className="px-3 py-2 border rounded border-gray-300"
-                />
-                <button type="button" onClick={() => removeSubTask(i)}>
-                  <Trash2 />
+              <div key={st.id} className="flex items-center space-x-2 p-3 bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex-grow">
+                  <input
+                    type="text"
+                    value={st.title}
+                    onChange={e => updateSubTask(i, 'title', e.target.value)}
+                    placeholder={`Step ${i+1}`}
+                    className="w-full px-3 py-2 border rounded-md shadow-sm border-gray-300 focus:ring-blue-500 focus:border-blue-500 mb-2"
+                  />
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 text-gray-500 mr-1" />
+                    <span className="text-xs text-gray-600 mr-2">Deadline:</span>
+                    <input
+                      type="date"
+                      value={st.dueDate?.split('T')[0] || ''}
+                      onChange={e => updateSubTask(i, 'dueDate', e.target.value)}
+                      className="text-sm px-2 py-1 border rounded-md shadow-sm border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => removeSubTask(i)}
+                  className="p-1 text-red-500 hover:text-red-700 rounded-full hover:bg-red-50"
+                  title="Remove step"
+                >
+                  <Trash2 className="h-5 w-5" />
                 </button>
               </div>
             ))}
@@ -173,19 +223,35 @@ export const TaskForm = ({
         </div>
       )}
 
-      <div className="flex justify-end space-x-3">
+      <div className="flex justify-end space-x-3 pt-4">
         {onCancel && (
-          <button type="button" onClick={onCancel} disabled={loading} className="px-4 py-2 border rounded">
-            <XCircle className="inline mr-1" /> Cancel
+          <button 
+            type="button" 
+            onClick={onCancel} 
+            disabled={loading} 
+            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
+          >
+            <XCircle className="h-4 w-4 mr-1" /> Back
           </button>
         )}
         <button 
           type="submit" 
           disabled={isButtonDisabled} 
-          className={`px-4 py-2 text-white rounded flex items-center ${isButtonDisabled ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary-600 hover:bg-primary-700'}`}
+          className={`px-4 py-2 rounded-md shadow-sm text-white flex items-center ${
+            isButtonDisabled 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+          }`}
           title={disableSubmit ? 'You must select a card to create a task' : ''}
         >
-          {loading ? 'Processing...' : (<><Save className="inline mr-1"/> {initialData ? 'Save' : 'Create'}</>)}
+          {loading ? (
+            <>Processing...</>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-1"/> 
+              {initialData ? 'Save Changes' : 'Create Task'}
+            </>
+          )}
         </button>
       </div>
     </form>
