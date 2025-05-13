@@ -6,3 +6,8 @@ export const fetchAchievements = () => {
     return res.data;
   });
 };
+
+// 检查并解锁成就
+export const checkAchievements = () => {
+  return axios.post("/achievements/check").then((res) => res.data);
+};

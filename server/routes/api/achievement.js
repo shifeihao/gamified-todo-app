@@ -8,7 +8,6 @@ import {
   getUnlockedAchievements,
   triggerAchievementCheck,
   resetAchievementsForUser,
-  getUserStatistics,
 } from "../../controllers/achievementController.js";
 
 const router = express.Router();
@@ -17,8 +16,6 @@ const router = express.Router();
 router.get("/", protect, getAllAchievements);
 // ✅ 获取当前用户已解锁的成就
 router.get("/unlocked", protect, getUnlockedAchievements);
-// ✅ 获取当前用户记录信息
-router.get("/stat", protect, getUserStatistics);
 // ✅ 成就检测测试
 router.post("/check", protect, triggerAchievementCheck);
 // ✅ 清空该用户的成就记录（测试用）

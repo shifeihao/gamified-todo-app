@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { fetchAchievements } from "../services/achievement.js";
-import { fetchUserStat } from "../services/userStat.js";
+import {
+  fetchAchievements,
+  checkAchievements,
+} from "../services/achievement.js";
+import { fetchUserStat, syncUserStat } from "../services/userStat.js";
 import AchievementSidebar from "../components/AchievementSidebar.js";
 import OverviewTab from "../components/OverviewTab.js";
 import CategoryTab from "../components/CategoryTab.js";
 import { Navbar } from "../components/navbar/Navbar.js";
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from "../contexts/ToastContext";
 
 const AchievementCenterPage = () => {
   const [achievements, setAchievements] = useState([]);
@@ -16,6 +19,10 @@ const AchievementCenterPage = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
+        await syncUserStat(); // 同步用户状态
+        console.log("✅ 同步用户状态成功");
+        await checkAchievements(); // ✅  解锁
+        console.log("✅ 成就检测成功");
         const [achievements, stats] = await Promise.all([
           fetchAchievements(),
           fetchUserStat(),
@@ -24,7 +31,7 @@ const AchievementCenterPage = () => {
         setUserStats(stats);
       } catch (error) {
         console.error("❌ 获取数据失败:", error);
-        showError('获取成就数据失败');
+        showError("获取成就数据失败");
       }
     };
     fetchAll();
