@@ -190,7 +190,8 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
       
-      const { task: updatedTask, reward } = response.data;
+      // 只有在response.data存在时才解构
+      const { task: updatedTask, reward } = response.data || {};
       
       if (updatedTask) {
         setTask(updatedTask);
@@ -198,7 +199,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
           onTaskUpdated(updatedTask);
         }
         
-        // Show reward information
+        // 显示奖励信息
         if (reward) {
           const { expGained, goldGained, leveledUp, newLevel } = reward;
           
@@ -221,15 +222,47 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             </div>,
             { duration: 5000, position: 'top-center' }
           );
+        } else {
+          // 如果没有奖励数据，显示基本完成信息
+          const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
+          const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
+          
+          console.log(`任务完成但无奖励数据，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
+          
+          toast.success(
+            <div className="flex flex-col space-y-1">
+              <span className="font-semibold text-sm">Task Completed!</span>
+              <div className="flex items-center">
+                <span className="text-yellow-500 mr-1">🏅</span>
+                <span className="text-xs">
+                  Earned <span className="font-bold text-yellow-600">{defaultXp} XP</span>
+                  and <span className="font-bold text-amber-500">{defaultGold} Gold</span>
+                </span>
+              </div>
+            </div>,
+            { duration: 5000, position: 'top-center' }
+          );
         }
         
-        // Trigger task completion event
+        // 任务完成后关闭详情模态框
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+        
+        // 触发任务完成事件
         window.dispatchEvent(new CustomEvent('taskCompleted'));
-        onClose();
+      } else {
+        // 返回的数据不包含更新后的任务，可能是部分成功
+        console.warn("任务可能部分完成，但未返回更新后的任务数据");
+        toast.success("Task appears to be completed");
+        setTimeout(() => onClose(), 1000);
       }
     } catch (err) {
       console.error('Failed to complete task:', err);
-      toast.error(err.response?.data?.message || 'Failed to complete task');
+      const errorMessage = err.response?.data?.message || 'Failed to complete task';
+      toast.error(errorMessage);
+      // 即使出错，也更新UI状态
+      setLoading(false);
     } finally {
       setLoading(false);
     }

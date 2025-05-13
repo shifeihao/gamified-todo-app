@@ -19,6 +19,7 @@ const scheduleDailyCardReset = () => {
             type: 'blank',
             title: '空白卡片',
             description: '可用于创建任意类型的任务',
+            taskDuration: 'short', // 添加taskDuration属性，指定为短期卡片
             issuedAt: new Date()
           })
         ));

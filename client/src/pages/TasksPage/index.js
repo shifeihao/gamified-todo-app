@@ -207,15 +207,16 @@ const TasksPage = () => {
       // 清除编辑任务状态，确保不会带入到新建任务中
       setEditingTask(null);
       
-      // 检查是否成功完成任务
-      if (!response || response.success === false) {
-        // 任务完成失败处理
-        showError(response?.message || "获取任务数据失败");
+      // 检查是否任务明确失败（有失败标记且没有任务数据）
+      if (response && response.success === false && !response.task) {
+        // 明确的任务完成失败处理
+        showError(response?.message || "任务完成失败");
         console.error("任务完成失败:", response);
         return;
       }
       
-      const { task, reward } = response;
+      // 从这里往下，我们认为任务完成成功或至少部分成功，只要有task或reward数据
+      const { task, reward } = response || {};
       
       // 显示更详细的完成信息和奖励通知
       if (reward) {
@@ -300,27 +301,42 @@ const TasksPage = () => {
       // 清除编辑任务状态，确保不会带入到新建任务中
       setEditingTask(null);
       
-      if (response.success) {
-        const { task, reward } = response;
-        if (reward) {
-          showTaskCompletedToast(task.title, reward.expGained, reward.goldGained);
-          console.log(`长期任务完成奖励: ${reward.expGained} XP, ${reward.goldGained} Gold`);
-        }
-
-        // 触发等级更新事件
-        window.dispatchEvent(new CustomEvent(TASK_COMPLETED_EVENT));
-
-        // 确保任务完成后自动卸下任务
-        if (task && task._id) {
-          try {
-            await unequipTaskService(task._id, user.token);
-            console.log("Successfully unequipped long task after completion");
-          } catch (err) {
-            console.error("Failed to unequip completed long task:", err);
-          }
-        }
+      // 检查是否任务明确失败（有失败标记且没有任务数据）
+      if (response && response.success === false && !response.task) {
+        // 明确的任务完成失败处理
+        showError(response?.message || "完成长期任务失败");
+        console.error("长期任务完成失败:", response);
+        return;
+      }
+      
+      // 从这里往下，我们认为任务完成成功或至少部分成功
+      const { task, reward } = response || {};
+      
+      if (reward) {
+        showTaskCompletedToast(task?.title || "长期任务", reward.expGained, reward.goldGained);
+        console.log(`长期任务完成奖励: ${reward.expGained} XP, ${reward.goldGained} Gold`);
+      } else if (task) {
+        // 如果没有奖励信息但有任务信息，使用默认值
+        const defaultXp = task.experienceReward || 30;
+        const defaultGold = task.goldReward || 15;
+        
+        console.log(`长期任务无奖励信息，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
+        showTaskCompletedToast(task.title, defaultXp, defaultGold);
       } else {
-        showError("Failed to complete long task");
+        showSuccess("长期任务完成");
+      }
+
+      // 触发等级更新事件
+      window.dispatchEvent(new CustomEvent(TASK_COMPLETED_EVENT));
+
+      // 确保任务完成后自动卸下任务
+      if (task && task._id) {
+        try {
+          await unequipTaskService(task._id, user.token);
+          console.log("Successfully unequipped long task after completion");
+        } catch (err) {
+          console.error("Failed to unequip completed long task:", err);
+        }
       }
       
       // 更新任务列表

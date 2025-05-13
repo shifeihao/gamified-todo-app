@@ -3,18 +3,66 @@
 import User from "../models/User.js";
 import Level from "../models/Level.js";
 import Task from "../models/Task.js";
-import { calculateReward } from "../utils/TaskRewardCalcultor.js";
+import { calculateReward } from "../utils/TaskRewardCalculator.js";
 import { SyncTaskHistory, SyncUser } from "../utils/userStatsSync.js";
 
 // 处理任务完成，给予经验和金币奖励
 export const handleTaskCompletion = async (req) => {
   try {
-    const userId = req.user._id;
     const { taskId } = req.body;
+    const userId = req.user._id;
+    
+    // Get the task and verify it exists and belongs to the user
+    const task = await Task.findOne({
+      _id: taskId,
+      user: userId,
+    }).populate("cardUsed");
+
+    if (!task) {
+      return {
+        success: false,
+        message: "Task not found",
+      };
+    }
+    
+    if (task.status === "completed") {
+      // 任务已经完成，但可能奖励尚未处理
+      if (task.rewardClaimed) {
+        return {
+          success: false,
+          message: "This task is already completed and rewards have been claimed",
+        };
+      }
+    }
+    
+    // Rest of the function continues... 
+    // 确保计算奖励时使用正确的倍率
+    let cardBonus = { experienceMultiplier: 1, goldMultiplier: 1 };
+    
+    // 如果使用了卡片，获取其奖励倍率
+    if (task.cardUsed) {
+      cardBonus = task.cardUsed.bonus || cardBonus;
+      console.log(`使用了卡片 ${task.cardUsed._id}，奖励倍率: XP=${cardBonus.experienceMultiplier}x, Gold=${cardBonus.goldMultiplier}x`);
+    }
+    
+    // 实际奖励计算必须使用任务本身存储的奖励值，而不是硬编码的值
+    // 这样ensures that the correct reward is calculated based on the task type and card bonuses
+    const baseExperience = task.experienceReward || (task.type === 'long' ? 30 : 10);
+    const baseGold = task.goldReward || (task.type === 'long' ? 15 : 5);
+    
+    // 确保使用正确的奖励计算函数计算最终奖励值
+    const { experience: finalExp, gold: finalGold } = calculateReward(
+      baseExperience,
+      baseGold,
+      cardBonus
+    );
+    
+    console.log(`计算的任务奖励：基础值 XP=${baseExperience}, Gold=${baseGold}，最终值 XP=${finalExp}, Gold=${finalGold}`);
+    
+    // Continue with the rest of the function...
 
     console.log(`开始处理任务完成 - 任务ID: ${taskId}, 用户ID: ${userId}`);
 
-    const task = await Task.findById(taskId).populate("cardUsed");
     if (!task || task.user.toString() !== userId.toString()) {
       console.error(`任务无效或不属于当前用户 - 任务ID: ${taskId}, 用户ID: ${userId}`);
       return {

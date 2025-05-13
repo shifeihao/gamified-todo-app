@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import Card from "../models/Card.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
-import { calculateReward } from "../utils/TaskRewardCalcultor.js";
+import { calculateReward } from "../utils/TaskRewardCalculator.js";
 import { checkCardNumber } from "../utils/userStatsSync.js";
 import { calculateAndProcessDrops } from '../services/dropService.js';
 import { Monster } from '../models/Monster.js';
@@ -12,6 +12,21 @@ import { Monster } from '../models/Monster.js';
 // @access  Private
 const getCardInventory = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).populate("cardInventory");
+  
+  // 检查是否禁止自动发放卡片的标志
+  const noAutoIssue = req.query.noAutoIssue === "true";
+  
+  // 检查是否是新用户标志
+  const isNewUser = req.query.isNewUser === "true";
+
+  // 计算当前的短期和长期卡片数量
+  const currentShortCards = user.cardInventory.filter(
+    card => card.type === "blank" && card.taskDuration === "short" && !card.used
+  ).length;
+  
+  const currentLongCards = user.cardInventory.filter(
+    card => card.type === "blank" && card.taskDuration === "long" && !card.used
+  ).length;
 
   // 检查并重置每日卡片配额（短期卡片）
   const today = new Date().setHours(0, 0, 0, 0);
@@ -19,29 +34,33 @@ const getCardInventory = asyncHandler(async (req, res) => {
     ? new Date(user.dailyCards.lastIssued).setHours(0, 0, 0, 0)
     : null;
 
-  // 如果今天还没发放过卡片，发放新的短期卡片
-  if (lastIssued !== today) {
+  // 如果今天还没发放过卡片，并且没有禁止自动发放，发放新的短期卡片
+  // 对于非新用户，不考虑已有卡片数量；对于新用户，确保刚好有3张
+  if (lastIssued !== today && !noAutoIssue && (!isNewUser || currentShortCards < 3)) {
     console.log("今日未发放短期卡片，准备清理旧卡片并发放新卡片");
 
-    // 1. 删除所有已有的短期卡片（如果有）
-    // 找出所有属于该用户、类型为blank、持续时间为short的卡片ID
-    const shortCardIds = user.cardInventory
-      .filter((card) => card.type === "blank" && card.taskDuration === "short")
-      .map((card) => card._id);
+    // 只有对于新用户才清理旧卡片，确保数量正好为3
+    if (isNewUser && currentShortCards > 0) {
+      // 1. 删除所有已有的短期卡片（如果有）
+      // 找出所有属于该用户、类型为blank、持续时间为short的卡片ID
+      const shortCardIds = user.cardInventory
+        .filter((card) => card.type === "blank" && card.taskDuration === "short")
+        .map((card) => card._id);
 
-    if (shortCardIds.length > 0) {
-      // 从用户的库存中移除这些短期卡片
-      user.cardInventory = user.cardInventory.filter(
-        (card) => !shortCardIds.includes(card._id)
-      );
+      if (shortCardIds.length > 0) {
+        // 从用户的库存中移除这些短期卡片
+        user.cardInventory = user.cardInventory.filter(
+          (card) => !shortCardIds.includes(card._id)
+        );
 
-      // 从数据库中删除这些卡片
-      await Card.deleteMany({
-        _id: { $in: shortCardIds },
-        user: user._id,
-      });
+        // 从数据库中删除这些卡片
+        await Card.deleteMany({
+          _id: { $in: shortCardIds },
+          user: user._id,
+        });
 
-      console.log(`删除了${shortCardIds.length}张旧的短期卡片`);
+        console.log(`删除了${shortCardIds.length}张旧的短期卡片`);
+      }
     }
 
     // 2. 创建3张新的短期卡片
@@ -75,40 +94,51 @@ const getCardInventory = asyncHandler(async (req, res) => {
   const lastWeeklyIssued = user.weeklyCards?.lastIssued
     ? new Date(user.weeklyCards.lastIssued)
     : null;
-
+  
   // 判断是否需要刷新周卡
+  // 只有在以下情况才刷新:
+  // 1. 是周一 且
+  // 2. (不是新用户 或 新用户但长期卡片少于3张) 且
+  // 3. 上次发放卡片时间不是本周 且
+  // 4. 没有禁止自动发放
   const needWeeklyRefresh =
     isWeeklyRefreshDay &&
+    (!isNewUser || currentLongCards < 3) &&
     (!lastWeeklyIssued ||
       lastWeeklyIssued.getDay() !== dayOfWeek ||
-      today2 - lastWeeklyIssued > 7 * 24 * 60 * 60 * 1000);
+      today2 - lastWeeklyIssued > 7 * 24 * 60 * 60 * 1000) &&
+    !noAutoIssue;
 
+  // 如果需要刷新周卡，则发放新的长期卡片
   if (needWeeklyRefresh) {
     console.log("本周未发放长期卡片，准备清理旧卡片并发放新卡片");
 
-    // 1. 删除所有已有的长期卡片（类型为blank，持续时间为long）
-    const longCardIds = user.cardInventory
-      .filter((card) => card.type === "blank" && card.taskDuration === "long")
-      .map((card) => card._id);
+    // 只有对于新用户才清理旧卡片，确保数量正好为3
+    if (isNewUser && currentLongCards > 0) {
+      // 1. 删除所有已有的长期卡片（类型为blank，持续时间为long）
+      const longCardIds = user.cardInventory
+        .filter((card) => card.type === "blank" && card.taskDuration === "long")
+        .map((card) => card._id);
 
-    if (longCardIds.length > 0) {
-      // 从用户的库存中移除这些长期卡片
-      user.cardInventory = user.cardInventory.filter(
-        (card) => !longCardIds.includes(card._id)
-      );
+      if (longCardIds.length > 0) {
+        // 从用户的库存中移除这些长期卡片
+        user.cardInventory = user.cardInventory.filter(
+          (card) => !longCardIds.includes(card._id)
+        );
 
-      // 从数据库中删除这些卡片
-      await Card.deleteMany({
-        _id: { $in: longCardIds },
-        user: user._id,
-      });
+        // 从数据库中删除这些卡片
+        await Card.deleteMany({
+          _id: { $in: longCardIds },
+          user: user._id,
+        });
 
-      console.log(`删除了${longCardIds.length}张旧的长期卡片`);
+        console.log(`删除了${longCardIds.length}张旧的长期卡片`);
+      }
     }
 
-    // 2. 创建2张新的长期卡片
+    // 2. 创建3张新的长期卡片
     const longCards = await Promise.all(
-      [...Array(2)].map(() =>
+      [...Array(3)].map(() =>
         Card.create({
           user: user._id,
           type: "blank",
@@ -129,7 +159,7 @@ const getCardInventory = asyncHandler(async (req, res) => {
     }
     user.weeklyCards.lastIssued = new Date();
 
-    console.log("成功发放2张新的长期卡片");
+    console.log("成功发放3张新的长期卡片");
   }
 
   // 保存用户信息
@@ -163,6 +193,7 @@ const getCardInventory = asyncHandler(async (req, res) => {
 // @access  Private
 const issueDailyCards = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
+  const isNewRegistration = req.query.isNewRegistration === "true";
 
   // 检查是否已发放
   const today = new Date().setHours(0, 0, 0, 0);
@@ -170,9 +201,37 @@ const issueDailyCards = asyncHandler(async (req, res) => {
     ? new Date(user.dailyCards.lastIssued).setHours(0, 0, 0, 0)
     : null;
 
-  if (lastIssued === today) {
+  if (lastIssued === today && !isNewRegistration) {
     res.status(400);
     throw new Error("今日卡片已发放");
+  }
+
+  // 如果是新注册用户的请求，首先删除所有现有的短期卡片
+  if (isNewRegistration) {
+    console.log("新用户注册初始化短期卡片");
+    // 找出所有属于该用户、类型为blank、持续时间为short的卡片ID
+    const existingShortCards = await Card.find({
+      user: user._id,
+      type: "blank",
+      taskDuration: "short"
+    });
+
+    if (existingShortCards.length > 0) {
+      const shortCardIds = existingShortCards.map(card => card._id);
+      
+      // 从用户的库存中移除这些短期卡片
+      user.cardInventory = user.cardInventory.filter(
+        (cardId) => !shortCardIds.includes(cardId.toString())
+      );
+      
+      // 从数据库中删除这些卡片
+      await Card.deleteMany({
+        _id: { $in: shortCardIds },
+        user: user._id
+      });
+      
+      console.log(`删除了${shortCardIds.length}张旧的短期卡片`);
+    }
   }
 
   // 创建3张空白卡片
@@ -288,24 +347,35 @@ const issueRewardCard = asyncHandler(async (req, res) => {
 // @route   POST /api/cards/issue-blank
 // @access  Private
 const issueBlankCard = asyncHandler(async (req, res) => {
-  const { title = "空白卡片", description = "" } = req.body;
+  const { title = "blank", description = "", taskDuration = "long" } = req.body;
+
+  // 验证 taskDuration 是否有效
+  if (!["short", "long", "general"].includes(taskDuration)) {
+    res.status(400);
+    throw new Error(
+      "无效的任务持续时长：taskDuration 必须为 short、long 或 general"
+    );
+  }
+
+  // 移除对卡片数量的限制，用户可以拥有任意数量的卡片
+  // 注意：新用户的初始卡片数量仍然在AuthContext.js中的initializeUserCards函数中限制为3张
 
   const blankCard = await Card.create({
     user: req.user.id,
     type: "blank",
     title,
     description,
-    taskDuration: "long", //  限定为short卡片
+    taskDuration, // 使用请求中传递的参数
     issuedAt: new Date(),
   });
 
   await User.findByIdAndUpdate(req.user.id, {
     $push: { cardInventory: blankCard._id },
-    $inc: { "dailyCards.blank": 1 }, //  增加每日空白卡计数
+    $inc: { "dailyCards.blank": taskDuration === "short" ? 1 : 0 }, // 只有短期卡片才计入dailyCards.blank计数
   });
 
   res.status(201).json({
-    message: "卡片发放成功",
+    message: `${taskDuration === "short" ? "短期" : "长期"}空白卡片发放成功`,
     card: blankCard,
   });
 });
@@ -511,8 +581,43 @@ const getCardById = asyncHandler(async (req, res) => {
     res.json(card);
   } catch (error) {
     console.error("Error fetching card details:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @desc    删除指定ID的卡片
+// @route   DELETE /api/cards/:id
+// @access  Private
+const deleteCard = asyncHandler(async (req, res) => {
+  const cardId = req.params.id;
+
+  // 验证ID格式
+  if (!mongoose.Types.ObjectId.isValid(cardId)) {
+    return res.status(400).json({ message: "无效的卡片ID格式" });
+  }
+
+  // 查找卡片
+  const card = await Card.findById(cardId);
+
+  // 检查卡片是否存在
+  if (!card) {
+    return res.status(404).json({ message: "卡片不存在" });
+  }
+
+  // 检查卡片是否属于当前用户
+  if (card.user.toString() !== req.user.id) {
+    return res.status(403).json({ message: "您没有权限删除此卡片" });
+  }
+
+  // 删除卡片
+  await Card.findByIdAndDelete(cardId);
+
+  // 从用户的卡片库存中移除这张卡片
+  await User.findByIdAndUpdate(req.user.id, {
+    $pull: { cardInventory: cardId }
+  });
+
+  res.json({ message: "卡片删除成功" });
 });
 
 export {
@@ -523,5 +628,6 @@ export {
   issueRewardCard,
   issueBlankCard,
   getCardById,
-  processDrops
+  processDrops,
+  deleteCard
 };

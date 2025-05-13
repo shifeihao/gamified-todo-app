@@ -10,6 +10,7 @@ import {
   HelpCircle, Loader2, Clock, Calendar, Check, 
   CreditCard, ArrowLeft, ArrowRight, X 
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export const CreateTaskModal = ({
   isOpen,
@@ -26,8 +27,20 @@ export const CreateTaskModal = ({
   
   // Properly calculate initial task type
   const getInitialTaskType = () => {
-    if (initialData?.type) return initialData.type;
-    if (isFromSlot) return defaultType;
+    // 编辑现有任务时，使用其类型
+    if (initialData?.type) {
+      console.log(`编辑现有任务，使用类型: ${initialData.type}`);
+      return initialData.type;
+    }
+    
+    // 从槽位创建任务时，使用槽位类型
+    if (isFromSlot) {
+      console.log(`从槽位创建任务，使用类型: ${defaultType}`); 
+      return defaultType;
+    }
+    
+    // 默认情况
+    console.log(`使用默认类型: ${defaultType}`);
     return defaultType;
   };
 
@@ -53,15 +66,31 @@ export const CreateTaskModal = ({
   const [blankCards, setBlankCards] = useState([]);
   const [rewardCards, setRewardCards] = useState([]);
 
+  // 添加默认类型的输出，帮助调试
+  useEffect(() => {
+    console.log("CreateTaskModal初始化参数:", {
+      isFromSlot,
+      slotIndex,
+      defaultType,
+      initialTaskType: getInitialTaskType()
+    });
+  }, []);
+
   // Effect to initialize task type and handle card selection when task type changes
   useEffect(() => {
-    // Only set initial task type when component first loads or when initialData/defaultType changes
-    if (initialData?.type) {
-      setTaskType(initialData.type);
-    } else if (isFromSlot) {
-      setTaskType(defaultType); // Use the slot's default type when creating from a slot
+    // 严格控制任务类型 - 从槽创建任务时始终使用槽位类型
+    if (isFromSlot && taskType !== defaultType) {
+      console.log(`从槽创建任务，强制使用类型: ${defaultType}`);
+      setTaskType(defaultType);
+      return; // 提前返回，避免重置卡片选择
     }
-    // We don't reset the task type here if the user has manually changed it
+    
+    // 编辑现有任务时总是使用任务原类型
+    if (initialData?.type && taskType !== initialData.type) {
+      console.log(`编辑现有任务，强制使用类型: ${initialData.type}`);
+      setTaskType(initialData.type);
+      return; // 提前返回，避免重置卡片选择
+    }
     
     // Automatically switch to reward cards if blank cards are not available
     const hasShortBlankCards = shortBlankCards > 0;
@@ -84,8 +113,15 @@ export const CreateTaskModal = ({
     setSelectedBlankCard(null);
     setSelectedCard(null);
     
-    // This effect will trigger fetchInventory via the dependency array in that effect
-    // which will then update the card selection based on the new task type
+    // 当任务类型改变时立即重新获取库存
+    // 这会触发依赖于taskType的fetchInventory()
+    if (isOpen && user) {
+      console.log(`任务类型变更为: ${taskType}，重新获取匹配的卡片`);
+      setIsFetchingInventory(true);
+      setTimeout(() => {
+        fetchInventory(); // 手动触发库存获取
+      }, 10);
+    }
   }, [taskType]);
 
   // Effect to handle due date
@@ -115,108 +151,119 @@ export const CreateTaskModal = ({
     }
   }, [isOpen, initialData]);
 
-  // Fetch card inventory
-  useEffect(() => {
-    const fetchInventory = async () => {
-      if (!user || !isOpen) return;
-      setIsFetchingInventory(true);
-      setCardError('');
-      try {
-        const res = await axios.get('/api/cards/inventory', {
-          headers: { Authorization: `Bearer ${user.token}` }
-        });
-        const inventory = res.data.inventory || [];
+  // 添加单独的fetchInventory函数，供手动调用
+  const fetchInventory = async () => {
+    if (!user || !isOpen) return;
+    setIsFetchingInventory(true);
+    setCardError('');
+    try {
+      const res = await axios.get('/api/cards/inventory', {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      const inventory = res.data.inventory || [];
 
-        // Calculate short and long term cards (both blank and reward)
-        const shortBlanks = inventory.filter(c =>
-          c.type === 'blank' &&
-          !c.used &&
-          c.taskDuration === 'short'
-        );
-        
-        const longBlanks = inventory.filter(c =>
-          c.type === 'blank' &&
-          !c.used &&
-          c.taskDuration === 'long'
-        );
-        
-        const shortRewards = inventory.filter(c => 
-          c.type === 'special' && 
-          !c.used && 
-          (c.taskDuration === 'short' || c.taskDuration === 'general')
-        );
-        
-        const longRewards = inventory.filter(c => 
-          c.type === 'special' && 
-          !c.used && 
-          (c.taskDuration === 'long' || c.taskDuration === 'general')
-        );
+      // Calculate short and long term cards (both blank and reward)
+      const shortBlanks = inventory.filter(c =>
+        c.type === 'blank' &&
+        !c.used &&
+        c.taskDuration === 'short'
+      );
+      
+      const longBlanks = inventory.filter(c =>
+        c.type === 'blank' &&
+        !c.used &&
+        c.taskDuration === 'long'
+      );
+      
+      const shortRewards = inventory.filter(c => 
+        c.type === 'special' && 
+        !c.used && 
+        (c.taskDuration === 'short' || c.taskDuration === 'general')
+      );
+      
+      const longRewards = inventory.filter(c => 
+        c.type === 'special' && 
+        !c.used && 
+        (c.taskDuration === 'long' || c.taskDuration === 'general')
+      );
 
-        // Update card count statistics
-        setShortBlankCards(shortBlanks.length);
-        setLongBlankCards(longBlanks.length);
-        setShortRewardCount(shortRewards.length);
-        setLongRewardCount(longRewards.length);
-        
-        // Get cards for current task type
-        const currentTypeBlankCards = taskType === 'short' ? shortBlanks : longBlanks;
-        const currentTypeRewardCards = taskType === 'short' ? shortRewards : longRewards;
-        
-        // Update card lists
-        setBlankCards(currentTypeBlankCards);
-        setRewardCards(currentTypeRewardCards);
-        setRewardCardCount(currentTypeRewardCards.length);
-        
-        console.log(`${taskType} task available cards - Blank:${currentTypeBlankCards.length}, Reward:${currentTypeRewardCards.length}`);
-        
-        // Card selection logic
-        const hasBlankCards = currentTypeBlankCards.length > 0;
-        const hasRewardCards = currentTypeRewardCards.length > 0;
-        
-        // Check if previously selected cards are still valid
-        const prevSelectedCardStillValid = useReward && selectedCard && 
-          currentTypeRewardCards.some(c => c._id === selectedCard._id);
-        
-        const prevBlankCardStillValid = !useReward && selectedBlankCard && 
-          currentTypeBlankCards.some(c => c._id === selectedBlankCard._id);
-         
-        // 1. If previous selection is still valid, keep it
-        if (prevSelectedCardStillValid || prevBlankCardStillValid) {
-          // Keep current selection
-        }
-        // 2. If no blank cards but reward cards available, auto-switch to reward card mode
-        else if (!hasBlankCards && hasRewardCards) {
-          setUseReward(true);
-          setSelectedCard(currentTypeRewardCards[0]);
-          setSelectedBlankCard(null);
-        } 
-        // 3. If blank cards available and not in reward mode, select blank card
-        else if (hasBlankCards && !useReward) {
-          setSelectedBlankCard(currentTypeBlankCards[0]);
-          setSelectedCard(null);
-        }
-        // 4. If reward cards available and in reward mode, select reward card
-        else if (hasRewardCards && useReward) {
-          setSelectedCard(currentTypeRewardCards[0]);
-          setSelectedBlankCard(null);
-        }
-        // 5. If no cards available, clear all selections
-        else {
-          setSelectedBlankCard(null);
-          setSelectedCard(null);
-        }
-        
-        setIsFetchingInventory(false);
-      } catch (err) {
-        console.error("Failed to obtain card inventory:", err);
-        setCardError("Could not load card inventory.");
-        setIsFetchingInventory(false);
+      // Update card count statistics
+      setShortBlankCards(shortBlanks.length);
+      setLongBlankCards(longBlanks.length);
+      setShortRewardCount(shortRewards.length);
+      setLongRewardCount(longRewards.length);
+      
+      console.log(`当前任务类型: ${taskType}`);
+      console.log(`空白卡数量 - 短期: ${shortBlanks.length}, 长期: ${longBlanks.length}`);
+      console.log(`奖励卡数量 - 短期: ${shortRewards.length}, 长期: ${longRewards.length}`);
+      
+      // Get cards for current task type
+      const currentTypeBlankCards = taskType === 'short' ? shortBlanks : longBlanks;
+      const currentTypeRewardCards = taskType === 'short' ? shortRewards : longRewards;
+      
+      // Update card lists
+      setBlankCards(currentTypeBlankCards);
+      setRewardCards(currentTypeRewardCards);
+      setRewardCardCount(currentTypeRewardCards.length);
+      
+      console.log(`${taskType} task available cards - Blank:${currentTypeBlankCards.length}, Reward:${currentTypeRewardCards.length}`);
+      
+      // Card selection logic
+      const hasBlankCards = currentTypeBlankCards.length > 0;
+      const hasRewardCards = currentTypeRewardCards.length > 0;
+      
+      // Check if previously selected cards are still valid
+      const prevSelectedCardStillValid = useReward && selectedCard && 
+        currentTypeRewardCards.some(c => c._id === selectedCard._id);
+      
+      const prevBlankCardStillValid = !useReward && selectedBlankCard && 
+        currentTypeBlankCards.some(c => c._id === selectedBlankCard._id);
+       
+      // 1. If previous selection is still valid, keep it
+      if (prevSelectedCardStillValid || prevBlankCardStillValid) {
+        // Keep current selection
+        console.log("保持当前卡片选择");
       }
-    };
+      // 2. If no blank cards but reward cards available, auto-switch to reward card mode
+      else if (!hasBlankCards && hasRewardCards) {
+        console.log("没有空白卡片，自动切换到奖励卡片模式");
+        setUseReward(true);
+        setSelectedCard(currentTypeRewardCards[0]);
+        setSelectedBlankCard(null);
+      } 
+      // 3. If blank cards available and not in reward mode, select blank card
+      else if (hasBlankCards && !useReward) {
+        console.log("选择匹配任务类型的空白卡片");
+        setSelectedBlankCard(currentTypeBlankCards[0]);
+        setSelectedCard(null);
+      }
+      // 4. If reward cards available and in reward mode, select reward card
+      else if (hasRewardCards && useReward) {
+        console.log("选择匹配任务类型的奖励卡片");
+        setSelectedCard(currentTypeRewardCards[0]);
+        setSelectedBlankCard(null);
+      }
+      // 5. If no cards available, clear all selections
+      else {
+        console.log("没有可用卡片，清除所有选择");
+        setSelectedBlankCard(null);
+        setSelectedCard(null);
+      }
+      
+      setIsFetchingInventory(false);
+    } catch (err) {
+      console.error("Failed to obtain card inventory:", err);
+      setCardError("Could not load card inventory.");
+      setIsFetchingInventory(false);
+    }
+  };
+
+  // Effect to fetch inventory when modal opens
+  useEffect(() => {
     if (isOpen && user) {
       fetchInventory();
     }
-  }, [isOpen, user, taskType, slotIndex, useReward]);
+  }, [isOpen, user, useReward]);
 
   const resetFormState = () => {
     // 完全重置所有状态
@@ -256,6 +303,14 @@ export const CreateTaskModal = ({
         setCardError('Please select a reward card');
         return;
       }
+
+      // 验证选择的奖励卡是否匹配当前任务类型
+      if (selectedCard.taskDuration !== 'general' && selectedCard.taskDuration !== taskType) {
+        setCardError(`This reward card only supports ${selectedCard.taskDuration === 'short' ? 'Daily Quests' : 'Quest Chains'} but you're creating a ${taskType === 'short' ? 'Daily Quest' : 'Quest Chain'}`);
+        // 触发重新选择卡片
+        fetchInventory();
+        return;
+      }
     } else {
       if (!selectedBlankCard?._id) {
         // If no blank cards but reward cards are available, suggest switching
@@ -264,6 +319,14 @@ export const CreateTaskModal = ({
           return;
         }
         setCardError('No available cards');
+        return;
+      }
+
+      // 验证选择的空白卡是否匹配当前任务类型
+      if (selectedBlankCard.taskDuration !== 'general' && selectedBlankCard.taskDuration !== taskType) {
+        setCardError(`This blank card only supports ${selectedBlankCard.taskDuration === 'short' ? 'Daily Quests' : 'Quest Chains'} but you're creating a ${taskType === 'short' ? 'Daily Quest' : 'Quest Chain'}`);
+        // 触发重新选择卡片
+        fetchInventory();
         return;
       }
     }
@@ -277,6 +340,59 @@ export const CreateTaskModal = ({
         finalDueDate = new Date(formFields.dueDate + "T00:00:00.000Z").toISOString();
       } else {
         finalDueDate = new Date(formFields.dueDate).toISOString();
+      }
+      
+      // 验证长期任务的子任务
+      if (formFields.subTasks && formFields.subTasks.length > 0) {
+        // 检查子任务的标题和截止时间
+        for (let i = 0; i < formFields.subTasks.length; i++) {
+          const subTask = formFields.subTasks[i];
+          
+          // 验证子任务标题
+          if (!subTask.title || subTask.title.trim() === '') {
+            toast.error(
+              <div className="flex flex-col space-y-1">
+                <span className="font-semibold text-sm">Subtask Title Required</span>
+                <div className="text-xs">
+                  All subtasks in the Quest Chain must have a title.
+                </div>
+              </div>,
+              { duration: 5000, position: 'top-center' }
+            );
+            return;
+          }
+          
+          // 验证子任务截止时间
+          if (!subTask.dueDate) {
+            toast.error(
+              <div className="flex flex-col space-y-1">
+                <span className="font-semibold text-sm">Subtask Deadline Required</span>
+                <div className="text-xs">
+                  All subtasks in the Quest Chain must have a deadline.
+                </div>
+              </div>,
+              { duration: 5000, position: 'top-center' }
+            );
+            return;
+          }
+          
+          // 验证子任务截止时间不能晚于主任务截止时间
+          const subTaskDueDate = new Date(subTask.dueDate);
+          const mainTaskDueDate = new Date(finalDueDate);
+          
+          if (subTaskDueDate > mainTaskDueDate) {
+            toast.error(
+              <div className="flex flex-col space-y-1">
+                <span className="font-semibold text-sm">Invalid Subtask Deadline</span>
+                <div className="text-xs">
+                  Subtask #{i+1} deadline cannot be later than the main quest deadline.
+                </div>
+              </div>,
+              { duration: 5000, position: 'top-center' }
+            );
+            return;
+          }
+        }
       }
     }
 

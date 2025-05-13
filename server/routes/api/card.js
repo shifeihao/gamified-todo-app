@@ -3,7 +3,17 @@ const router = express.Router();
 
 import { protect } from '../../middleware/auth.js';
 
-import {consumeCard,processDrops,getCardInventory, issueDailyCards, issueWeeklyCards, issueRewardCard, issueBlankCard,getCardById} from '../../controllers/cardController.js';
+import {
+  consumeCard,
+  processDrops,
+  getCardInventory, 
+  issueDailyCards, 
+  issueWeeklyCards, 
+  issueRewardCard, 
+  issueBlankCard,
+  getCardById,
+  deleteCard
+} from '../../controllers/cardController.js';
 
 // 获取卡片库存
 router.route('/inventory')
@@ -33,8 +43,7 @@ router.route('/process-drops')
   .post(protect, processDrops);    
 
 router.route('/:id')
-  .get(protect, getCardById);
-
-
+  .get(protect, getCardById)
+  .delete(protect, deleteCard);
 
 export default router;  

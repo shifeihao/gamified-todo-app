@@ -1,5 +1,3 @@
-// utils/TaskRewardCalculator.js
-
 export const calculateReward = (baseExp = 0, baseGold = 0, bonus = {}) => {
     const expMultiplier = bonus.experienceMultiplier ?? 1;
     const goldMultiplier = bonus.goldMultiplier ?? 1;
@@ -8,5 +6,4 @@ export const calculateReward = (baseExp = 0, baseGold = 0, bonus = {}) => {
         experience: Math.round(baseExp * expMultiplier),
         gold: Math.round(baseGold * goldMultiplier),
     };
-};
-
+}; 
