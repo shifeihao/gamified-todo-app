@@ -1,8 +1,6 @@
 import { creatLevel } from "./loadLevel.js";
 import { generateTestUser } from "./generateTestUser.js";
 import User from "../models/User.js";
-import dotenv from "dotenv";
-import connectDB from "../config/db.js";
 import mongoose from "mongoose";
 
 // 连接到 MongoDB 数据库
