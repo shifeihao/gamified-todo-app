@@ -67,6 +67,16 @@ export async function SyncTaskHistory(userId) {
       return;
     }
 
+    //统计十分有任务完成，如果没有完成任何任务，直接返回
+    const checkCompletedTasks = taskHistory.filter(
+      (t) => t.status === "Completed" || t.status === "completed"
+    );
+    if (checkCompletedTasks.length === 0) {
+      console.error("❌ 没有完成任何任务");
+      return;
+    }
+
+
     // 正确统计数量
     const completedNum = taskHistory.filter(
       (t) => t.status === "Completed"
@@ -85,8 +95,14 @@ export async function SyncTaskHistory(userId) {
     const sortedByCompletedTime = [...taskHistory]
       .filter((t) => t.completedAt)
       .sort((a, b) => toSeconds(a.completedAt) - toSeconds(b.completedAt));
-    const earlisterComp = toTimeStr(sortedByCompletedTime[0].completedAt);
-    const latestComp = toTimeStr(sortedByCompletedTime.at(-1).completedAt);
+
+    let earlisterComp = null;
+    let latestComp = null;
+
+    if (sortedByCompletedTime.length > 0) {
+      earlisterComp = toTimeStr(sortedByCompletedTime[0].completedAt);
+      latestComp = toTimeStr(sortedByCompletedTime.at(-1).completedAt);
+    }
 
     // 找出持续时间 最长/最短
     const shortTasks = taskHistory.filter(
@@ -101,10 +117,11 @@ export async function SyncTaskHistory(userId) {
     const longLongestTask = getMaxDuration(longTasks);
 
     // 找出用户连续完成任务的天数/连续多少天没有做任务的天数
+    
     // 获取该用户所有“已完成”的任务
     const completedTasks = await TaskHistory.find({
       user: userId,
-      status: { $in: ["completed", "finished", "已完成"] },
+      status: { $in: ["Completed", "finished", "已完成", "completed"] },
       completedAt: { $exists: true },
     });
 
@@ -112,7 +129,6 @@ export async function SyncTaskHistory(userId) {
     const completedDays = new Set(
       completedTasks.map((task) => task.completedAt.toISOString().slice(0, 10))
     );
-
     // 设置 streak（连续完成）
     let streak = 0;
     let current = new Date();
@@ -216,6 +232,12 @@ export async function checkTaskNumber(userId) {
 }
 //删除一个任务，task_deleted_total计数器+1
 export async function addDeletedTasksNum(userId) {
+  // 1. 检查UserStats表是否存在
+  const userStats = await UserStats.findOne({ user: userId });
+  if (!userStats) {
+    console.error("❌ 成就检查失败：未找到该用户的记录", userId);
+    return;
+  }
   await UserStats.updateOne(
     { user: userId }, // 查找条件
     { $inc: { task_deleted_total: 1 } } // 更新内容：将该字段 +1
@@ -223,6 +245,11 @@ export async function addDeletedTasksNum(userId) {
 }
 //编辑一个任务，task_edited_total计数器+1
 export async function addEditedTasksNum(userId) {
+  const userStats = await UserStats.findOne({ user: userId });
+  if (!userStats) {
+    console.error("❌ 成就检查失败：未找到该用户的记录", userId);
+    return;
+  }
   await UserStats.updateOne(
     { user: userId }, // 查找条件
     { $inc: { task_edited_total: 1 } } // 更新内容：将该字段 +1

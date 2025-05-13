@@ -11,7 +11,8 @@ export async function checkAndUnlockAchievements(userId) {
     const stats = await UserStats.findOne({ user: userId });
     if (!stats) {
       console.log("Can not find the user's stats, so canceling checking");
-      return;    }
+      return;
+    }
 
     // 2. 获取用户已解锁的成就 ID 列表
     const unlocked = await UserAchievement.find({ user: userId });
@@ -48,16 +49,12 @@ export async function checkAndUnlockAchievements(userId) {
         default:
           isMet = false;
       }
-      console.log("isMet", isMet);
-      console.log("userId", userId);
-      console.log("achievementName", ach.name);
       if (isMet) {
         await UserAchievement.create({
           user: userId,
           achievementId: ach._id,
           achievementName: ach.name,
         });
-        console.log(`🏆 用户 ${userId} 解锁成就：${ach.name}`);
 
         // 4. 奖励发放
         await User.updateOne(
@@ -71,11 +68,11 @@ export async function checkAndUnlockAchievements(userId) {
             },
           }
         );
-        console.log(
-          `💰 用户 ${userId} 获得奖励：${ach.reward.exp || 0} 经验，${
-            ach.reward.coins || 0
-          } 金币`
-        );
+        // 5. 成就解锁通知
+        console.log("experience+", ach.reward.exp);
+        console.log("gold+", ach.reward.coins);
+        console.log("shortCardSlot+", ach.reward.task_short_slot);
+        console.log("longCardSlot+", ach.reward.task_long_slot);
       }
     }
 

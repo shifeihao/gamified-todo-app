@@ -15,7 +15,8 @@ const AchievementSchema = new mongoose.Schema(
     reward: {
       exp: { type: Number, default: 0 },
       coins: { type: Number, default: 0 },
-      item: { type: String, default: null },
+      task_short_slot: { type: Number, default: 0 },
+      task_long_slot: { type: Number, default: 0 },
     },
     icon: { type: String, default: null },
     isEnabled: { type: Boolean, default: true },

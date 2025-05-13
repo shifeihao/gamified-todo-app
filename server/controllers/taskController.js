@@ -4,8 +4,6 @@ import asyncHandler from "express-async-handler";
 import {
   addDeletedTasksNum,
   addEditedTasksNum,
-  checkTaskNumber,
-  SyncUserStats,
 } from "../utils/userStatsSync.js";
 
 // @desc    获取当前用户的所有任务
@@ -75,7 +73,6 @@ const createTask = async (req, res) => {
     });
 
     res.status(201).json(task);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "服务器错误" });
@@ -238,11 +235,9 @@ const updateTask = async (req, res) => {
       ) {
         task.status = "Overdue";
         await task.save();
-        return res
-          .status(400)
-          .json({
-            message: "The short-term task has expired and cannot be completed",
-          });
+        return res.status(400).json({
+          message: "The short-term task has expired and cannot be completed",
+        });
       }
 
       task.completedAt = task.completedAt || Date.now();
@@ -260,8 +255,8 @@ const updateTask = async (req, res) => {
 
     const updatedTask = await task.save();
 
-
-
+    // 添加编辑任务的统计
+    await addEditedTasksNum(req.user._id);
     // ✅ 最终统一响应
     return res.json({
       message: "任务已更新",
@@ -295,7 +290,8 @@ const deleteTask = async (req, res) => {
     await task.deleteOne();
     res.json({ message: "任务已归档并删除" });
 
-
+    // 更新用户统计数据
+    await addDeletedTasksNum(req.user._id);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "服务器错误" });
