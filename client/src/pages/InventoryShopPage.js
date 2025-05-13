@@ -7,7 +7,7 @@ import {
   buyItem
 } from '../services/inventoryShopService';
 import axios from 'axios';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../context/ToastContext';
 
 const categories = ['全部', '武器', '防具', '消耗品', '材料'];
 

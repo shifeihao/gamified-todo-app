@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Navbar } from '../components/navbar';
 import AuthContext from '../context/AuthContext';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../context/ToastContext';
 
 const ProfilePage = () => {
   const { user, updateProfile, loading, error } = useContext(AuthContext);

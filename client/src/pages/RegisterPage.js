@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from '../context/ToastContext';
 import { AuthNavbar } from '../components/navbar';
 
 const RegisterPage = () => {
