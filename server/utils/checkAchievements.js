@@ -6,26 +6,22 @@ import { checkIfGodAchievementUnlocked } from "./userStatsSync.js";
 
 export async function checkAndUnlockAchievements(userId) {
   try {
-    // 获取UserStats表
-    // 1. 将累计经验、等级、当前金币更新进user统计表
+    // get UserStats
+    // get UserStats and check if it exists
     const stats = await UserStats.findOne({ user: userId });
     if (!stats) {
       console.log("Can not find the user's stats, so canceling checking");
       return;
     }
 
-    // 2. 获取用户已解锁的成就 ID 列表
+    // get UserAchievement
     const unlocked = await UserAchievement.find({ user: userId });
-    // 将解锁的成就里的名字提取出来，方便后续对比
     const unlockedName = unlocked.map((item) => item.achievementName);
-    // 3. 获取所有启用状态的成就模板
     const allAchievements = await Achievement.find({ isEnabled: true });
     for (const ach of allAchievements) {
-      // 跳过已解锁成就
       if (unlockedName.includes(ach.name)) continue;
       const { type, value, op } = ach.logic || {};
       const statValue = stats[type];
-      // 条件判断
       let isMet = false;
       switch (op) {
         case "gte":
@@ -56,7 +52,7 @@ export async function checkAndUnlockAchievements(userId) {
           achievementName: ach.name,
         });
 
-        // 4. 奖励发放
+        // give reward
         await User.updateOne(
           { _id: userId },
           {
@@ -68,7 +64,7 @@ export async function checkAndUnlockAchievements(userId) {
             },
           }
         );
-        // 5. 成就解锁通知
+        // log the reward
         console.log("experience+", ach.reward.exp);
         console.log("gold+", ach.reward.coins);
         console.log("shortCardSlot+", ach.reward.task_short_slot);
@@ -78,6 +74,6 @@ export async function checkAndUnlockAchievements(userId) {
 
     await checkIfGodAchievementUnlocked(userId);
   } catch (error) {
-    console.error("❌ 检查并解锁成就失败:", error);
+    console.error("❌ fail:", error);
   }
 }

@@ -19,10 +19,10 @@ const AchievementCenterPage = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        await syncUserStat(); // 同步用户状态
-        console.log("✅ 同步用户状态成功");
-        await checkAchievements(); // ✅  解锁
-        console.log("✅ 成就检测成功");
+        await syncUserStat(); // Synchronize user status
+        console.log("✅ Synchronize user status successfully");
+        await checkAchievements(); // Check achievements
+        console.log("✅ Achievement test success");
         const [achievements, stats] = await Promise.all([
           fetchAchievements(),
           fetchUserStat(),
@@ -30,8 +30,8 @@ const AchievementCenterPage = () => {
         setAchievements(achievements);
         setUserStats(stats);
       } catch (error) {
-        console.error("❌ 获取数据失败:", error);
-        showError("获取成就数据失败");
+        console.error("❌ Failed to obtain data:", error);
+        showError("Failed to obtain achievement data");
       }
     };
     fetchAll();
@@ -90,7 +90,7 @@ const AchievementCenterPage = () => {
           </div>
         </div>
       </div>
-      {/* Tailwind safelist hint: 让 Tailwind 编译这些类名 */}
+      {/* Tailwind safelist hint: let Tailwind Compile these class names */}
       <div className="hidden">
         bg-achievementPage-100 bg-achievementPage-200 bg-achievementPage-400
         bg-achievementPage-500 bg-achievementPage-600 text-achievementPage-600

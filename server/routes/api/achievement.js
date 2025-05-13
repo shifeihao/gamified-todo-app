@@ -12,13 +12,13 @@ import {
 
 const router = express.Router();
 
-// ✅ 获取所有成就 + 是否解锁
+// ✅ Get all achievements + unlocked
 router.get("/", protect, getAllAchievements);
-// ✅ 获取当前用户已解锁的成就
+// ✅ Get the achievements that the current user has unlocked
 router.get("/unlocked", protect, getUnlockedAchievements);
-// ✅ 成就检测测试
+// ✅ Achievement Detection Test
 router.post("/check", protect, triggerAchievementCheck);
-// ✅ 清空该用户的成就记录（测试用）
+// ✅ Clear the user's achievement record (for testing)
 router.delete("/reset/:userId", resetAchievementsForUser);
 
 export default router;

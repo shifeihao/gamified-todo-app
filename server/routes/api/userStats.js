@@ -8,9 +8,9 @@ import {
 
 const router = express.Router();
 
-// ✅ 获取当前用户记录信息
+// ✅ Get the current user record information
 router.get("/", protect, getUserStatistics);
-// ✅ 同步用户的所有统计信息
+// ✅ Synchronize all statistics of users
 router.patch("/sync", protect, syncUserStats);
 
 export default router;

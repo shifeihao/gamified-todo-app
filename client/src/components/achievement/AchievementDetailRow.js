@@ -19,14 +19,14 @@ const AchievementDetailRow = ({
       ? Math.min((current / total) * 100, 100)
       : 0;
 
-  // 判断是否为时间格式 "HH:mm:ss"
+  // Determine whether the time format is "HH:mm:ss"
   const isTimeString =
     typeof total === "string" && /^\d{2}:\d{2}:\d{2}$/.test(total);
 
   const isValidTimeValue =
     current !== undefined && current !== null && current !== 0;
 
-  // 时间类：格式化 current 值
+  // Time class: format current value
   const formattedCurrent =
     isTimeString && typeof current === "string"
       ? current
@@ -50,7 +50,7 @@ const AchievementDetailRow = ({
       />
 
       <div className="flex-1 space-y-1">
-        {/* 标题 + 时间 */}
+        {/* Title + Time */}
         <div className="flex justify-between items-center">
           <h3 className="text-base font-semibold text-achievementPage-600">
             {achievement.name}
@@ -63,15 +63,15 @@ const AchievementDetailRow = ({
           )}
         </div>
 
-        {/* 描述 */}
+        {/* Description */}
         <p className="text-sm text-gray-700">{achievement.description}</p>
 
-        {/* 条件 */}
+        {/* Condition */}
         <p className="text-xs text-gray-500">
           Condition:{achievement.condition || "—"}
         </p>
 
-        {/* 未解锁：展示进度 */}
+        {/* Unlocked: Show progress */}
         {!isUnlocked && (
           <div className="mt-2 space-y-1">
             {!isTimeString ? (
