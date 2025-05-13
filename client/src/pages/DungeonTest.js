@@ -471,6 +471,8 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       
       // 调用API获取探索结果
       const res = await exploreCurrentFloor(token);
+    
+      
       if (DEBUG) console.log('探索响应:', res);
       
       // 处理战斗日志

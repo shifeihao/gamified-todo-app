@@ -90,7 +90,7 @@ const CombatSystem = ({
   
   const [currentMonsterIndex, setCurrentMonsterIndex] = useState(0);
   const [playerHp, setPlayerHp] = useState(playerStats.hp);
-  const [monsterHp, setMonsterHp] = useState(100);
+  const [monsterHp, setMonsterHp] = useState(monsters[0]?.stats?.hp || 100);
   const [combatLogs, setCombatLogs] = useState([]);
   const [isAttacking, setIsAttacking] = useState(false);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
@@ -98,6 +98,11 @@ const CombatSystem = ({
   const [showDamage, setShowDamage] = useState(null);
   const [isFirstAttack, setIsFirstAttack] = useState(true);
   const [currentTurn, setCurrentTurn] = useState(0);
+  const maxPlayerHpRef = useRef(playerStats.hp);
+  const [maxMonsterHp, setMaxMonsterHp] = useState(
+    monsters[0]?.stats?.hp ?? 100
+  );
+ 
   
   // 技能和状态效果相关状态
   const [activeSkills, setActiveSkills] = useState(skills || []);
@@ -118,6 +123,12 @@ const CombatSystem = ({
   const classConfig = CLASS_COMBAT_CONFIG[actualPlayerClass] || CLASS_COMBAT_CONFIG.warrior;
   
   // 初始化战斗状态
+  useEffect(() => {
+  const hp = currentMonster?.stats?.hp ?? 100;
+   setMonsterHp(hp);
+    setMaxMonsterHp(hp);
+  }, [currentMonster]);
+  
   useEffect(() => {
     // 初始化技能冷却
     const initialCooldowns = {};
@@ -557,7 +568,8 @@ const CombatSystem = ({
             } else {
               // 移至下一个怪物
               setCurrentMonsterIndex(prev => prev + 1);
-              setMonsterHp(100);
+              setMonsterHp(monsters[currentMonsterIndex + 1]?.stats?.hp|| 100);
+              
               setIsPlayerTurn(true); // 玩家对新怪物先手
               setIsFirstAttack(true); // 重置首次攻击标志
               
@@ -598,7 +610,7 @@ const CombatSystem = ({
           setIsPlayerTurn(true);
         } else {
           // 计算怪物伤害
-          const monsterDamage = Math.floor(((currentMonster.attack || 8) * (0.7 + Math.random() * 0.5)));
+          const monsterDamage = Math.floor(((currentMonster.stats.attack || 8) * (0.7 + Math.random() * 0.5)));
           
           // 触发受击技能
           const hitSkillEffects = triggerSkills('onReceiveHit', { evaded: false });
@@ -943,14 +955,14 @@ const CombatSystem = ({
               border: '1px solid #7e4ab8'
             }}>
               <div style={{
-                width: `${(playerHp / playerStats.hp) * 100}%`,
+                width: `${(playerHp / maxPlayerHpRef.current) * 100}%`,
                 height: '100%',
                 backgroundColor: '#4caf50',
                 transition: 'width 0.5s ease-out'
               }}></div>
             </div>
             <div style={{ fontSize: '12px', marginTop: '3px', color: '#b89be6' }}>
-              HP: {playerHp}/{playerStats.hp}
+              HP: {playerHp}/{maxPlayerHpRef.current}
             </div>
           </div>
           
@@ -1025,21 +1037,30 @@ const CombatSystem = ({
           transform: isAttacking && !isPlayerTurn ? 'translateX(-20px)' : 'translateX(0)',
           transition: 'transform 0.2s ease-in-out'
         }}>
-          <div style={{ 
-            width: '90px', 
-            height: '110px', 
+          {/* 怪物头像 */}
+          <div style={{
+            width: '90px',
+            height: '110px',
             backgroundColor: currentMonster.type === 'boss' ? '#d32f2f' : '#5d3494',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '28px',
-            color: 'white',
             margin: '0 auto',
-            border: '2px solid #7e4ab8'
+            border: '2px solid #7e4ab8',
+            overflow: 'hidden'
           }}>
-            {currentMonster.type === 'boss' ? '👹' : '👾'}
+            {currentMonster.icon ? (
+              <img
+                src={`/Icon/Monster/${currentMonster.icon}.png`}
+                alt={currentMonster.name}
+                style={{ maxWidth: '100%', maxHeight: '100%' }}
+              />
+            ) : (
+              currentMonster.type === 'boss' ? '👹' : '👾'
+            )}
           </div>
+
           <div style={{ marginTop: '10px' }}>
             <div style={{ fontWeight: 'bold', color: '#ffffff' }}>
               {currentMonster.name} {currentMonster.type === 'boss' && '(BOSS)'}
@@ -1054,14 +1075,14 @@ const CombatSystem = ({
               border: '1px solid #7e4ab8'
             }}>
               <div style={{
-                width: `${monsterHp}%`,
+                width: `${(monsterHp / maxMonsterHp) * 100}%`,
                 height: '100%',
                 backgroundColor: '#ff9800',
                 transition: 'width 0.5s ease-out'
               }}></div>
             </div>
             <div style={{ fontSize: '12px', marginTop: '3px', color: '#b89be6' }}>
-              HP: {monsterHp}/100
+              HP: {monsterHp}/{maxMonsterHp}
             </div>
           </div>
           

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import BackpackPanel from "../components/game/BackpackPanel";
 import EquipmentPanel from "../components/game/EquipmentPanel";
+import { getItemEffects } from '../components/game/EquipmentPanel';
 import {
   getUserInventory,
   getShopItems,
@@ -110,7 +111,7 @@ export default function InventoryShopPage() {
     if (!hoveredItem) return null;
 
     // 创建属性效果描述
-    const effects = hoveredItem.item?.effects || {};
+    const effects = getItemEffects(hoveredItem.item) || {};
     const effectStrings = [];
     
     Object.entries(effects).forEach(([stat, value]) => {

@@ -37,7 +37,7 @@ const slotIcons = {
 };
 
 // Helper function to get item stats/effects
-const getItemEffects = (item) => {
+export const getItemEffects = (item) => {
   if (!item) return null;
   
   // Default stats if not present

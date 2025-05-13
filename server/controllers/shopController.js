@@ -30,7 +30,7 @@ export const getShopItems = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -40,37 +40,37 @@ export const buyItem = async (req, res) => {
 
     const shopEntry = await ShopInventory.findOne({ item: itemId });
     if (!shopEntry || shopEntry.quantity <= 0) {
-      return res.status(400).json({ message: "商品已售罄或不存在" });
+      return res.status(400).json({ message: "Item is sold out or does not exist" });
     }
 
     const user = req.user;
     if (user.gold < shopEntry.price) {
-      return res.status(400).json({ message: "金币不足" });
+      return res.status(400).json({ message: "Not enough gold" });
     }
 
-    // 扣金币
+    // deduct gold
     user.gold -= shopEntry.price;
     await user.save();
 
-    // 减库存
+    // deduct inventory
     shopEntry.quantity -= 1;
     await shopEntry.save();
 
-    // 加入用户背包（存在则加数量）
+    // add to user's bag（if exist then adding the number）
     await UserInventory.updateOne(
       { userId: user._id, item: itemId },
       { $inc: { quantity: 1 } },
       { upsert: true }
     );
 
-    res.json({ message: "购买成功" });
+    res.json({ message: "Item purchased successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
-// @desc    通过物品名称获取物品（内部用途）
+// @desc    desc Get item by name (internal use)
 // @route   GET /api/shop/item/:name
 // @access  Internal / Admin
 export const getItemByName = async (req, res) => {
@@ -79,13 +79,13 @@ export const getItemByName = async (req, res) => {
     const item = await ShopItem.findOne({ name });
 
     if (!item) {
-      return res.status(404).json({ message: "物品未找到" });
+      return res.status(404).json({ message: "Item not found" });
     }
 
     res.json(item);
   } catch (error) {
     console.error("❌ getItemByName error:", error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -100,22 +100,19 @@ export const sellItem = async (req, res) => {
     });
 
     if (!inventoryEntry || inventoryEntry.quantity <= 0) {
-      return res.status(400).json({ message: "背包中没有该物品" });
+      return res.status(400).json({ message: "Item not found in inventory" });
     }
 
-    // 获取价格（卖出价格为原价一半）
     const shopItem = await ShopItem.findById(itemId);
     if (!shopItem) {
-      return res.status(404).json({ message: "物品不存在" });
+      return res.status(404).json({ message: "Item does not exist" });
     }
 
     const sellPrice = Math.floor(shopItem.price / 2);
 
-    // 1. 增加用户金币
     user.gold += sellPrice;
     await user.save();
 
-    // 2. 减少用户物品数量
     if (inventoryEntry.quantity > 1) {
       inventoryEntry.quantity -= 1;
       await inventoryEntry.save();
@@ -123,9 +120,9 @@ export const sellItem = async (req, res) => {
       await inventoryEntry.deleteOne();
     }
 
-    res.json({ message: `成功售出，获得 ${sellPrice} 金币` });
+    res.json({ message: `Item sold successfully. You received ${sellPrice} gold.` });
   } catch (error) {
     console.error("❌ sellItem error:", error);
-    res.status(500).json({ message: "服务器错误" });
+    res.status(500).json({ message: "Server Error" });
   }
 };
