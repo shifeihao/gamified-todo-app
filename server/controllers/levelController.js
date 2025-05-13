@@ -18,9 +18,11 @@ export const handleTaskCompletion = async (req) => {
     if (!task || task.user.toString() !== userId.toString()) {
       throw new Error("Task is invalid or does not belong to the current user");
     }
-    
-    console.log(`任务详情 - 标题: ${task.title}, 类型: ${task.type}, 状态: ${task.status}, 奖励已领取: ${task.rewardClaimed}`);
-    
+
+    console.log(
+      `任务详情 - 标题: ${task.title}, 类型: ${task.type}, 状态: ${task.status}, 奖励已领取: ${task.rewardClaimed}`
+    );
+
     // 检查任务是否已完成并且已经发放过奖励 (通过检查rewardClaimed字段)
     if (task.rewardClaimed === true) {
       console.log(`任务 ${taskId} 已经完成并领取过奖励，不再重复发放`);
@@ -30,7 +32,9 @@ export const handleTaskCompletion = async (req) => {
     const user = await User.findById(userId);
     if (!user) throw new Error("User not found");
 
-    console.log(`用户信息 - 等级: ${user.level}, 经验: ${user.experience}, 金币: ${user.gold}`);
+    console.log(
+      `用户信息 - 等级: ${user.level}, 经验: ${user.experience}, 金币: ${user.gold}`
+    );
 
     let totalExp = 0;
     let totalGold = 0;
@@ -38,14 +42,27 @@ export const handleTaskCompletion = async (req) => {
     // 计算奖励（区分长期与short）
     if (task.type === "long") {
       // 检查子任务完成情况，但不再要求所有子任务必须完成
-      const completedSubTasks = task.subTasks.filter(st => st.status === 'completed');
-      
+      const completedSubTasks = task.subTasks.filter(
+        (st) => st.status === "completed"
+      );
+
       console.log("Long-term task completion - Task ID:", task._id);
       console.log("Long-term task completion - Task title:", task.title);
-      console.log("Long-term task completion - Card used:", task.cardUsed?.type, "Bonus:", task.cardUsed?.bonus);
-      console.log("Long-term task completion - Total subtasks:", task.subTasks.length);
-      console.log("Long-term task completion - Completed subtasks:", completedSubTasks.length);
-      
+      console.log(
+        "Long-term task completion - Card used:",
+        task.cardUsed?.type,
+        "Bonus:",
+        task.cardUsed?.bonus
+      );
+      console.log(
+        "Long-term task completion - Total subtasks:",
+        task.subTasks.length
+      );
+      console.log(
+        "Long-term task completion - Completed subtasks:",
+        completedSubTasks.length
+      );
+
       // 如果任务之前未完成，设置完成状态
       if (task.status !== "completed") {
         task.status = "completed";
@@ -57,24 +74,24 @@ export const handleTaskCompletion = async (req) => {
         task.completedAt = new Date();
         console.log(`设置任务 ${taskId} 完成时间为 ${task.completedAt}`);
       }
-      
+
       // 主任务的奖励，尝试多种来源获取奖励值
       const bonusExp = task.experienceReward || task.finalBonusExperience || 30;
       const bonusGold = task.goldReward || task.finalBonusGold || 15;
-      
+
       console.log("Long-term task bonus - XP:", bonusExp);
       console.log("Long-term task bonus - Gold:", bonusGold);
-      
+
       // 应用卡片加成到额外奖励
       const { experience: finalExp, gold: finalGold } = calculateReward(
         bonusExp,
         bonusGold,
         task.cardUsed?.bonus
       );
-      
+
       console.log("Long-term task bonus (with multiplier) - XP:", finalExp);
       console.log("Long-term task bonus (with multiplier) - Gold:", finalGold);
-      
+
       // 设置总奖励为额外奖励
       totalExp = finalExp;
       totalGold = finalGold;
@@ -95,14 +112,18 @@ export const handleTaskCompletion = async (req) => {
     task.completedAt = task.completedAt || new Date();
     // 标记奖励已发放
     task.rewardClaimed = true;
-    
-    console.log(`将向用户 ${userId} 发放奖励: ${totalExp} XP, ${totalGold} Gold`);
+
+    console.log(
+      `将向用户 ${userId} 发放奖励: ${totalExp} XP, ${totalGold} Gold`
+    );
 
     // 发放奖励
     user.experience += totalExp;
     user.gold += totalGold;
-    
-    console.log(`用户新状态 - 经验: ${user.experience} (+${totalExp}), 金币: ${user.gold} (+${totalGold})`);
+
+    console.log(
+      `用户新状态 - 经验: ${user.experience} (+${totalExp}), 金币: ${user.gold} (+${totalGold})`
+    );
 
     const newExp = user.experience;
 
@@ -151,14 +172,14 @@ export const handleTaskCompletion = async (req) => {
     // ✅ 返回结果对象，由调用者决定是否发送给前端
     return {
       success: true,
-      message: 'Rewards and level updated successfully',
+      message: "Rewards and level updated successfully",
       task: {
         _id: task._id,
         title: task.title,
         type: task.type,
         status: task.status,
         completedAt: task.completedAt,
-        rewardClaimed: true
+        rewardClaimed: true,
       },
       reward: {
         expGained: totalExp,
@@ -169,8 +190,8 @@ export const handleTaskCompletion = async (req) => {
         nextLevelExp,
         expProgress,
         expRemaining,
-        progressRate
-      }
+        progressRate,
+      },
     };
   } catch (error) {
     console.error("❌ Rewards and level update failed:", error);
@@ -268,7 +289,7 @@ export const handleSubTaskCompletion = async (req) => {
     // 11. 返回结果
     return {
       success: true,
-      message: 'Subtask completed successfully',
+      message: "Subtask completed successfully",
       task: {
         _id: task._id,
         title: task.title,
@@ -277,13 +298,13 @@ export const handleSubTaskCompletion = async (req) => {
         subTasks: task.subTasks,
         completedAt: task.completedAt,
         equipped: task.equipped,
-        slotPosition: task.slotPosition
+        slotPosition: task.slotPosition,
       },
       subTaskReward: {
         expGained: experience,
         goldGained: gold,
         subTaskIndex: subTaskIndex,
-        subTaskTitle: task.subTasks[subTaskIndex].title
+        subTaskTitle: task.subTasks[subTaskIndex].title,
       },
       longTaskReward,
       userInfo: {
@@ -293,11 +314,11 @@ export const handleSubTaskCompletion = async (req) => {
         expProgress,
         expRemaining,
         progressRate,
-        leveledUp
+        leveledUp,
       },
       allSubTasksCompleted: task.subTasks.every(
         (sub) => sub.status === "completed"
-      )
+      ),
     };
   } catch (error) {
     console.error("❌ Subtask completion failed:", error);
@@ -309,7 +330,7 @@ export const handleSubTaskCompletion = async (req) => {
 export const getUserLevelBar = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const currentLevel = await Level.findOne({
       expRequired: { $lte: user.experience },
@@ -386,7 +407,6 @@ export const updateSlot = async (req, res) => {
     if (!updatedUser) {
       return res.status(404).json({ message: "用户不存在" });
     }
-
 
     return res.json({
       message: "卡槽数量已更新",

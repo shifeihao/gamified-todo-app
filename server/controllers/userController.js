@@ -23,7 +23,6 @@ const registerUser = async (req, res) => {
     // 创建用户统计信息
     await checkUserStats(user._id);
 
-
     if (user) {
       res.status(201).json({
         _id: user._id,

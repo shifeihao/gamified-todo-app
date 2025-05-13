@@ -378,9 +378,7 @@ export const exploreCurrentFloor = async (req, res) => {
       logs.push("Combat system error");
     }
 
-
     logs.push(`🔍 正在探索第 ${floorIndex} 层...`);
-
 
     // 处理战斗失败
     if (!combatResult.survived) {
@@ -401,7 +399,6 @@ export const exploreCurrentFloor = async (req, res) => {
     stats.currentExploration.floorIndex = floorIndex + 1;
     stats.currentExploration.currentHp = combatResult.remainingHp;
     logs.push(`🚪 你进入了第 ${floorIndex + 1} 层`);
-    
 
     // 确保 exploredFloors 是数组并添加当前楼层
     stats.exploredFloors = Array.isArray(stats.exploredFloors)
@@ -459,11 +456,9 @@ export const exploreCurrentFloor = async (req, res) => {
         levelUp: levelDiff > 0,
         newLevel,
         statPointsGained: levelDiff * 5,
-        
+
         unspentStatPoints: stats.unspentStatPoints, // 确保包含这个值
-        message: `You have completed ${dungeon.name}!`
-
-
+        message: `You have completed ${dungeon.name}!`,
       });
     }
 
@@ -563,52 +558,51 @@ export const summarizeExploration = async (req, res) => {
     const userId = req.user._id;
     const stats = await UserDungeonStats.findOne({ user: userId });
 
-
     if (!stats) {
-      return res.status(404).json({ error: '找不到用户统计信息' });
-
+      return res.status(404).json({ error: "找不到用户统计信息" });
     }
-    
+
     // 获取总经验值
     const totalExp = stats.dungeonExp || 0;
-    console.log('Total exp for summary:', totalExp);
-    
+    console.log("Total exp for summary:", totalExp);
+
     // 计算当前等级
     const prevLevel = stats.dungeonLevel || 1;
     const currentLevel = Math.floor(1 + totalExp / 100);
     const levelDiff = Math.max(0, currentLevel - prevLevel);
-    
+
     // 处理等级提升
     if (levelDiff > 0) {
       stats.dungeonLevel = currentLevel;
-      stats.unspentStatPoints = (stats.unspentStatPoints || 0) + (levelDiff * 5);
+      stats.unspentStatPoints = (stats.unspentStatPoints || 0) + levelDiff * 5;
       console.log(`Level up in summary: ${prevLevel} -> ${currentLevel}`);
     }
 
-    
     // 处理探索楼层
     if (stats.currentExploration && stats.currentExploration.floorIndex) {
-      stats.exploredFloors = Array.from(new Set([
-        ...(stats.exploredFloors || []),
-        stats.currentExploration.floorIndex
-      ]));
+      stats.exploredFloors = Array.from(
+        new Set([
+          ...(stats.exploredFloors || []),
+          stats.currentExploration.floorIndex,
+        ])
+      );
     }
-    
+
     // 清除当前探索
     const wasExploring = !!stats.currentExploration;
     stats.currentExploration = undefined;
-    
+
     // 保存更新
     try {
       await stats.save();
-      console.log('Stats saved successfully after summary');
+      console.log("Stats saved successfully after summary");
     } catch (saveError) {
-      console.error('Error saving stats in summary:', saveError);
+      console.error("Error saving stats in summary:", saveError);
     }
-    
+
     // 返回结算信息
     return res.json({
-      message: wasExploring ? '探索完成' : '没有进行中的探索',
+      message: wasExploring ? "探索完成" : "没有进行中的探索",
       gainedExp: totalExp, // 添加这一行，与前端对应
       totalExp: totalExp,
       prevLevel: prevLevel,
@@ -617,12 +611,11 @@ export const summarizeExploration = async (req, res) => {
       statPointsGained: levelDiff * 5,
       unspentStatPoints: stats.unspentStatPoints,
       exploredFloors: stats.exploredFloors || [],
-      highestFloor: Math.max(...(stats.exploredFloors || [1]))
+      highestFloor: Math.max(...(stats.exploredFloors || [1])),
     });
   } catch (err) {
-    console.error('summarizeExploration error:', err);
-    res.status(500).json({ error: '内部错误', message: err.message });
-
+    console.error("summarizeExploration error:", err);
+    res.status(500).json({ error: "内部错误", message: err.message });
   }
 };
 
@@ -805,13 +798,12 @@ export const prepareCombatAfterShop = async (req, res) => {
       return await exploreCurrentFloor(req, res);
     }
 
-
     // 设置标志，指示这是商店后战斗
     if (!stats.currentExploration.shopCombat) {
       stats.currentExploration.shopCombat = {
         floorIndex,
         monsterCount: monsterIds.length,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
       await stats.save();
     }
@@ -820,7 +812,6 @@ export const prepareCombatAfterShop = async (req, res) => {
     if (monsterIds.length > 0) {
       logs.push(`⚔️ 遭遇了 ${monsterIds.length} 个怪物!`);
     }
-    
 
     // 返回怪物信息，前端将处理战斗
     return res.json({
@@ -832,8 +823,7 @@ export const prepareCombatAfterShop = async (req, res) => {
       currentHp: hp,
 
       totalExp: stats.dungeonExp, // 添加当前总经验
-      shopTransition: true  // 标记这是从商店过来的，前端可以据此特殊处理
-
+      shopTransition: true, // 标记这是从商店过来的，前端可以据此特殊处理
     });
   } catch (err) {
     console.error("prepareCombatAfterShop error:", err);
@@ -913,7 +903,6 @@ export const updateCombatResult = async (req, res) => {
     // 保存更新的状态
     await stats.save();
 
-    
     // 修改 updateCombatResult 函数中的返回值
 
     return res.json({
@@ -926,7 +915,7 @@ export const updateCombatResult = async (req, res) => {
       totalExp: stats.dungeonExp,
       currentLevel: stats.dungeonLevel,
       unspentStatPoints: stats.unspentStatPoints, // 添加这个值
-      logs: [`🚪 你进入了第 ${stats.currentExploration.floorIndex} 层`] // 添加进入新层的日志
+      logs: [`🚪 你进入了第 ${stats.currentExploration.floorIndex} 层`], // 添加进入新层的日志
     });
   } catch (err) {
     console.error("Update combat result error:", err);
@@ -955,12 +944,11 @@ export const updateAfterCombat = async (req, res) => {
     // 更新HP
     stats.currentExploration.currentHp = remainingHp;
 
-    
     // 是否来自商店战斗
-    const isShopCombat = stats.currentExploration.shopCombat && 
-                         stats.currentExploration.shopCombat.floorIndex === floorIndex;
-    console.log('Is shop combat:', isShopCombat);
-    
+    const isShopCombat =
+      stats.currentExploration.shopCombat &&
+      stats.currentExploration.shopCombat.floorIndex === floorIndex;
+    console.log("Is shop combat:", isShopCombat);
 
     // 如果战斗胜利，处理层数增加
     if (result === "victory") {
@@ -969,23 +957,24 @@ export const updateAfterCombat = async (req, res) => {
 
       const newFloorIndex = floorIndex + 1;
       stats.currentExploration.floorIndex = newFloorIndex;
-      console.log('Advanced to floor:', stats.currentExploration.floorIndex);
-      
+      console.log("Advanced to floor:", stats.currentExploration.floorIndex);
+
       // 处理经验获取 - 根据不同来源调整经验计算
-      let expGained = 10 + (floorIndex * 2); // 基础经验
-      
+      let expGained = 10 + floorIndex * 2; // 基础经验
+
       // 如果是商店后战斗，可能有更多怪物，调整经验
       if (isShopCombat && stats.currentExploration.shopCombat.monsterCount) {
         expGained += stats.currentExploration.shopCombat.monsterCount * 3; // 每个怪物3点额外经验
         // 清除商店战斗标志
         stats.currentExploration.shopCombat = undefined;
       }
-      
+
       // 累加经验值
       const oldExp = stats.dungeonExp || 0;
       stats.dungeonExp = oldExp + expGained;
-      console.log(`Gained ${expGained} exp. Old: ${oldExp}, New: ${stats.dungeonExp}`);
-      
+      console.log(
+        `Gained ${expGained} exp. Old: ${oldExp}, New: ${stats.dungeonExp}`
+      );
 
       // 确保exploredFloors数组包含当前楼层
       stats.exploredFloors = Array.isArray(stats.exploredFloors)
@@ -995,26 +984,25 @@ export const updateAfterCombat = async (req, res) => {
         stats.exploredFloors.push(floorIndex);
       }
 
-      
       // 检查等级提升
       const prevLevel = stats.dungeonLevel || 1;
       const newLevel = Math.floor(1 + stats.dungeonExp / 100); // 每100经验升一级
       const levelDiff = Math.max(0, newLevel - prevLevel);
-      
+
       if (levelDiff > 0) {
         console.log(`Level up! ${prevLevel} -> ${newLevel}`);
         stats.dungeonLevel = newLevel;
-        stats.unspentStatPoints = (stats.unspentStatPoints || 0) + levelDiff * 5;
+        stats.unspentStatPoints =
+          (stats.unspentStatPoints || 0) + levelDiff * 5;
       }
-      
+
       // 保存更新后的状态
       try {
         await stats.save();
-        console.log('Stats saved successfully after combat');
+        console.log("Stats saved successfully after combat");
       } catch (saveError) {
-        console.error('Error saving stats:', saveError);
+        console.error("Error saving stats:", saveError);
       }
-      
 
       // 返回更新信息
       return res.json({
@@ -1030,8 +1018,7 @@ export const updateAfterCombat = async (req, res) => {
         unspentStatPoints: stats.unspentStatPoints,
         levelUp: levelDiff > 0,
         statPointsGained: levelDiff > 0 ? levelDiff * 5 : 0,
-        logs: [`🚪 你进入了第 ${newFloorIndex} 层`]
-
+        logs: [`🚪 你进入了第 ${newFloorIndex} 层`],
       });
     }
 
@@ -1044,8 +1031,7 @@ export const updateAfterCombat = async (req, res) => {
       currentFloor: floorIndex,
       currentHp: remainingHp,
 
-      totalExp: stats.dungeonExp
-
+      totalExp: stats.dungeonExp,
     });
   } catch (err) {
     console.error("Update after combat error:", err);

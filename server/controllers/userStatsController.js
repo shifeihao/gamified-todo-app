@@ -23,15 +23,13 @@ export async function getUserStatistics(req, res) {
         .status(404)
         .json({ message: "No statistics found for this user" });
     }
-    const result = await UserStats.findOne({ user:userId });
+    const result = await UserStats.findOne({ user: userId });
     res.json(result);
   } catch (err) {
     console.error("❌ Failed to obtain user statistics:", err);
-    res
-      .status(500)
-      .json({
-        message: "Failed to obtain user statistics",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Failed to obtain user statistics",
+      error: err.message,
+    });
   }
 }

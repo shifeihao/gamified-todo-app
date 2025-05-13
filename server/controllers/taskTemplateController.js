@@ -1,13 +1,13 @@
-import TaskTemplate from '../models/TaskTemplate.js';
-import asyncHandler from 'express-async-handler';
+import TaskTemplate from "../models/TaskTemplate.js";
+import asyncHandler from "express-async-handler";
 
 // @desc    获取用户的所有模板
 // @route   GET /api/templates
 // @access  Private
 export const getTemplates = asyncHandler(async (req, res) => {
-  console.log('Fetching templates for user:', req.user._id);
+  console.log("Fetching templates for user:", req.user._id);
   const templates = await TaskTemplate.find({ user: req.user._id });
-  console.log('Found templates:', templates);
+  console.log("Found templates:", templates);
   res.json(templates);
 });
 
@@ -16,7 +16,13 @@ export const getTemplates = asyncHandler(async (req, res) => {
 // @access  Private
 export const createTemplate = asyncHandler(async (req, res) => {
   const { title, description, category, type, subTasks } = req.body;
-  console.log('Creating template with data:', { title, description, category, type, subTasks });
+  console.log("Creating template with data:", {
+    title,
+    description,
+    category,
+    type,
+    subTasks,
+  });
 
   const template = await TaskTemplate.create({
     user: req.user._id,
@@ -24,10 +30,10 @@ export const createTemplate = asyncHandler(async (req, res) => {
     description,
     category,
     type,
-    subTasks: subTasks || []
+    subTasks: subTasks || [],
   });
 
-  console.log('Created template:', template);
+  console.log("Created template:", template);
   res.status(201).json(template);
 });
 
@@ -35,18 +41,18 @@ export const createTemplate = asyncHandler(async (req, res) => {
 // @route   GET /api/templates/:id
 // @access  Private
 export const getTemplateById = asyncHandler(async (req, res) => {
-  console.log('Fetching template:', req.params.id);
+  console.log("Fetching template:", req.params.id);
   const template = await TaskTemplate.findOne({
     _id: req.params.id,
-    user: req.user._id
+    user: req.user._id,
   });
 
   if (!template) {
     res.status(404);
-    throw new Error('模板不存在');
+    throw new Error("模板不存在");
   }
 
-  console.log('Found template:', template);
+  console.log("Found template:", template);
   res.json(template);
 });
 
@@ -54,19 +60,19 @@ export const getTemplateById = asyncHandler(async (req, res) => {
 // @route   PUT /api/templates/:id
 // @access  Private
 export const updateTemplate = asyncHandler(async (req, res) => {
-  console.log('Updating template:', req.params.id);
+  console.log("Updating template:", req.params.id);
   const template = await TaskTemplate.findOne({
     _id: req.params.id,
-    user: req.user._id
+    user: req.user._id,
   });
 
   if (!template) {
     res.status(404);
-    throw new Error('模板不存在');
+    throw new Error("模板不存在");
   }
 
   const { title, description, category, type, subTasks } = req.body;
-  console.log('Update data:', { title, description, category, type, subTasks });
+  console.log("Update data:", { title, description, category, type, subTasks });
 
   template.title = title || template.title;
   template.description = description || template.description;
@@ -75,7 +81,7 @@ export const updateTemplate = asyncHandler(async (req, res) => {
   template.subTasks = subTasks || template.subTasks;
 
   const updatedTemplate = await template.save();
-  console.log('Updated template:', updatedTemplate);
+  console.log("Updated template:", updatedTemplate);
   res.json(updatedTemplate);
 });
 
@@ -83,18 +89,18 @@ export const updateTemplate = asyncHandler(async (req, res) => {
 // @route   DELETE /api/templates/:id
 // @access  Private
 export const deleteTemplate = asyncHandler(async (req, res) => {
-  console.log('Deleting template:', req.params.id);
+  console.log("Deleting template:", req.params.id);
   const template = await TaskTemplate.findOne({
     _id: req.params.id,
-    user: req.user._id
+    user: req.user._id,
   });
 
   if (!template) {
     res.status(404);
-    throw new Error('模板不存在');
+    throw new Error("模板不存在");
   }
 
   await template.deleteOne();
-  console.log('Template deleted successfully');
-  res.json({ message: '模板已删除' });
-}); 
+  console.log("Template deleted successfully");
+  res.json({ message: "模板已删除" });
+});

@@ -46,11 +46,9 @@ const createTask = async (req, res) => {
     });
 
     if (!card) {
-      return res
-        .status(400)
-        .json({
-          message: "The specified card does not exist or has already been used",
-        });
+      return res.status(400).json({
+        message: "The specified card does not exist or has already been used",
+      });
     }
 
     // 验证卡片类型与任务类型匹配
@@ -70,11 +68,9 @@ const createTask = async (req, res) => {
         !Array.isArray(req.body.subTasks) ||
         req.body.subTasks.length === 0
       ) {
-        return res
-          .status(400)
-          .json({
-            message: "Long-term tasks must include at least one subtask",
-          });
+        return res.status(400).json({
+          message: "Long-term tasks must include at least one subtask",
+        });
       }
 
       // 验证每个子任务

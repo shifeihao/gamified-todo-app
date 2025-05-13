@@ -20,28 +20,28 @@ const getCardInventory = asyncHandler(async (req, res) => {
   // 如果今天还没发放过卡片，发放新的短期卡片
   if (lastIssued !== today) {
     console.log("今日未发放短期卡片，准备清理旧卡片并发放新卡片");
-    
+
     // 1. 删除所有已有的短期卡片（如果有）
     // 找出所有属于该用户、类型为blank、持续时间为short的卡片ID
     const shortCardIds = user.cardInventory
-      .filter(card => card.type === 'blank' && card.taskDuration === 'short')
-      .map(card => card._id);
-    
+      .filter((card) => card.type === "blank" && card.taskDuration === "short")
+      .map((card) => card._id);
+
     if (shortCardIds.length > 0) {
       // 从用户的库存中移除这些短期卡片
-      user.cardInventory = user.cardInventory.filter(card => 
-        !shortCardIds.includes(card._id)
+      user.cardInventory = user.cardInventory.filter(
+        (card) => !shortCardIds.includes(card._id)
       );
-      
+
       // 从数据库中删除这些卡片
       await Card.deleteMany({
         _id: { $in: shortCardIds },
-        user: user._id
+        user: user._id,
       });
-      
+
       console.log(`删除了${shortCardIds.length}张旧的短期卡片`);
     }
-    
+
     // 2. 创建3张新的短期卡片
     const shortCards = await Promise.all(
       [...Array(3)].map(() =>
@@ -55,55 +55,55 @@ const getCardInventory = asyncHandler(async (req, res) => {
         })
       )
     );
-    
+
     // 3. 将新卡片添加到用户的库存中
     user.cardInventory.push(...shortCards.map((card) => card._id));
     user.dailyCards.blank = 3;
     user.dailyCards.lastIssued = new Date();
-    
+
     console.log("成功发放3张新的短期卡片");
   }
-  
+
   // 检查并重置每周卡片配额（长期卡片）
   const today2 = new Date();
   const dayOfWeek = today2.getDay(); // 0是周日，1是周一
   const isWeeklyRefreshDay = dayOfWeek === 1; // 设定周一为刷新日
-  
+
   // 获取上次发放周卡的日期
   const lastWeeklyIssued = user.weeklyCards?.lastIssued
     ? new Date(user.weeklyCards.lastIssued)
     : null;
-  
+
   // 判断是否需要刷新周卡
-  const needWeeklyRefresh = isWeeklyRefreshDay && (
-    !lastWeeklyIssued || 
-    lastWeeklyIssued.getDay() !== dayOfWeek || 
-    (today2 - lastWeeklyIssued) > 7 * 24 * 60 * 60 * 1000
-  );
-  
+  const needWeeklyRefresh =
+    isWeeklyRefreshDay &&
+    (!lastWeeklyIssued ||
+      lastWeeklyIssued.getDay() !== dayOfWeek ||
+      today2 - lastWeeklyIssued > 7 * 24 * 60 * 60 * 1000);
+
   if (needWeeklyRefresh) {
     console.log("本周未发放长期卡片，准备清理旧卡片并发放新卡片");
-    
+
     // 1. 删除所有已有的长期卡片（类型为blank，持续时间为long）
     const longCardIds = user.cardInventory
-      .filter(card => card.type === 'blank' && card.taskDuration === 'long')
-      .map(card => card._id);
-    
+      .filter((card) => card.type === "blank" && card.taskDuration === "long")
+      .map((card) => card._id);
+
     if (longCardIds.length > 0) {
       // 从用户的库存中移除这些长期卡片
-      user.cardInventory = user.cardInventory.filter(card => 
-        !longCardIds.includes(card._id)
+      user.cardInventory = user.cardInventory.filter(
+        (card) => !longCardIds.includes(card._id)
       );
-      
+
       // 从数据库中删除这些卡片
       await Card.deleteMany({
         _id: { $in: longCardIds },
-        user: user._id
+        user: user._id,
       });
-      
+
       console.log(`删除了${longCardIds.length}张旧的长期卡片`);
     }
-    
+
     // 2. 创建2张新的长期卡片
     const longCards = await Promise.all(
       [...Array(2)].map(() =>
@@ -117,22 +117,22 @@ const getCardInventory = asyncHandler(async (req, res) => {
         })
       )
     );
-    
+
     // 3. 将新卡片添加到用户的库存中
     user.cardInventory.push(...longCards.map((card) => card._id));
-    
+
     // 4. 更新用户的周卡发放时间
     if (!user.weeklyCards) {
       user.weeklyCards = {};
     }
     user.weeklyCards.lastIssued = new Date();
-    
+
     console.log("成功发放2张新的长期卡片");
   }
-  
+
   // 保存用户信息
   await user.save();
-  
+
   // 更新用户卡片统计
   await checkCardNumber(req.user.id);
 
@@ -192,8 +192,6 @@ const issueDailyCards = asyncHandler(async (req, res) => {
   user.dailyCards.lastIssued = new Date();
   await user.save();
 
- 
-
   res.status(201).json({
     message: "每日卡片发放成功",
     cards: blankCards,
@@ -210,7 +208,9 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
   const isMonday = today.getDay() === 1;
   if (!isMonday) {
     res.status(400);
-    throw new Error("Today is not the time to send Long-term cards (Monday only).");
+    throw new Error(
+      "Today is not the time to send Long-term cards (Monday only)."
+    );
   }
   // 检查是否本周已发放
   const lastWeek = new Date(user.weeklyCards?.lastIssued || 0);
@@ -240,8 +240,6 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
     lastIssued: new Date(),
   };
   await user.save();
-
-
 
   res.status(201).json({
     message: "本周长期空白卡片发放成功",
@@ -277,8 +275,6 @@ const issueRewardCard = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(req.user.id, {
     $push: { cardInventory: rewardCard._id },
   });
-
-
 
   res.status(201).json({
     message: "奖励卡片发放成功",
@@ -340,7 +336,10 @@ const consumeCard = asyncHandler(async (req, res) => {
     }
 
     // ✅ 校验任务类型是否匹配
-    if (card.taskDuration !== "general" && card.taskDuration !== taskData.type) {
+    if (
+      card.taskDuration !== "general" &&
+      card.taskDuration !== taskData.type
+    ) {
       res.status(400);
       throw new Error(
         `该卡片仅支持 ${card.taskDuration} 类型任务，无法用于 ${taskData.type} 类型任务`
@@ -401,29 +400,31 @@ const consumeCard = asyncHandler(async (req, res) => {
 const getCardById = asyncHandler(async (req, res) => {
   try {
     const cardId = req.params.id;
-    
+
     // 验证ID格式
     if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      return res.status(400).json({ message: 'Invalid card ID format' });
+      return res.status(400).json({ message: "Invalid card ID format" });
     }
-    
+
     // 查找卡片
     const card = await Card.findById(cardId);
-    
+
     // 检查卡片是否存在
     if (!card) {
-      return res.status(404).json({ message: 'Card not found' });
+      return res.status(404).json({ message: "Card not found" });
     }
-    
+
     // 检查卡片是否属于当前用户
     if (card.user.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'You do not have permission to view this card' });
+      return res
+        .status(403)
+        .json({ message: "You do not have permission to view this card" });
     }
-    
+
     res.json(card);
   } catch (error) {
-    console.error('Error fetching card details:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error fetching card details:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

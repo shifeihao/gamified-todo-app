@@ -29,7 +29,7 @@ export async function getAllAchievements(req, res) {
         category: ach.category,
         isHidden: ach.isHidden && !isUnlocked,
         unlocked: Boolean(isUnlocked),
-        unlockedAt: isUnlocked ? unlockedTimeMap[name] : null, 
+        unlockedAt: isUnlocked ? unlockedTimeMap[name] : null,
         reward: ach.reward,
         points: ach.points,
         icon: ach.icon,
@@ -65,19 +65,18 @@ export async function getUnlockedAchievements(req, res) {
     res.json(result);
   } catch (err) {
     console.error("❌ Failed to obtain unlocked achievements:", err);
-    res
-      .status(500)
-      .json({
-        message: "Failed to obtain unlocked achievements",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Failed to obtain unlocked achievements",
+      error: err.message,
+    });
   }
 }
 
 // Achievement Check Trigger
 export async function triggerAchievementCheck(req, res) {
   const userId = req.user?._id;
-  if (!userId) return res.status(400).json({ message: "Please provide userId" });
+  if (!userId)
+    return res.status(400).json({ message: "Please provide userId" });
   try {
     await checkAndUnlockAchievements(userId);
     res.json({
