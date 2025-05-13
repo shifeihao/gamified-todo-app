@@ -76,8 +76,6 @@ const createTask = async (req, res) => {
 
     res.status(201).json(task);
 
-    //触发task表检查，将表记录同步到Userstats
-    SyncUserStats(req.user._id);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "服务器错误" });
@@ -262,9 +260,7 @@ const updateTask = async (req, res) => {
 
     const updatedTask = await task.save();
 
-    // 每编辑一次任务，userStats里面计数器+1
-    await SyncUserStats(req.user._id);
-    await addEditedTasksNum(req.user._id);
+
 
     // ✅ 最终统一响应
     return res.json({
@@ -299,9 +295,7 @@ const deleteTask = async (req, res) => {
     await task.deleteOne();
     res.json({ message: "任务已归档并删除" });
 
-    //删除一个任务，计数一次
-    await SyncUserStats(req.user._id);
-    await addDeletedTasksNum(req.user._id);
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "服务器错误" });

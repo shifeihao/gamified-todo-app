@@ -72,9 +72,9 @@ export async function getUnlockedAchievements(req, res) {
   }
 }
 
-// ✅ 成就检查触发器(测试用)
+// ✅ 成就检查触发器
 export async function triggerAchievementCheck(req, res) {
-  const userId = req.params.userId;
+  const userId = req.user?._id;
   if (!userId) return res.status(400).json({ message: "请提供 userId" });
   try {
     await checkAndUnlockAchievements(userId);

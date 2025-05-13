@@ -8,6 +8,7 @@ import achievementRoutes from "./achievement.js";
 import dungeonRoutes from "./dungeon.js";
 import characterRoutes from "./character.js";
 import inventoryRoutes from "./inventory.js";
+import userStats from "./userStats.js";
 
 const router = express.Router();
 router.use("/users", userRoutes);
@@ -19,5 +20,5 @@ router.use("/achievements", achievementRoutes);
 router.use("/dungeon", dungeonRoutes); // 确保 dungeonRoutes 已经定义并导入
 router.use("/character", characterRoutes);
 router.use("/inventory", inventoryRoutes);
-
+router.use("/userstats", userStats);
 export default router;

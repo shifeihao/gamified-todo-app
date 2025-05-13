@@ -6,23 +6,16 @@ import Achievement from "../models/Achievement.js";
 import TaskHistory from "../models/TaskHistory.js";
 import UserAchievement from "../models/UserAchievement.js";
 import { UserDungeonStats } from "../models/UserDungeonStats.js";
-
+import { checkAndUnlockAchievements } from "./checkAchievements.js";
 //统一调动所有函数同步UserStats
 export async function SyncUserStats(userId) {
   await checkUserStats(userId);
-  console.log("✅ 成就记录检查成功");
   await SyncUser(userId);
-  console.log("✅ User成就记录同步");
   await SyncTaskHistory(userId);
-  console.log("✅ TaskHistory成就记录同步");
   await checkCardNumber(userId);
-  console.log("✅ CardNumber成就记录同步");
   await checkTaskNumber(userId);
-  console.log("✅ TaskNumber成就记录同步");
   await checkGameStats(userId);
-  console.log("✅ GameStats成就记录同步");
 }
-
 // 检查UserStats表是否存在，如果不存在就创建一个新的
 export async function checkUserStats(userId) {
   console.log("开始检查UserStats表");
@@ -40,17 +33,15 @@ export async function SyncUser(userId) {
   try {
     // 将User表和Stats表同步（金币、累计经验、最大金币数）
     // 1. 获取用户信息
-    console.log("开始检查成就");
-    console.log("获取用户信息");
     const user = await User.findOne({ _id: userId });
     if (!user) {
       console.error("❌ 成就检查失败：未找到该用户 userId =", userId);
       return;
     }
     console.log("检查成功，用户名是：", user.username);
+
     // 2. 更新UserStats
     console.log("开始更新用户记录信息，用户名是：", user.username);
-
     const allSlotNum = user.shortCardSlot + user.longCardSlot;
     await UserStats.updateOne(
       { user: userId },
@@ -116,7 +107,6 @@ export async function SyncTaskHistory(userId) {
       status: { $in: ["completed", "finished", "已完成"] },
       completedAt: { $exists: true },
     });
-    console.log("completedTasks:", completedTasks);
 
     // 用 Set 保存完成任务的“日期字符串”（格式："YYYY-MM-DD"）
     const completedDays = new Set(
@@ -135,13 +125,9 @@ export async function SyncTaskHistory(userId) {
         break;
       }
     }
-
     // 重置日期再算 unStreak（连续未完成）
     let unStreak = 0;
     current = new Date();
-    console.log("current:", current);
-    console.log("completedDays:", completedDays);
-
     while (true) {
       const key = current.toISOString().slice(0, 10);
       if (!completedDays.has(key)) {
@@ -204,7 +190,6 @@ export async function checkTaskNumber(userId) {
     console.error("❌ 没有任务记录");
     return;
   }
-
   //找出任务创建createdAt 中的最早和最晚时刻（按“小时:分钟:秒”）
   const sortedByTime = [...taskCreate].sort(
     (a, b) => toSeconds(a.createdAt) - toSeconds(b.createdAt)
@@ -245,7 +230,6 @@ export async function addEditedTasksNum(userId) {
 }
 //统计游戏数据，计数器+1
 export async function checkGameStats(userId) {
-  console.log("✅ 开始检查游戏信息");
   const dungeonStats = await UserDungeonStats.findOne({ user: userId });
   if (!dungeonStats) {
     console.error("❌ 成就游戏信息：未找到该用户 userId =", userId);
@@ -261,10 +245,20 @@ export async function checkGameStats(userId) {
     { user: userId },
     { $max: { max_maze_level: maxFloor } }
   );
-  console.log(`✅ 已同步 max_maze_level = ${maxFloor}`);
 }
 //统计个人成就数量/判断是否解锁成就之神
 export async function checkIfGodAchievementUnlocked(userId) {
+  // 1. 获取用户信息
+  const user = await User.findOne({ _id: userId });
+  if (!user) {
+    console.error("❌ 成就检查失败：未找到该用户 userId =", userId);
+    return;
+  }
+  console.log("检查成功，用户名是：", user.username);
+
+  // 检查UserStats表是否存在
+  await checkUserStats(userId);
+
   // 1. 重新获取已解锁成就
   const unlockedAchievements = await UserAchievement.find({ user: userId });
   const unlockedCount = unlockedAchievements.length;

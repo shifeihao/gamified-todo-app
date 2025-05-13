@@ -78,8 +78,7 @@ const issueDailyCards = asyncHandler(async (req, res) => {
   user.dailyCards.lastIssued = new Date();
   await user.save();
 
-  //发卡片后统计卡片库存总数量，记录到userstats中
-  await checkCardNumber(req.user.id);
+ 
 
   res.status(201).json({
     message: "每日卡片发放成功",
@@ -128,8 +127,7 @@ const issueWeeklyCards = asyncHandler(async (req, res) => {
   };
   await user.save();
 
-  //发卡片后统计卡片库存总数量，记录到userstats中
-  await checkCardNumber(req.user.id);
+
 
   res.status(201).json({
     message: "本周长期空白卡片发放成功",
@@ -166,8 +164,7 @@ const issueRewardCard = asyncHandler(async (req, res) => {
     $push: { cardInventory: rewardCard._id },
   });
 
-  //发放奖励后，统计卡片库存，记录在userstats上面
-  await checkCardNumber(req.user.id);
+
 
   res.status(201).json({
     message: "奖励卡片发放成功",

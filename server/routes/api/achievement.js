@@ -19,9 +19,8 @@ router.get("/", protect, getAllAchievements);
 router.get("/unlocked", protect, getUnlockedAchievements);
 // ✅ 获取当前用户记录信息
 router.get("/stat", protect, getUserStatistics);
-
-// ✅ 成就检测测试：调用 checkAndUnlockAchievements
-router.post("/check/:userId", triggerAchievementCheck);
+// ✅ 成就检测测试
+router.post("/check", protect, triggerAchievementCheck);
 // ✅ 清空该用户的成就记录（测试用）
 router.delete("/reset/:userId", resetAchievementsForUser);
 
