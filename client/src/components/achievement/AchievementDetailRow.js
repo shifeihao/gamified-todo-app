@@ -68,7 +68,7 @@ const AchievementDetailRow = ({
 
         {/* Condition */}
         <p className="text-xs text-gray-500">
-          Condition:{achievement.condition || "—"}
+          Condition: {achievement.condition || "—"}
         </p>
 
         {/* Unlocked: Show progress */}
