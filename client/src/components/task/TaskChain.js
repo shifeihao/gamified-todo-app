@@ -97,7 +97,6 @@ export const TaskChain = ({
                 </div>
                 <div className="text-center">
                     <p className="text-sm text-gray-500">Chain Slot Locked</p>
-                    <p className="text-xs text-gray-400 mt-1">Reach level {idx + 4} to unlock</p>
                 </div>
             </div>
         </div>

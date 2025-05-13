@@ -202,24 +202,46 @@ const TasksPage = () => {
     error: completeError,
   } = useApiAction(completeTaskService, {
     onSuccess: async (response) => {
-      const { task, reward } = response;
-      
       console.log("任务完成响应:", response); // 添加日志来调试
+      
+      // 清除编辑任务状态，确保不会带入到新建任务中
+      setEditingTask(null);
+      
+      // 检查是否成功完成任务
+      if (!response || response.success === false) {
+        // 任务完成失败处理
+        showError(response?.message || "获取任务数据失败");
+        console.error("任务完成失败:", response);
+        return;
+      }
+      
+      const { task, reward } = response;
       
       // 显示更详细的完成信息和奖励通知
       if (reward) {
         const xp = reward.expGained || 0;
         const gold = reward.goldGained || 0;
-        showTaskCompletedToast(task.title, xp, gold);
-        console.log(`任务完成奖励: ${xp} XP, ${gold} Gold`);
+        
+        // 确保经验和金币不为0
+        if (xp === 0 && gold === 0 && task) {
+          const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
+          const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
+          
+          console.log(`奖励值异常，使用默认值 - XP: ${defaultXp}, Gold: ${defaultGold}`);
+          showTaskCompletedToast(task.title, defaultXp, defaultGold);
+        } else {
+          console.log(`任务完成奖励: ${xp} XP, ${gold} Gold`);
+          showTaskCompletedToast(task.title, xp, gold);
+        }
       } else {
         // 特殊处理：如果没有收到奖励信息但任务已完成
         if (task && task.status === "completed") {
           // 使用默认奖励值
-          const defaultXp = task.type === 'long' ? 30 : 10;
-          const defaultGold = task.type === 'long' ? 15 : 5;
+          const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
+          const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
+          
+          console.log(`未收到奖励信息，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
           showTaskCompletedToast(task.title, defaultXp, defaultGold);
-          console.log(`使用默认奖励值: ${defaultXp} XP, ${defaultGold} Gold`);
         } else {
           showSuccess("Task Completed");
         }
@@ -242,8 +264,10 @@ const TasksPage = () => {
       fetchTasks();
     },
     onError: (err) => {
-      console.error(err);
+      console.error("任务完成出错:", err);
       showError("Failed to complete the task");
+      // 也需要清除编辑任务状态
+      setEditingTask(null);
     },
   });
 
@@ -272,6 +296,9 @@ const TasksPage = () => {
   } = useApiAction(completeLongTaskService, {
     onSuccess: async (response) => {
       console.log("长期任务完成响应:", response); // 添加日志来调试
+      
+      // 清除编辑任务状态，确保不会带入到新建任务中
+      setEditingTask(null);
       
       if (response.success) {
         const { task, reward } = response;
@@ -302,6 +329,8 @@ const TasksPage = () => {
     onError: (err) => {
       console.error("长期任务完成错误:", err);
       showError("Failed to complete the long task");
+      // 也需要清除编辑任务状态
+      setEditingTask(null);
     },
   });
 

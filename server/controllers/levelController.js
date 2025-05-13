@@ -16,7 +16,12 @@ export const handleTaskCompletion = async (req) => {
 
     const task = await Task.findById(taskId).populate("cardUsed");
     if (!task || task.user.toString() !== userId.toString()) {
-      throw new Error("Task is invalid or does not belong to the current user");
+      console.error(`任务无效或不属于当前用户 - 任务ID: ${taskId}, 用户ID: ${userId}`);
+      return {
+        success: false,
+        message: "Task is invalid or does not belong to the current user",
+        reward: { expGained: 0, goldGained: 0 }
+      };
     }
 
     console.log(
@@ -26,11 +31,23 @@ export const handleTaskCompletion = async (req) => {
     // 检查任务是否已完成并且已经发放过奖励 (通过检查rewardClaimed字段)
     if (task.rewardClaimed === true) {
       console.log(`任务 ${taskId} 已经完成并领取过奖励，不再重复发放`);
-      throw new Error("Task has already been completed and reward claimed");
+      return {
+        success: false,
+        message: "Task has already been completed and reward claimed",
+        reward: { expGained: 0, goldGained: 0 }
+      };
     }
 
+    // 查找用户信息
     const user = await User.findById(userId);
-    if (!user) throw new Error("User not found");
+    if (!user) {
+      console.error(`用户不存在 - 用户ID: ${userId}`);
+      return {
+        success: false,
+        message: "User not found",
+        reward: { expGained: 0, goldGained: 0 }
+      };
+    }
 
     console.log(
       `用户信息 - 等级: ${user.level}, 经验: ${user.experience}, 金币: ${user.gold}`
@@ -98,11 +115,19 @@ export const handleTaskCompletion = async (req) => {
     } else {
       task.finalBonusExperience = 0;
       task.finalBonusGold = 0;
+      const baseExp = task.experienceReward || 10; // 默认短期任务经验为10
+      const baseGold = task.goldReward || 5; // 默认短期任务金币为5
+      
+      console.log("Short-term task base reward - XP:", baseExp, "Gold:", baseGold);
+      
       const { experience, gold } = calculateReward(
-        task.experienceReward || 0,
-        task.goldReward || 0,
+        baseExp,
+        baseGold,
         task.cardUsed?.bonus
       );
+      
+      console.log("Short-term task final reward (with multiplier) - XP:", experience, "Gold:", gold);
+      
       totalExp = experience;
       totalGold = gold;
     }
@@ -128,14 +153,28 @@ export const handleTaskCompletion = async (req) => {
     const newExp = user.experience;
 
     // 查等级配置
-    const currentLevel = await Level.findOne({
-      expRequired: { $lte: newExp },
-    }).sort({ level: -1 });
-    const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
+    let currentLevel, nextLevel;
+    try {
+      currentLevel = await Level.findOne({
+        expRequired: { $lte: newExp },
+      }).sort({ level: -1 });
+      
+      if (!currentLevel) {
+        console.error(`无法找到用户当前等级，使用默认等级 - 用户ID: ${userId}, 经验: ${newExp}`);
+        currentLevel = { level: user.level || 1, expRequired: 0, expToNext: 100 };
+      }
+      
+      nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
+    } catch (err) {
+      console.error(`查询等级信息失败: ${err.message}`);
+      // 使用默认值
+      currentLevel = { level: user.level || 1, expRequired: 0, expToNext: 100 };
+      nextLevel = { level: currentLevel.level + 1, expRequired: currentLevel.expToNext };
+    }
 
     const nextLevelExp = nextLevel
       ? nextLevel.expRequired
-      : currentLevel.expRequired;
+      : currentLevel.expRequired + (currentLevel.expToNext || 100);
     const expProgress = newExp - currentLevel.expRequired;
     const expRemaining = nextLevelExp - newExp;
     const progressRate =
@@ -147,27 +186,41 @@ export const handleTaskCompletion = async (req) => {
     user.level = currentLevel.level;
     user.nextLevelExp = nextLevelExp;
 
-    await user.save();
-    await task.save();
+    try {
+      await user.save();
+      await task.save();
+      
+      // 写入历史记录
+      try {
+        const TaskHistory = (await import("../models/TaskHistory.js")).default;
+        const duration = task.slotEquippedAt
+          ? Math.floor((task.completedAt - new Date(task.slotEquippedAt)) / 60000)
+          : null;
 
-    // 写入历史记录
-    const TaskHistory = (await import("../models/TaskHistory.js")).default;
-    const duration = task.slotEquippedAt
-      ? Math.floor((task.completedAt - new Date(task.slotEquippedAt)) / 60000)
-      : null;
-
-    await TaskHistory.create({
-      user: task.user,
-      title: task.title,
-      type: task.type,
-      status: task.status,
-      completedAt: task.completedAt,
-      duration,
-      experienceGained: totalExp,
-      goldGained: totalGold,
-      cardType: task.cardUsed?.type || null,
-      cardBonus: task.cardUsed?.bonus || null,
-    });
+        await TaskHistory.create({
+          user: task.user,
+          title: task.title,
+          type: task.type,
+          status: task.status,
+          completedAt: task.completedAt,
+          duration,
+          experienceGained: totalExp,
+          goldGained: totalGold,
+          cardType: task.cardUsed?.type || null,
+          cardBonus: task.cardUsed?.bonus || null,
+        });
+      } catch (historyErr) {
+        console.error(`创建任务历史记录失败: ${historyErr.message}`);
+        // 不影响主流程
+      }
+    } catch (saveErr) {
+      console.error(`保存用户或任务信息失败: ${saveErr.message}`);
+      return {
+        success: false,
+        message: "Failed to save user or task data",
+        reward: { expGained: totalExp, goldGained: totalGold }
+      };
+    }
 
     // ✅ 返回结果对象，由调用者决定是否发送给前端
     return {
@@ -195,7 +248,11 @@ export const handleTaskCompletion = async (req) => {
     };
   } catch (error) {
     console.error("❌ Rewards and level update failed:", error);
-    throw new Error("Rewards and level update failed: " + error.message);
+    return {
+      success: false,
+      message: "Rewards and level update failed: " + error.message,
+      reward: { expGained: 0, goldGained: 0 }
+    };
   }
 };
 

@@ -296,26 +296,52 @@ const updateTask = async (req, res) => {
       // 仅设置完成时间，但不标记奖励已领取，让handleTaskCompletion处理奖励发放
       task.completedAt = task.completedAt || Date.now();
       await task.save(); // ✅ 保存更新（包括 status 字段）
-      console.log("Task ID:", task._id); // 应该是 ObjectId 类型
-      console.log("ID passed to handleTaskCompletion:", task._id?.toString());
-      // ✅ 调用 handleTaskCompletion 并接收返回值
-      const { handleTaskCompletion } = await import("./levelController.js");
+      
+      try {
+        console.log("Task ID:", task._id); // 应该是 ObjectId 类型
+        console.log("ID passed to handleTaskCompletion:", task._id?.toString());
+        // ✅ 调用 handleTaskCompletion 并接收返回值
+        const { handleTaskCompletion } = await import("./levelController.js");
 
-      rewardResult = await handleTaskCompletion({
-        user: req.user,
-        body: { taskId: task._id.toString() },
-      });
+        rewardResult = await handleTaskCompletion({
+          user: req.user,
+          body: { taskId: task._id.toString() },
+        });
+        
+        console.log("任务完成奖励处理结果:", rewardResult);
+        if (rewardResult && !rewardResult.reward) {
+          // 确保reward对象存在
+          rewardResult.reward = {
+            expGained: task.experienceReward || (task.type === 'long' ? 30 : 10),
+            goldGained: task.goldReward || (task.type === 'long' ? 15 : 5)
+          };
+        }
+      } catch (err) {
+        console.error("处理任务完成奖励失败:", err);
+        // 即使失败也不要阻止更新任务状态，提供默认奖励值
+        rewardResult = {
+          success: false,
+          message: err.message || "处理任务完成奖励失败",
+          task: task.toObject(),
+          reward: {
+            expGained: task.experienceReward || (task.type === 'long' ? 30 : 10),
+            goldGained: task.goldReward || (task.type === 'long' ? 15 : 5)
+          }
+        };
+      }
     }
 
     const updatedTask = await task.save();
 
     // 添加编辑任务的统计
     await addEditedTasksNum(req.user._id);
+    
     // ✅ 最终统一响应
     return res.json({
       message: "Task updated",
       task: updatedTask.toObject(), // 👈 确保 _id 是字符串存在的
       reward: rewardResult,
+      success: rewardResult ? rewardResult.success !== false : true
     });
   } catch (error) {
     console.error(error);

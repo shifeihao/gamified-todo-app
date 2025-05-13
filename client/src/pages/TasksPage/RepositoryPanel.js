@@ -69,7 +69,7 @@ const RepositoryPanel = ({
             </div>
 
             {/* 内容区域 */}
-            <div className="mt-4 overflow-auto" style={{ maxHeight: 'calc(100vh - 240px)' }}>
+            <div className="mt-4 overflow-auto" style={{ maxHeight: 'calc(100vh - 120px)' }}>
                 {activeTab === 'store' && (
                     <TaskRepository
                         tasks={tasks}

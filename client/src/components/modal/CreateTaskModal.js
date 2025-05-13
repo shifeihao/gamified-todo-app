@@ -108,8 +108,12 @@ export const CreateTaskModal = ({
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(1);
+      // 如果不是编辑模式，需要重置表单状态
+      if (!initialData) {
+        resetFormState();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   // Fetch card inventory
   useEffect(() => {
@@ -215,13 +219,17 @@ export const CreateTaskModal = ({
   }, [isOpen, user, taskType, slotIndex, useReward]);
 
   const resetFormState = () => {
+    // 完全重置所有状态
     setTaskType(getInitialTaskType());
-    setUseReward(initialData?.cardId ? true : false);
-    setSelectedCard(initialData?.cardDetails || null);
+    setUseReward(false); // 始终重置为false，避免使用上一次的状态
+    setSelectedCard(null);
     setSelectedBlankCard(null);
     setCardError('');
     setCurrentStep(1);
     setFormValues(null);
+    // 确保清除表单值
+    if (document.getElementById('title')) document.getElementById('title').value = '';
+    if (document.getElementById('description')) document.getElementById('description').value = '';
   };
 
   const handleClose = () => {

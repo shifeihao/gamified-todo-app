@@ -144,13 +144,46 @@ export const completeTask = async (id, token) => {
       { status: 'completed' },
       getConfig(token)
     );
+    
+    // 确保返回数据存在
+    if (!data) {
+      console.error('任务完成接口返回数据为空');
+      return { 
+        success: false, 
+        message: '任务完成操作失败，服务器未返回数据', 
+        task: { _id: id, status: 'pending' },
+        reward: { expGained: 0, goldGained: 0 }
+      };
+    }
+    
+    console.log('任务完成接口响应数据:', data);
+    
+    // 如果response没有包含reward对象，但task属性存在，构造一个默认的reward对象
+    if (!data.reward && data.task) {
+      const task = data.task;
+      const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
+      const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
+      
+      console.log(`没有找到奖励信息，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
+      
+      data.reward = {
+        expGained: defaultXp,
+        goldGained: defaultGold
+      };
+    }
+    
     return data;
   } catch (error) {
-    throw new Error(
-      error.response && error.response.data.message
-        ? error.response.data.message
-        : 'Failed to complete task'
-    );
+    console.error('完成任务失败:', error.response || error);
+    const errorMessage = error.response?.data?.message || '完成任务失败，请稍后再试';
+    
+    // 返回错误信息和默认数据结构，而不是抛出错误
+    return {
+      success: false,
+      message: errorMessage,
+      task: { _id: id, status: 'pending' },
+      reward: { expGained: 0, goldGained: 0 }
+    };
   }
 };
 

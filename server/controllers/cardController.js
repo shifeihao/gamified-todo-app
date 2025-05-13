@@ -295,7 +295,7 @@ const issueBlankCard = asyncHandler(async (req, res) => {
     type: "blank",
     title,
     description,
-    taskDuration: "short", //  限定为short卡片
+    taskDuration: "long", //  限定为short卡片
     issuedAt: new Date(),
   });
 
