@@ -6,31 +6,50 @@ import Achievement from "../models/Achievement.js";
 import TaskHistory from "../models/TaskHistory.js";
 import UserAchievement from "../models/UserAchievement.js";
 import { UserDungeonStats } from "../models/UserDungeonStats.js";
+import { checkAndUnlockAchievements } from "./checkAchievements.js";
 
-//统一调动所有函数同步UserStats
+// call this function to sync user stats
 export async function SyncUserStats(userId) {
+  await checkUserStats(userId);
   await SyncUser(userId);
   await SyncTaskHistory(userId);
   await checkCardNumber(userId);
   await checkTaskNumber(userId);
   await checkGameStats(userId);
+  await checkAndUnlockAchievements(userId);
 }
-//统计User
+// check if UserStats table exists
+export async function checkUserStats(userId) {
+  console.log("check UserStats");
+  const userStats = await UserStats.findOne({ user: userId });
+  if (!userStats) {
+    console.log("UserStats does not exist, creating a new one");
+    const newUserStats = new UserStats({ user: userId });
+    await newUserStats.save();
+  } else {
+    console.log("UserStats is already exist");
+  }
+}
+//check User
 export async function SyncUser(userId) {
   try {
-    // 将User表和Stats表同步（金币、累计经验、最大金币数）
-    // 1. 获取用户信息
-    console.log("开始检查成就");
-    console.log("获取用户信息");
+    // Synchronize the User table and the Stats table (gold coins, accumulated experience, maximum number of gold coins)
+    // 1. Get user information
     const user = await User.findOne({ _id: userId });
     if (!user) {
-      console.error("❌ 成就检查失败：未找到该用户 userId =", userId);
+      console.error(
+        "❌ Achievement check failed: User not found userId = ",
+        userId
+      );
       return;
     }
-    console.log("检查成功，用户名是：", user.username);
-    // 2. 更新UserStats
-    console.log("开始更新用户记录信息，用户名是：", user.username);
+    console.log("Check successful, the username is:", user.username);
 
+    // 2. update UserStats
+    console.log(
+      "Start updating user record information, the user name is:",
+      user.username
+    );
     const allSlotNum = user.shortCardSlot + user.longCardSlot;
     await UserStats.updateOne(
       { user: userId },
@@ -43,19 +62,29 @@ export async function SyncUser(userId) {
       { new: true }
     );
   } catch (error) {
-    console.error("❌ 同步出错:", error);
+    console.error("❌ Synchronization error:", error);
   }
 }
-//统计TaskHistory（已经完成的任务情况）
+//check TaskHistory
 export async function SyncTaskHistory(userId) {
   try {
-    //获取TaskHistory记录
+    //Get TaskHistory Record
     const taskHistory = await TaskHistory.find({ user: userId });
     if (taskHistory.length === 0) {
-      console.error("❌ 没有任务记录");
+      console.error("❌ No mission record");
       return;
     }
-    // 正确统计数量
+
+    //Statistics show that all tasks have been completed. If no tasks have been completed, return directly
+    const checkCompletedTasks = taskHistory.filter(
+      (t) => t.status === "Completed" || t.status === "completed"
+    );
+    if (checkCompletedTasks.length === 0) {
+      console.error("❌ No tasks completed");
+      return;
+    }
+
+    // Correctly count the number
     const completedNum = taskHistory.filter(
       (t) => t.status === "completed"
     ).length;
@@ -69,14 +98,20 @@ export async function SyncTaskHistory(userId) {
       (t) => t.cardType === "special"
     ).length;
 
-    //找出任务完成时间（completedAt）中的最早/最晚时间
+    //Find the earliest/latest time of task completion time (completedAt)
     const sortedByCompletedTime = [...taskHistory]
       .filter((t) => t.completedAt)
       .sort((a, b) => toSeconds(a.completedAt) - toSeconds(b.completedAt));
-    const earlisterComp = toTimeStr(sortedByCompletedTime[0].completedAt);
-    const latestComp = toTimeStr(sortedByCompletedTime.at(-1).completedAt);
 
-    // 找出持续时间 最长/最短
+    let earlisterComp = null;
+    let latestComp = null;
+
+    if (sortedByCompletedTime.length > 0) {
+      earlisterComp = toTimeStr(sortedByCompletedTime[0].completedAt);
+      latestComp = toTimeStr(sortedByCompletedTime.at(-1).completedAt);
+    }
+
+    // Find the longest/shortest duration
     const shortTasks = taskHistory.filter(
       (t) => t.type === "short" && t.status === "Completed"
     );
@@ -88,20 +123,20 @@ export async function SyncTaskHistory(userId) {
     const longShortestTask = getMinDuration(longTasks);
     const longLongestTask = getMaxDuration(longTasks);
 
-    // 找出用户连续完成任务的天数/连续多少天没有做任务的天数
-    // 获取该用户所有“已完成”的任务
+    // Find out the number of consecutive days the user has completed the task/the number of consecutive days the user has not completed the task
+
+    // Get all "completed" tasks for this user
     const completedTasks = await TaskHistory.find({
       user: userId,
-      status: "Completed",
+      status: { $in: ["Completed", "finished", "已完成", "completed"] },
       completedAt: { $exists: true },
     });
 
-    // 用 Set 保存完成任务的“日期字符串”（格式："YYYY-MM-DD"）
+    // Use Set to save the "date string" of the completed task (format: "YYYY-MM-DD")
     const completedDays = new Set(
       completedTasks.map((task) => task.completedAt.toISOString().slice(0, 10))
     );
-
-    // 设置 streak（连续完成）
+    //Set streak (continuous completion)
     let streak = 0;
     let current = new Date();
     while (true) {
@@ -113,8 +148,7 @@ export async function SyncTaskHistory(userId) {
         break;
       }
     }
-
-    // 重置日期再算 unStreak（连续未完成）
+    // Reset date and calculate unStreak (continuous unfinished)
     let unStreak = 0;
     current = new Date();
     while (true) {
@@ -127,7 +161,7 @@ export async function SyncTaskHistory(userId) {
       }
     }
 
-    // 把所有记录写入数据库
+    // Write all records to the database
     await UserStats.updateOne(
       { user: userId },
       {
@@ -148,20 +182,20 @@ export async function SyncTaskHistory(userId) {
       { new: true }
     );
   } catch (error) {
-    console.error("❌ 同步出错:", error);
+    console.error("❌ Synchronization error:", error);
   }
 }
-//统计Card
+//check Card
 export async function checkCardNumber(userId) {
   const cardHistory = await Card.find({ user: userId });
   if (cardHistory.length === 0) {
-    console.error("❌ 没有任务记录");
+    console.error("❌ No mission record");
     return;
   }
   const blanckCardNum = cardHistory.filter((t) => t.type === "blank").length;
   const specialCardNum = cardHistory.filter((t) => t.type === "special").length;
 
-  //查看和记录里的比谁更大，选择大的记录
+  //Check which record is bigger and select the bigger record
   await UserStats.updateOne(
     { user: userId },
     {
@@ -172,15 +206,14 @@ export async function checkCardNumber(userId) {
     }
   );
 }
-//统计Task（创建的任务情况）
+//check Task
 export async function checkTaskNumber(userId) {
   const taskCreate = await Task.find({ user: userId });
   if (taskCreate.length === 0) {
-    console.error("❌ 没有任务记录");
+    console.error("❌ No mission record");
     return;
   }
-
-  //找出任务创建createdAt 中的最早和最晚时刻（按“小时:分钟:秒”）
+  //Find out the earliest and latest times in createdAt when the task was created (in hours: minutes: seconds)
   const sortedByTime = [...taskCreate].sort(
     (a, b) => toSeconds(a.createdAt) - toSeconds(b.createdAt)
   );
@@ -188,7 +221,7 @@ export async function checkTaskNumber(userId) {
   const earlisterTimeStr = toTimeStr(sortedByTime[0].createdAt);
   const laterTimeStr = toTimeStr(sortedByTime.at(-1).createdAt);
 
-  //记录创建过的长期任务中子任务最多的数量，只要创建就记录下来
+  //Record the maximum number of subtasks in the long-term task created, and record it as soon as it is created
   const longTasks = taskCreate.filter((t) => t.type === "long");
   const maxSubtaskCount = longTasks.reduce((max, current) => {
     const count = current.subTasks?.length || 0;
@@ -204,31 +237,52 @@ export async function checkTaskNumber(userId) {
     }
   );
 }
-//删除一个任务，task_deleted_total计数器+1
+//delete one task and task_deleted_total push +1
 export async function addDeletedTasksNum(userId) {
+  // 1. Check if the UserStats table exists
+  const userStats = await UserStats.findOne({ user: userId });
+  if (!userStats) {
+    console.error(
+      "❌ Achievement check failed: No record found for this user",
+      userId
+    );
+    return;
+  }
   await UserStats.updateOne(
-    { user: userId }, // 查找条件
-    { $inc: { task_deleted_total: 1 } } // 更新内容：将该字段 +1
+    { user: userId },
+    { $inc: { task_deleted_total: 1 } }
   );
 }
-//编辑一个任务，task_edited_total计数器+1
+//update one task and task_edited_total push +1
 export async function addEditedTasksNum(userId) {
+  // 1. Check if the UserStats table exists
+  const userStats = await UserStats.findOne({ user: userId });
+  if (!userStats) {
+    console.error(
+      "❌ Achievement check failed: No record found for this user",
+      userId
+    );
+    return;
+  }
   await UserStats.updateOne(
-    { user: userId }, // 查找条件
-    { $inc: { task_edited_total: 1 } } // 更新内容：将该字段 +1
+    { user: userId },
+    { $inc: { task_edited_total: 1 } }
   );
 }
-//统计游戏数据，计数器+1
+//check game stats
 export async function checkGameStats(userId) {
-  console.log("✅ 开始检查游戏信息");
+  // check if the UserDungeonStats table exists
   const dungeonStats = await UserDungeonStats.findOne({ user: userId });
   if (!dungeonStats) {
-    console.error("❌ 成就游戏信息：未找到该用户 userId =", userId);
+    console.error(
+      "❌ Achievement game information: User not found userId = ",
+      userId
+    );
     return;
   }
   const { exploredFloors } = dungeonStats;
   if (!Array.isArray(exploredFloors) || exploredFloors.length === 0) {
-    console.error("❌ exploredFloors 无效或为空");
+    console.error("❌ exploredFloors is invalid or empty");
     return;
   }
   const maxFloor = Math.max(...exploredFloors);
@@ -236,27 +290,42 @@ export async function checkGameStats(userId) {
     { user: userId },
     { $max: { max_maze_level: maxFloor } }
   );
-  console.log(`✅ 已同步 max_maze_level = ${maxFloor}`);
 }
-//统计个人成就数量/判断是否解锁成就之神
+//check if the user has unlocked the "God of Achievement" achievement
 export async function checkIfGodAchievementUnlocked(userId) {
-  // 1. 重新获取已解锁成就
+  // 1. Get user information
+  const user = await User.findOne({ _id: userId });
+  if (!user) {
+    console.error(
+      "❌ Achievement check failed: User not found userId =",
+      userId
+    );
+    return;
+  }
+  console.log("Check successful, the username is:", user.username);
+
+  // Check if the UserStats table exists
+  await checkUserStats(userId);
+
+  // 1. Re-acquire unlocked achievements
   const unlockedAchievements = await UserAchievement.find({ user: userId });
   const unlockedCount = unlockedAchievements.length;
-  // 2. 更新 UserStats 中的 achievements_total_unlocked 字段
+  // 2. Update the achievements_total_unlocked field in UserStats
   await UserStats.updateOne(
     { user: userId },
     { achievements_total_unlocked: unlockedCount }
   );
-  console.log(`🔢 用户 ${userId} 的成就总数已更新：${unlockedCount}`);
-  // 3. 获取总启用成就数量（过滤掉未启用的）
+  console.log(
+    `🔢 User ${userId} The total number of achievements has been updated:${unlockedCount}`
+  );
+  // 3. Get the total number of enabled achievements (filter out unenabled ones)
   const allEnabledAchievements = await Achievement.find({ isEnabled: true });
   const totalAchievementsCount = allEnabledAchievements.length;
-  // 4. 查找“成就之神”成就定义
+  // 4. Find the "God of Achievement" achievement definition
   const godAchievement = await Achievement.findOne({
     logic: { type: "achievements_total_unlocked" },
   });
-  // 5. 判断是否需要解锁“成就之神”
+  // 5. check if the user has already unlocked the achievement
   console.log();
   const alreadyUnlocked = unlockedAchievements.some(
     (ua) => ua.achievementName.toString() === godAchievement?.name?.toString()
@@ -271,11 +340,12 @@ export async function checkIfGodAchievementUnlocked(userId) {
       achievementId: godAchievement._id,
       achievementName: godAchievement.name,
     });
-    console.log(`🏆 用户 ${userId} 解锁成就之神：${godAchievement.name}`);
+    console.log(`🏆 User ${userId} unlock: ${godAchievement.name}`);
   }
 }
-//计算函数工具
-// 时间排序函数：最早 & 最晚时间（hh:mm:ss）
+
+//tools
+// time format
 function toSeconds(date) {
   return date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds();
 }
@@ -284,7 +354,7 @@ function toTimeStr(date) {
     date.getMinutes()
   ).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
 }
-// 持续时间排序
+// time format2
 function getMinDuration(tasks) {
   return tasks.reduce(
     (min, curr) => (!min || curr.duration < min.duration ? curr : min),

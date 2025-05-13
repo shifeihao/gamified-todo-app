@@ -15,14 +15,14 @@ const OverviewTab = ({
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8 space-y-10">
-      {/* 标题 */}
+      {/* Title */}
       <div className="bg-achievementPage-100 border-l-4 border-achievementPage-500 pl-4 py-1 rounded">
         <h2 className="text-lg font-semibold text-achievementPage-600">
           Recently Acquired
         </h2>
       </div>
 
-      {/* 最近获得成就 */}
+      {/* Recent achievements*/}
       <div>
         {recentUnlocked.length === 0 ? (
           <p className="text-sm text-gray-500">No achievements unlocked yet</p>
@@ -40,7 +40,7 @@ const OverviewTab = ({
         )}
       </div>
 
-      {/* 总体进度条 */}
+      {/* Overall progress bar */}
       <div>
         <h2 className="text-lg font-semibold text-achievementPage-title mb-2">
           Overall Progress
@@ -56,7 +56,7 @@ const OverviewTab = ({
         </p>
       </div>
 
-      {/* 分类进度条 */}
+      {/* Classification progress bar */}
       <AchievementCategoryProgress categoryStats={categoryStats} />
     </div>
   );

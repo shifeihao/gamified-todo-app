@@ -1,7 +1,14 @@
-import axios from "./axios"; // 如果你有封装好的 axios 实例
-// 获取所有成就
+import axios from "./axios"; 
+// Get all user status
 export const fetchUserStat = () => {
-  return axios.get("/achievements/stat").then((res) => {
+  return axios.get("/userstats/").then((res) => {
+    return res.data;
+  });
+};
+
+// Synchronize user status
+export const syncUserStat = () => {
+  return axios.patch("/userstats/sync").then((res) => {
     return res.data;
   });
 };

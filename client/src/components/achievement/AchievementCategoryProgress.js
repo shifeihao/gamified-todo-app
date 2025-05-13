@@ -3,14 +3,14 @@ import React from "react";
 const AchievementCategoryProgress = ({ categoryStats = {} }) => {
   return (
     <div className="space-y-6">
-      {/* 标题块 */}
+      {/* Title Block */}
       <div className="bg-achievementPage-100 border-l-4 border-achievementPage-500 px-4 py-2 rounded-lg shadow-sm">
         <h2 className="text-lg font-semibold text-achievementPage-600">
           Classification Progress Overview
         </h2>
       </div>
 
-      {/* 各分类进度 */}
+      {/* Progress of each category */}
       <div className="space-y-4">
         {Object.entries(categoryStats).map(
           ([category, { unlocked, total }]) => {

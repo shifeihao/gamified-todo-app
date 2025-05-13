@@ -4,8 +4,9 @@ import User from "../models/User.js";
 import Level from "../models/Level.js";
 import Task from "../models/Task.js";
 import { calculateReward } from "../utils/TaskRewardCalcultor.js";
-import { SyncUser, SyncTaskHistory } from "../utils/userStatsSync.js";
+import { SyncTaskHistory, SyncUser } from "../utils/userStatsSync.js";
 
+// 处理任务完成，给予经验和金币奖励
 export const handleTaskCompletion = async (req) => {
   try {
     const userId = req.user._id;
@@ -147,10 +148,6 @@ export const handleTaskCompletion = async (req) => {
       cardBonus: task.cardUsed?.bonus || null,
     });
 
-    //完成任务，将User自己的经验、等级等情况同步到UserStats里面去
-    await SyncUser(userId);
-    await SyncTaskHistory(userId);
-
     // ✅ 返回结果对象，由调用者决定是否发送给前端
     return {
       success: true,
@@ -209,22 +206,22 @@ export const handleSubTaskCompletion = async (req) => {
     // 2. 设置子任务为已完成状态
     task.subTasks[subTaskIndex].status = "completed";
     task.subTasks[subTaskIndex].completedAt = new Date();
-    
+
     // 3. 计算子任务的奖励（与短期任务相同）
     const subTaskExp = task.subTasks[subTaskIndex].experience || 10;
     const subTaskGold = task.subTasks[subTaskIndex].gold || 5;
-    
+
     // 4. 应用卡片加成（如果有）
     const { experience, gold } = calculateReward(
       subTaskExp,
       subTaskGold,
       task.cardUsed?.bonus
     );
-    
+
     // 5. 发放奖励
     user.experience += experience;
     user.gold += gold;
-    
+
     // 6. 计算等级和经验进度
     const newExp = user.experience;
     const currentLevel = await Level.findOne({
@@ -250,25 +247,23 @@ export const handleSubTaskCompletion = async (req) => {
     const allSubTasksCompleted = task.subTasks.every(
       (sub) => sub.status === "completed"
     );
-    
+
     let longTaskReward = null;
-    
+
     // 8. 如果所有子任务已完成，只将主任务标记为已完成，但不自动发放额外奖励
     if (allSubTasksCompleted && task.status !== "completed") {
       // 将任务状态标记为完成
       task.status = "completed";
       task.completedAt = new Date();
-      
-      console.log("所有子任务已完成，长期任务标记为已完成状态，需手动点击完成按钮获取额外奖励");
+
+      console.log(
+        "所有子任务已完成，长期任务标记为已完成状态，需手动点击完成按钮获取额外奖励"
+      );
     }
 
     // 9. 保存更改
     await user.save();
     await task.save();
-    
-    // 10. 同步用户状态
-    await SyncUser(userId);
-    await SyncTaskHistory(userId);
 
     // 11. 返回结果
     return {
@@ -310,20 +305,26 @@ export const handleSubTaskCompletion = async (req) => {
   }
 };
 
+// 获取用户等级信息
 export const getUserLevelBar = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const currentLevel = await Level.findOne({ expRequired: { $lte: user.experience } }).sort({ level: -1 });
+    const currentLevel = await Level.findOne({
+      expRequired: { $lte: user.experience },
+    }).sort({ level: -1 });
     const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
 
-    const nextLevelExp = nextLevel ? nextLevel.expRequired : currentLevel.expRequired;
+    const nextLevelExp = nextLevel
+      ? nextLevel.expRequired
+      : currentLevel.expRequired;
     const expProgress = user.experience - currentLevel.expRequired;
     const expRemaining = nextLevelExp - user.experience;
-    const progressRate = currentLevel.expToNext > 0
-      ? Math.min(expProgress / currentLevel.expToNext, 1)
-      : 1;
+    const progressRate =
+      currentLevel.expToNext > 0
+        ? Math.min(expProgress / currentLevel.expToNext, 1)
+        : 1;
 
     return res.json({
       level: currentLevel.level,
@@ -332,10 +333,68 @@ export const getUserLevelBar = async (req, res) => {
       expProgress,
       expRemaining,
       progressRate,
-      leveledUp: false // 登录时一般不会升级，但你可以自定义逻辑
+      leveledUp: false, // 登录时一般不会升级，但你可以自定义逻辑
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: 'Failed to get level information' });
+    return res.status(500).json({ message: "获取等级信息失败" });
+  }
+};
+
+// 给用户加经验(测试)
+export const addExperience = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "用户不存在" });
+
+    const { experience } = req.body;
+    if (experience <= 0)
+      return res.status(400).json({ message: "经验值必须大于0" });
+
+    user.experience += experience;
+    await user.save();
+    return res.json({ message: "经验值增加成功", experience: user.experience });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "增加经验值失败" });
+  }
+};
+
+// 更新用户卡槽（测试）
+export const updateSlot = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { shortCardSlot, longCardSlot } = req.body;
+
+    // 校验输入值（允许设置为0，但不能为 undefined）
+    const updateFields = {};
+    if (typeof shortCardSlot === "number")
+      updateFields.shortCardSlot = shortCardSlot;
+    if (typeof longCardSlot === "number")
+      updateFields.longCardSlot = longCardSlot;
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ message: "请输入要设置的卡槽数量" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "用户不存在" });
+    }
+
+
+    return res.json({
+      message: "卡槽数量已更新",
+      shortCardSlot: updatedUser.shortCardSlot,
+      longCardSlot: updatedUser.longCardSlot,
+    });
+  } catch (err) {
+    console.error("❌ 更新卡槽失败：", err);
+    return res.status(500).json({ message: "服务器错误" });
   }
 };

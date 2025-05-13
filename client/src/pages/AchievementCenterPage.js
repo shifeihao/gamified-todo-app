@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { fetchAchievements } from "../services/achievement.js";
-import { fetchUserStat } from "../services/userStat.js";
-import AchievementSidebar from "../components/AchievementSidebar.js";
-import OverviewTab from "../components/OverviewTab.js";
-import CategoryTab from "../components/CategoryTab.js";
+import {
+  fetchAchievements,
+  checkAchievements,
+} from "../services/achievement.js";
+import { fetchUserStat, syncUserStat } from "../services/userStat.js";
+import AchievementSidebar from "../components/achievement/AchievementSidebar.js";
+import OverviewTab from "../components/achievement/OverviewTab.js";
+import CategoryTab from "../components/achievement/CategoryTab.js";
 import { Navbar } from "../components/navbar/Navbar.js";
-import { useToast } from '../contexts/ToastContext';
+import { useToast } from "../contexts/ToastContext";
 
 const AchievementCenterPage = () => {
   const [achievements, setAchievements] = useState([]);
@@ -16,6 +19,10 @@ const AchievementCenterPage = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
+        await syncUserStat(); // Synchronize user status
+        console.log("✅ Synchronize user status successfully");
+        await checkAchievements(); // Check achievements
+        console.log("✅ Achievement test success");
         const [achievements, stats] = await Promise.all([
           fetchAchievements(),
           fetchUserStat(),
@@ -83,7 +90,7 @@ const AchievementCenterPage = () => {
           </div>
         </div>
       </div>
-      {/* Tailwind safelist hint: 让 Tailwind 编译这些类名 */}
+      {/* Tailwind safelist hint: let Tailwind Compile these class names */}
       <div className="hidden">
         bg-achievementPage-100 bg-achievementPage-200 bg-achievementPage-400
         bg-achievementPage-500 bg-achievementPage-600 text-achievementPage-600

@@ -11,9 +11,9 @@ const CategoryTab = ({ category, achievements = [], userStats }) => {
     .filter((a) => !a.unlocked && !a.isHidden)
     .sort((a, b) => {
       if (a.points !== b.points) {
-        return a.points - b.points; // 按积分升序
+        return a.points - b.points; // In ascending order of points
       }
-      return a.name.localeCompare(b.name); // 如果积分相同，按名称排序
+      return a.name.localeCompare(b.name); // If the points are the same, sort by name
     });
 
   return (
@@ -24,7 +24,7 @@ const CategoryTab = ({ category, achievements = [], userStats }) => {
           {category} Achievements
         </span>
       </div>
-      {/* 已解锁成就 */}
+      {/* Unlocked achievements */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold mb-2">Unlocked</h2>
         {unlocked.length === 0 ? (
@@ -45,7 +45,7 @@ const CategoryTab = ({ category, achievements = [], userStats }) => {
         )}
       </div>
 
-      {/* 未解锁成就 */}
+      {/* Locked achievements */}
       <div>
         <h2 className="text-lg font-semibold mb-2">Locked</h2>
         {locked.length === 0 ? (

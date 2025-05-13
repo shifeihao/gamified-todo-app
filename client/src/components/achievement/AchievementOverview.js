@@ -11,15 +11,15 @@ const AchievementOverview = ({
 
   return (
     <div className="mb-10">
-      {/* 标题 */}
+      {/* Title */}
       <h2 className="text-xl font-semibold mb-4">Achievements Overview</h2>
 
-      {/* 最近解锁成就 */}
+      {/* Recently unlocked achievements */}
       <div className="mb-6">
         <h3 className="text-md font-medium mb-2">Recently Acquired</h3>
       </div>
 
-      {/* 总体进度条 */}
+      {/* Overall progress bar */}
       <div>
         <h3 className="text-md font-medium mb-2">Unlock Progress</h3>
         <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden mb-1">

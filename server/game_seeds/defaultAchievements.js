@@ -10,7 +10,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_3.png",
     isEnabled: true,
@@ -31,7 +30,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_6.png",
     isEnabled: true,
@@ -52,7 +50,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_13.png",
     isEnabled: true,
@@ -72,7 +69,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_5.png",
     isEnabled: true,
@@ -94,7 +90,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 200,
-      item: null,
     },
     icon: "default_icon_unlocked_9.png",
     isEnabled: true,
@@ -114,7 +109,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 400,
-      item: null,
     },
     icon: "default_icon_unlocked_16.png",
     isEnabled: true,
@@ -135,7 +129,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_11.png",
     isEnabled: true,
@@ -177,7 +170,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_12.png",
     isEnabled: true,
@@ -197,7 +189,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 300,
-      item: null,
     },
     icon: "default_icon_unlocked_10.png",
     isEnabled: true,
@@ -218,7 +209,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_18.png",
     isEnabled: true,
@@ -259,7 +249,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 1200,
-      item: null,
     },
     icon: "default_icon_unlocked_26.png",
     isEnabled: true,
@@ -280,7 +269,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_17.png",
     isEnabled: true,
@@ -301,7 +289,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_19.png",
     isEnabled: true,
@@ -323,7 +310,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 600,
-      item: null,
     },
     icon: "default_icon_unlocked_20.png",
     isEnabled: true,
@@ -343,7 +329,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 1000,
-      item: null,
     },
     icon: "default_icon_unlocked_23.png",
     isEnabled: true,
@@ -363,7 +348,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 2000,
-      item: null,
     },
     icon: "default_icon_unlocked_27.png",
     isEnabled: true,
@@ -384,7 +368,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 1000,
-      item: null,
     },
     icon: "default_icon_unlocked_27.png",
     isEnabled: true,
@@ -405,7 +388,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_24.png",
     isEnabled: true,
@@ -427,7 +409,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_28.png",
     isEnabled: true,
@@ -448,7 +429,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 4000,
-      item: null,
     },
     icon: "default_icon_unlocked_30.png",
     isEnabled: true,
@@ -468,7 +448,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 20000,
-      item: null,
     },
     icon: "default_icon_unlocked_31.png",
     isEnabled: true,
@@ -530,7 +509,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 20000,
-      item: null,
     },
     icon: "default_icon_unlocked_33.png",
     isEnabled: true,
@@ -676,7 +654,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_34.png",
     isEnabled: true,
@@ -697,7 +674,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_4.png",
     isEnabled: true,
@@ -718,7 +694,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_35.png",
     isEnabled: true,
@@ -739,7 +714,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_36.png",
     isEnabled: true,
@@ -759,7 +733,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_37.png",
     isEnabled: true,
@@ -780,7 +753,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_38.png",
     isEnabled: true,
@@ -801,7 +773,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_39.png",
     isEnabled: true,
@@ -822,7 +793,6 @@ const defaultAchievements = [
     reward: {
       exp: 0,
       coins: 0,
-      item: null,
     },
     icon: "default_icon_unlocked_40.png",
     isEnabled: true,

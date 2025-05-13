@@ -1,28 +1,23 @@
 // controllers/achievementController.js
 import Achievement from "../models/Achievement.js";
 import UserAchievement from "../models/UserAchievement.js";
-import UserStats from "../models/UserStats.js";
 import { checkAndUnlockAchievements } from "../utils/checkAchievements.js";
 
-// ✅ 获取所有成就（附加是否解锁）
+// Get all achievements (plus whether they are unlocked)
 export async function getAllAchievements(req, res) {
   try {
     const userId = req.user?._id;
-
     const all = await Achievement.find({ isEnabled: true });
-
     const unlocked = await UserAchievement.find({ user: userId }).select(
       "achievementName unlockedAt"
     );
-
-    // 把 unlocked 变成一个 Map，以成就名为 key，解锁时间为 value
+    //Turn unlocked into a Map with the achievement name as the key and the unlocking time as the value
     const unlockedTimeMap = {};
     for (const u of unlocked) {
       if (u.achievementName) {
         unlockedTimeMap[u.achievementName.toString()] = u.unlockedAt;
       }
     }
-
     const result = all.map((ach) => {
       const name = ach.name?.toString();
       const isUnlocked = name && unlockedTimeMap[name];
@@ -34,7 +29,7 @@ export async function getAllAchievements(req, res) {
         category: ach.category,
         isHidden: ach.isHidden && !isUnlocked,
         unlocked: Boolean(isUnlocked),
-        unlockedAt: isUnlocked ? unlockedTimeMap[name] : null, // ✅ 加入解锁时间
+        unlockedAt: isUnlocked ? unlockedTimeMap[name] : null, 
         reward: ach.reward,
         points: ach.points,
         icon: ach.icon,
@@ -45,12 +40,14 @@ export async function getAllAchievements(req, res) {
 
     res.json(result);
   } catch (err) {
-    console.error("❌ 获取成就失败:", err);
-    res.status(500).json({ message: "获取成就失败", error: err.message });
+    console.error("❌ Failed to obtain achievement:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to obtain achievement", error: err.message });
   }
 }
 
-// ✅ 获取当前用户已解锁成就
+// Get the current user's unlocked achievements
 export async function getUnlockedAchievements(req, res) {
   try {
     const userId = req.user?._id;
@@ -67,52 +64,46 @@ export async function getUnlockedAchievements(req, res) {
 
     res.json(result);
   } catch (err) {
-    console.error("❌ 获取已解锁成就失败:", err);
-    res.status(500).json({ message: "获取已解锁成就失败", error: err.message });
+    console.error("❌ Failed to obtain unlocked achievements:", err);
+    res
+      .status(500)
+      .json({
+        message: "Failed to obtain unlocked achievements",
+        error: err.message,
+      });
   }
 }
 
-// ✅ 成就检查触发器(测试用)
+// Achievement Check Trigger
 export async function triggerAchievementCheck(req, res) {
-  const userId = req.params.userId;
-  if (!userId) return res.status(400).json({ message: "请提供 userId" });
+  const userId = req.user?._id;
+  if (!userId) return res.status(400).json({ message: "Please provide userId" });
   try {
     await checkAndUnlockAchievements(userId);
-    res.json({ message: `✅ 成就检测已执行 for userId=${userId}` });
+    res.json({
+      message: `✅ Achievement detection has been performedfor userId=${userId}`,
+    });
   } catch (err) {
-    console.error("❌ 成就检测失败:", err);
-    res.status(500).json({ message: "成就检测失败", error: err.message });
+    console.error("❌ Achievement detection failed:", err);
+    res
+      .status(500)
+      .json({ message: "Achievement detection failed", error: err.message });
   }
 }
 
-// ✅ 清空该用户的成就记录
+// Clear the user's achievement record
 export async function resetAchievementsForUser(req, res) {
   const userId = req.params.userId;
   try {
     const result = await UserAchievement.deleteMany({ user: userId });
     res.json({
-      message: `🗑️ 用户 ${userId} 的成就记录已清空`,
+      message: `🗑️ User ${userId} The achievement record of has been cleared`,
       deleted: result.deletedCount,
     });
   } catch (err) {
-    console.error("❌ 成就清空失败:", err);
-    res.status(500).json({ message: "成就清空失败", error: err.message });
-  }
-}
-
-// ✅ 获取当前用户的成就统计信息
-export async function getUserStatistics(req, res) {
-  try {
-    const userId = req.user?._id;
-    if (!userId) {
-      return res.status(404).json({ message: "未找到该用户的统计信息" });
-    }
-    const result = await UserStats.findOne({ user:userId });
-    res.json(result);
-  } catch (err) {
-    console.error("❌ 获取用户统计信息失败:", err);
+    console.error("❌ Achievement clear failed:", err);
     res
       .status(500)
-      .json({ message: "获取用户统计信息失败", error: err.message });
+      .json({ message: "Achievement clear failed:", error: err.message });
   }
 }
