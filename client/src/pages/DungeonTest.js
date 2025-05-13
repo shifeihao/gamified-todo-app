@@ -1,4 +1,4 @@
-// 简化版DungeonExplorer.jsx
+// 简化版的 DungeonTest.jsx - 前半部分
 import React, { useState, useEffect, useRef } from 'react';
 import { getShopItems, buyItem } from '../services/inventoryShopService.js';
 import {
@@ -6,11 +6,6 @@ import {
   exploreCurrentFloor,
   summarizeExploration
 } from '../services/dungeonTestService.js';
-import {
-  getAvailableClasses,
-  selectClass,
-  getUserStats
-} from '../services/characterService.js';
 import axios from 'axios';
 import StatAllocation from '../components/game/StatAllocation.js';
 import CombatSystem from '../components/game/CombatSystem';
@@ -18,7 +13,6 @@ import CombatSystem from '../components/game/CombatSystem';
 // 游戏状态
 const GAME_STATES = {
   IDLE: 'idle',
-  CLASS_SELECTION: 'class_selection',
   ENTERING_DUNGEON: 'entering_dungeon',
   EXPLORING: 'exploring',
   COMBAT: 'combat',
@@ -30,23 +24,30 @@ const GAME_STATES = {
 // 设置调试标志
 const DEBUG = true;
 
-// 战斗动画组件
-
-
 // 商店界面组件
 const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
   return (
-    <div style={{ padding: '20px', backgroundColor: '#f9f7e8', borderRadius: '8px', border: '2px solid #c8b458' }}>
-      <h3 style={{ textAlign: 'center', color: '#8b6b2f' }}>🛒 商人商店</h3>
+    <div style={{ 
+      padding: '20px', 
+      backgroundColor: '#3a1f6b', 
+      borderRadius: '12px', 
+      border: '2px solid #5d3494',
+      color: '#e0e0e0'
+    }}>
+      <h3 style={{ textAlign: 'center', color: '#ffffff', marginBottom: '15px' }}>
+        🛒 商人商店
+      </h3>
       
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
         <div style={{ 
-          backgroundColor: '#f8d64e', 
+          backgroundColor: '#ffa726', 
           padding: '8px 12px', 
-          borderRadius: '4px',
+          borderRadius: '6px',
           display: 'flex',
           alignItems: 'center',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+          color: '#2c1810',
+          border: '2px solid #ff8f00'
         }}>
           <span style={{ marginRight: '4px' }}>💰</span>
           <span style={{ fontWeight: 'bold' }}>{gold} 金币</span>
@@ -55,36 +56,46 @@ const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
       
       <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
         {!Array.isArray(items) || items.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '20px', 
+            color: '#b89be6',
+            backgroundColor: '#2c1810',
+            borderRadius: '8px',
+            border: '1px solid #5d3494'
+          }}>
             商店中没有可用物品
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
             {items.map(entry => (
               <div key={entry._id || `item-${Math.random()}`} style={{
-                border: '1px solid #d4c778',
-                borderRadius: '6px',
+                border: '2px solid #5d3494',
+                borderRadius: '8px',
                 padding: '15px',
-                backgroundColor: '#fffdf0'
+                backgroundColor: '#2c1810',
+                transition: 'all 0.2s ease'
               }}>
                 <div style={{ display: 'flex' }}>
                   <div style={{ 
                     width: '50px', 
                     height: '50px', 
-                    backgroundColor: '#f7f0d2',
-                    borderRadius: '6px',
-                    marginRight: '10px',
+                    backgroundColor: '#4c2a85',
+                    borderRadius: '8px',
+                    marginRight: '15px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    overflow: 'hidden',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                    fontSize: '24px',
+                    border: '2px solid #7e4ab8'
                   }}>
                     {entry.item?.icon ? '🔮' : '📦'}
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{entry.item?.name || '未知物品'}</div>
-                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '5px', color: '#ffffff' }}>
+                      {entry.item?.name || '未知物品'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#b89be6', marginBottom: '8px' }}>
                       {entry.item?.description || '无描述'}
                     </div>
                     <div style={{ 
@@ -93,16 +104,21 @@ const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
                       alignItems: 'center',
                       marginTop: '10px'
                     }}>
-                      <span style={{ fontWeight: 'bold', color: '#b7962d' }}>{entry.price} 金币</span>
+                      <span style={{ fontWeight: 'bold', color: '#ffa726' }}>
+                        {entry.price} 金币
+                      </span>
                       <button 
                         onClick={() => onBuyItem(entry.item?._id, entry.price)}
                         style={{
                           padding: '6px 12px',
-                          backgroundColor: gold >= entry.price ? '#4caf50' : '#ccc',
+                          backgroundColor: gold >= entry.price ? '#4caf50' : '#666',
                           color: 'white',
                           border: 'none',
-                          borderRadius: '4px',
-                          cursor: gold >= entry.price ? 'pointer' : 'not-allowed'
+                          borderRadius: '6px',
+                          cursor: gold >= entry.price ? 'pointer' : 'not-allowed',
+                          fontFamily: 'Courier New, monospace',
+                          fontWeight: 'bold',
+                          transition: 'all 0.2s ease'
                         }}
                         disabled={gold < entry.price || !entry.item?._id}
                       >
@@ -125,11 +141,23 @@ const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
           backgroundColor: '#ff9800',
           color: 'white',
           border: 'none',
-          borderRadius: '5px',
+          borderRadius: '6px',
           cursor: 'pointer',
           fontSize: '16px',
+          fontFamily: 'Courier New, monospace',
+          fontWeight: 'bold',
           display: 'block',
-          margin: '20px auto 0'
+          margin: '20px auto 0',
+          border: '2px solid #f57800',
+          transition: 'all 0.2s ease'
+        }}
+        onMouseOver={(e) => {
+          e.target.style.backgroundColor = '#f57800';
+          e.target.style.transform = 'translateY(-1px)';
+        }}
+        onMouseOut={(e) => {
+          e.target.style.backgroundColor = '#ff9800';
+          e.target.style.transform = 'translateY(0)';
         }}
       >
         离开商店并继续
@@ -138,26 +166,37 @@ const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
   );
 };
 
-// 主组件
-const DungeonExplorer = () => {
+// 主组件 - 简化版
+const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
   const [gameState, setGameState] = useState(GAME_STATES.IDLE);
   const [logs, setLogs] = useState([]);
   const [summary, setSummary] = useState(null);
-  const [classes, setClasses] = useState([]);
-  const [selectedClass, setSelectedClass] = useState(null);
-  const [userStats, setUserStats] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [gold, setGold] = useState(0);
-  const [showAdvancedStats, setShowAdvancedStats] = useState(false);
   const [currentFloor, setCurrentFloor] = useState(1);
   const [shopItems, setShopItems] = useState([]);
   const [monsters, setMonsters] = useState([]);
   const [playerStats, setPlayerStats] = useState({
-    hp: 100,
-    attack: 10,
-    defense: 5
-  });
+      hp: userStats?.baseStats?.hp || 100,
+      attack: userStats?.baseStats?.attack || 10,
+      defense: userStats?.baseStats?.defense || 5,
+      magicPower: userStats?.baseStats?.magicPower || 0,
+      speed: userStats?.baseStats?.speed || 0,
+      critRate: userStats?.baseStats?.critRate || 5,
+      evasion: userStats?.baseStats?.evasion || 0
+    });
+  useEffect(() => {
+  if (userStats?.baseStats) {
+    setPlayerStats({
+      hp: userStats.baseStats.hp || 100,
+      attack: userStats.baseStats.attack || 10,
+      defense: userStats.baseStats.defense || 5,
+      magicPower: userStats.baseStats.magicPower || 0,
+      speed: userStats.baseStats.speed || 0,
+      critRate: userStats.baseStats.critRate || 5,
+      evasion: userStats.baseStats.evasion || 0
+    });
+  }
+}, [userStats]);
   
   // 引用变量
   const logsEndRef = useRef(null);
@@ -195,66 +234,20 @@ const DungeonExplorer = () => {
     prevStateRef.current = gameState;
   }, [gameState, monsters]);
 
-  // 初始加载 - 检查用户职业
+  // 初始化玩家属性
   useEffect(() => {
-    const checkUserClass = async () => {
-      if (!token) {
-        setError('请先登录');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        console.log('使用令牌检查用户职业');
-        
-        // 获取用户统计信息
-        const stats = await getUserStats(token);
-        console.log('收到用户统计信息:', stats);
-        
-        setUserStats({
-          ...stats,
-          skills: stats.skills || [] 
-        });
-        
-        // 如果用户需要选择职业
-        if (!stats.hasClass) {
-          console.log('用户需要选择职业，获取可用职业');
-          setGameState(GAME_STATES.CLASS_SELECTION);
-          const classData = await getAvailableClasses(token);
-          setClasses(classData.classes);
-        } else {
-          setGameState(GAME_STATES.IDLE);
-        }
-        
-        // 获取用户金币
-        try {
-          const res = await axios.get('/api/users/profile', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setGold(res.data.gold || 0);
-          
-          // 根据返回数据设置玩家统计信息
-          if (stats.baseStats) {
-            setPlayerStats({
-              hp: stats.baseStats.hp || 100,
-              attack: stats.baseStats.attack || 10,
-              defense: stats.baseStats.defense || 5,
-            });
-          }
-        } catch (profileErr) {
-          console.error('获取用户配置文件失败:', profileErr);
-        }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('检查用户职业时出错:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    checkUserClass();
-  }, [token]);
+    if (userStats?.baseStats) {
+      setPlayerStats({
+        hp: userStats.baseStats.hp || 100,
+        attack: userStats.baseStats.attack || 10,
+        defense: userStats.baseStats.defense || 5,
+        magicPower: userStats.baseStats.magicPower || 0,
+        speed: userStats.baseStats.speed || 0,
+        critRate: userStats.baseStats.critRate || 5,
+        evasion: userStats.baseStats.evasion || 0
+      });
+    }
+  }, [userStats]);
 
   // 加载商店物品
   const loadShopItems = async () => {
@@ -270,44 +263,19 @@ const DungeonExplorer = () => {
       }
     } catch (err) {
       console.error('加载商店物品失败:', err);
-      // 设置为空数组以防止错误
       setShopItems([]);
-    }
-  };
-
-  // 选择职业
-  const handleClassSelect = async (classSlug) => {
-    try {
-      setLoading(true);
-      const result = await selectClass(token, classSlug);
-      setUserStats({ 
-        ...result.class, 
-        hasClass: true 
-      });
-      setSelectedClass(result.class);
-      
-      // 根据职业设置玩家属性
-      if (result.class.baseStats) {
-        setPlayerStats({
-          hp: result.class.baseStats.hp || 100,
-          attack: result.class.baseStats.attack || 10,
-          defense: result.class.baseStats.defense || 5,
-        });
-      }
-      
-      setLogs([`✅ 已选择职业: ${result.class.name}`]);
-      setGameState(GAME_STATES.IDLE);
-      setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
     }
   };
 
   // 购买商店物品
   const handleBuyItem = async (itemId, price) => {
     try {
-      if (gold < price) {
+      // 检查金币是否足够
+      const res = await axios.get('/api/users/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.data.gold < price) {
         alert('金币不足！');
         return;
       }
@@ -318,20 +286,12 @@ const DungeonExplorer = () => {
         { headers: { Authorization: `Bearer ${token}` }}
       );
       
-      // 更新金币
-      setGold(prev => prev - price);
-      
       // 更新日志
       setLogs(prev => [...prev, `💰 购买了 ${shopItems.find(i => i.item._id === itemId)?.item.name || '一件物品'}`]);
       
-      // 刷新用户资料以获取最新金币
-      try {
-        const res = await axios.get('/api/users/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setGold(res.data.gold || 0);
-      } catch (profileErr) {
-        console.error('刷新用户资料失败:', profileErr);
+      // 通知父组件更新金币
+      if (onGoldUpdate) {
+        onGoldUpdate();
       }
     } catch (err) {
       alert(`购买失败: ${err.message}`);
@@ -339,165 +299,161 @@ const DungeonExplorer = () => {
   };
 
   // 战斗结束处理
-  // Frontend: Update the handleCombatEnd function
-const handleCombatEnd = async (result) => {
-  console.log("战斗结束:", result);
-  
-  if (result.result === 'victory') {
-    // 基本胜利日志
-    setLogs(prev => [...prev, '🎯 战斗胜利！']);
+  const handleCombatEnd = async (result) => {
+    console.log("战斗结束:", result);
     
-    // 如果有掉落结果，显示掉落信息
-    if (result.drops) {
-      const { gold, exp, items, cards } = result.drops;
+    if (result.result === 'victory') {
+      // 基本胜利日志
+      setLogs(prev => [...prev, '🎯 战斗胜利！']);
       
-      // 更新金币（如果有掉落）
-      if (gold > 0) {
-        setGold(prev => prev + gold);
+      // 如果有掉落结果，显示掉落信息
+      if (result.drops) {
+        const { gold, exp, items, cards } = result.drops;
+        
+        // 通知父组件更新金币
+        if (gold > 0 && onGoldUpdate) {
+          onGoldUpdate();
+        }
+        
+        setLogs(prev => [...prev, '✨ 战利品已添加到库存中']);
       }
       
-      // 注意：这里不需要再次调用掉落API，因为已经在CombatSystem中处理了
-      setLogs(prev => [...prev, '✨ 战利品已添加到库存中']);
+      setPlayerStats(prev => ({
+        ...prev,
+        hp: result.remainingHp
+      }));
+      
+      try {
+        // 更新战斗后状态
+        const updateResponse = await axios.post(
+          '/api/dungeon/update-after-combat',
+          { 
+            result: 'victory', 
+            remainingHp: result.remainingHp 
+          },
+          { headers: { Authorization: `Bearer ${token}` }}
+        );
+        
+        console.log('战斗后状态更新:', updateResponse.data);
+        
+        // 处理等级提升等其他更新
+        if (updateResponse.data.logs && Array.isArray(updateResponse.data.logs)) {
+          setLogs(prev => [...prev, ...updateResponse.data.logs]);
+        }
+        
+        if (updateResponse.data.expGained) {
+          setLogs(prev => [...prev, `✨ 获得 ${updateResponse.data.expGained} 点经验`]);
+        }
+
+        if (updateResponse.data.levelUp) {
+          setLogs(prev => [
+            ...prev, 
+            `🌟 升级了！从 ${updateResponse.data.prevLevel || '?'} 级到 ${updateResponse.data.currentLevel || updateResponse.data.newLevel || '?'} 级`
+          ]);
+          
+          if (updateResponse.data.statPointsGained > 0) {
+            setLogs(prev => [
+              ...prev,
+              `💪 获得了 ${updateResponse.data.statPointsGained} 点属性点`
+            ]);
+          }
+        }
+        
+        // 更新楼层
+        if (updateResponse.data.nextFloor) {
+          console.log(`更新楼层: ${currentFloor} -> ${updateResponse.data.nextFloor}`);
+          setCurrentFloor(updateResponse.data.nextFloor);
+          setLogs(prev => [...prev, `🚪 你进入了第 ${updateResponse.data.nextFloor} 层`]);
+        }
+        
+        // 继续探索
+        setTimeout(() => {
+          continueExploration();
+        }, 1000);
+      } catch (err) {
+        console.error('更新战斗结果出错:', err);
+        setTimeout(() => {
+          continueExploration();
+        }, 1000);
+      }
+    } else if (result.result === 'settlement') {
+      // HP为0时的处理
+      setLogs(prev => [...prev, '💀 你被击败了，自动结算...']);
+      
+      try {
+        const summary = await summarizeExploration(token);
+        setSummary(summary);
+        setGameState(GAME_STATES.VICTORY);
+      } catch (err) {
+        console.error('获取结算信息失败:', err);
+      }
     }
+  };
+  // 离开商店
+  const handleLeaveShop = async () => {
+    console.log('=== LEAVE SHOP START ===');
+    setLogs(prev => [...prev, '🚶 离开商店并继续探索...']);
     
-    setPlayerStats(prev => ({
-      ...prev,
-      hp: result.remainingHp
-    }));
+    // 标记转换进行中
+    setShopItems([]);
+    setGameState(GAME_STATES.EXPLORING);
     
     try {
-      // 更新战斗后状态（不包含掉落处理，因为已经在前端完成）
-      const updateResponse = await axios.post(
-        '/api/dungeon/update-after-combat',
-        { 
-          result: 'victory', 
-          remainingHp: result.remainingHp 
-        },
+      // 调用离开商店API
+      await axios.post(
+        '/api/dungeon/shop-interaction', 
+        { action: 'leave' }, 
         { headers: { Authorization: `Bearer ${token}` }}
       );
       
-      console.log('战斗后状态更新:', updateResponse.data);
+      // 调用专门为商店后战斗设计的continue API
+      const continueResponse = await axios.post(
+        '/api/dungeon/continue',
+        {},
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
       
-      // 处理等级提升等其他更新
-      if (updateResponse.data.logs && Array.isArray(updateResponse.data.logs)) {
-        setLogs(prev => [...prev, ...updateResponse.data.logs]);
+      console.log('Continue after shop response:', continueResponse.data);
+      
+      // 添加这部分代码：处理返回的日志
+      if (continueResponse.data.logs && Array.isArray(continueResponse.data.logs)) {
+        console.log('Adding logs from response:', continueResponse.data.logs);
+        setLogs(prev => [...prev, ...continueResponse.data.logs]);
       }
       
-      if (updateResponse.data.expGained) {
-        setLogs(prev => [...prev, `✨ 获得 ${updateResponse.data.expGained} 点经验`]);
+      // 更新当前楼层
+      if (continueResponse.data.currentFloor) {
+        setCurrentFloor(continueResponse.data.currentFloor);
       }
-
-      if (updateResponse.data.levelUp) {
-        setLogs(prev => [
-          ...prev, 
-          `🌟 升级了！从 ${updateResponse.data.prevLevel || '?'} 级到 ${updateResponse.data.currentLevel || updateResponse.data.newLevel || '?'} 级`
-        ]);
+      
+      // 处理返回的怪物数据
+      if (continueResponse.data.monsters && 
+          Array.isArray(continueResponse.data.monsters) && 
+          continueResponse.data.monsters.length > 0) {
+          
+        console.log('Found monsters after shop, starting combat');
+        setMonsters(continueResponse.data.monsters);
         
-        if (updateResponse.data.statPointsGained > 0) {
-          setLogs(prev => [
-            ...prev,
-            `💪 获得了 ${updateResponse.data.statPointsGained} 点属性点`
-          ]);
-        }
-      }
-      
-      // 更新楼层
-      if (updateResponse.data.nextFloor) {
-        console.log(`更新楼层: ${currentFloor} -> ${updateResponse.data.nextFloor}`);
-        setCurrentFloor(updateResponse.data.nextFloor);
-        setLogs(prev => [...prev, `🚪 你进入了第 ${updateResponse.data.nextFloor} 层`]);
-      }
-      
-      // 继续探索
-      setTimeout(() => {
+        // 延迟确保UI更新
+        setTimeout(() => {
+          setGameState(GAME_STATES.COMBAT);
+        }, 300);
+      } else {
+        console.log('No monsters after shop, continuing exploration');
         continueExploration();
-      }, 1000);
+      }
     } catch (err) {
-      console.error('更新战斗结果出错:', err);
+      console.error('Leave shop error:', err);
+      setLogs(prev => [...prev, `❌ 错误: ${err.message}`]);
+      
+      // 错误恢复
       setTimeout(() => {
-        continueExploration();
+        setGameState(GAME_STATES.IDLE);
       }, 1000);
     }
-  } else if (result.result === 'settlement') {
-    // HP为0时的处理
-    setLogs(prev => [...prev, '💀 你被击败了，自动结算...']);
     
-    try {
-      const summary = await summarizeExploration(token);
-      setSummary(summary);
-      setGameState(GAME_STATES.VICTORY);
-    } catch (err) {
-      console.error('获取结算信息失败:', err);
-    }
-  }
-};
-  
-  // 离开商店
- // 改进的handleLeaveShop函数
-const handleLeaveShop = async () => {
-  console.log('=== LEAVE SHOP START ===');
-  setLogs(prev => [...prev, '🚶 离开商店并继续探索...']);
-  
-  // 标记转换进行中
-  setShopItems([]);
-  setGameState(GAME_STATES.EXPLORING);
-  
-  try {
-    // 调用离开商店API
-    await axios.post(
-      '/api/dungeon/shop-interaction', 
-      { action: 'leave' }, 
-      { headers: { Authorization: `Bearer ${token}` }}
-    );
-    
-    // 调用专门为商店后战斗设计的continue API
-    const continueResponse = await axios.post(
-      '/api/dungeon/continue',
-      {},
-      { headers: { Authorization: `Bearer ${token}` }}
-    );
-    
-    console.log('Continue after shop response:', continueResponse.data);
-    
-    // 添加这部分代码：处理返回的日志
-    if (continueResponse.data.logs && Array.isArray(continueResponse.data.logs)) {
-      console.log('Adding logs from response:', continueResponse.data.logs);
-      setLogs(prev => [...prev, ...continueResponse.data.logs]);
-    }
-    
-    // 更新当前楼层
-    if (continueResponse.data.currentFloor) {
-      setCurrentFloor(continueResponse.data.currentFloor);
-    }
-    
-    // 处理返回的怪物数据
-    if (continueResponse.data.monsters && 
-        Array.isArray(continueResponse.data.monsters) && 
-        continueResponse.data.monsters.length > 0) {
-        
-      console.log('Found monsters after shop, starting combat');
-      setMonsters(continueResponse.data.monsters);
-      
-      // 延迟确保UI更新
-      setTimeout(() => {
-        setGameState(GAME_STATES.COMBAT);
-      }, 300);
-    } else {
-      console.log('No monsters after shop, continuing exploration');
-      continueExploration();
-    }
-  } catch (err) {
-    console.error('Leave shop error:', err);
-    setLogs(prev => [...prev, `❌ 错误: ${err.message}`]);
-    
-    // 错误恢复
-    setTimeout(() => {
-      setGameState(GAME_STATES.IDLE);
-    }, 1000);
-  }
-  
-  console.log('=== LEAVE SHOP END ===');
-};
+    console.log('=== LEAVE SHOP END ===');
+  };
   
   // 战斗或商店后继续探索
   const continueExploration = async () => {
@@ -594,62 +550,60 @@ const handleLeaveShop = async () => {
   };
 
   // 开始探索
-const startExploration = async () => {
-  setLogs([]);
-  setSummary(null);
-  setGameState(GAME_STATES.ENTERING_DUNGEON);
+  const startExploration = async () => {
+    setLogs([]);
+    setSummary(null);
+    setGameState(GAME_STATES.ENTERING_DUNGEON);
 
-  try {
-    const enter = await enterDungeon(token);
-    console.log('进入地下城响应:', enter);
-    
-    // 设置初始层数
-    let initialFloor = 1;
-    if (enter.exploration) {
-      initialFloor = enter.exploration.floorIndex || 1;
-      setCurrentFloor(initialFloor);
+    try {
+      const enter = await enterDungeon(token);
+      console.log('进入地下城响应:', enter);
+      
+      // 设置初始层数
+      let initialFloor = 1;
+      if (enter.exploration) {
+        initialFloor = enter.exploration.floorIndex || 1;
+        setCurrentFloor(initialFloor);
+      }
+      
+      if (enter.stats) {
+        setPlayerStats({
+          hp: enter.stats.hp || 100,
+          attack: enter.stats.attack || 10,
+          defense: enter.stats.defense || 5,
+          magicPower: userStats.baseStats.magicPower || 0,
+          speed: userStats.baseStats.speed || 0,
+          critRate: userStats.baseStats.critRate || 5,
+          evasion: userStats.baseStats.evasion || 0
+        });
+      }
+      
+      // 添加进入日志包含层数信息
+      setLogs([
+        `✅ 进入: ${enter.dungeon.name}`,
+        `🏁 从第 ${initialFloor} 层开始探索`
+      ]);
+      
+      // 开始探索
+      setGameState(GAME_STATES.EXPLORING);
+      continueExploration();
+    } catch (err) {
+      console.error('开始探索时出错:', err);
+      setLogs([`❌ 错误: ${err.message}`]);
+      setGameState(GAME_STATES.IDLE);
     }
-    
-    if (enter.stats) {
-      setPlayerStats({
-        hp: enter.stats.hp || 100,
-        attack: enter.stats.attack || 10,
-        defense: enter.stats.defense || 5
-      });
-    }
-    
-    // 添加进入日志包含层数信息
-    setLogs([
-      `✅ 进入: ${enter.dungeon.name}`,
-      `🏁 从第 ${initialFloor} 层开始探索`
-    ]);
-    
-    // 开始探索
-    setGameState(GAME_STATES.EXPLORING);
-    continueExploration();
-  } catch (err) {
-    console.error('开始探索时出错:', err);
-    setLogs([`❌ 错误: ${err.message}`]);
-    setGameState(GAME_STATES.IDLE);
-  }
-};
+  };
 
-  // 显示加载中
-  if (loading) {
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-        <div>加载中...</div>
-      </div>
-    );
-  }
-
-  // 显示错误
   if (error) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <div style={{ 
+        padding: '20px', 
+        textAlign: 'center', 
+        backgroundColor: '#2c1810', 
+        borderRadius: '12px' 
+      }}>
         <h2 style={{ color: '#e74c3c' }}>错误</h2>
-        <p>{error}</p>
+        <p style={{ color: '#e0e0e0' }}>{error}</p>
         <button 
           onClick={() => window.location.reload()}
           style={{
@@ -657,9 +611,10 @@ const startExploration = async () => {
             backgroundColor: '#3498db',
             color: 'white',
             border: 'none',
-            borderRadius: '5px',
+            borderRadius: '6px',
             cursor: 'pointer',
-            marginTop: '10px'
+            marginTop: '10px',
+            fontFamily: 'Courier New, monospace'
           }}
         >
           重试
@@ -668,274 +623,34 @@ const startExploration = async () => {
     );
   }
 
-  // 职业选择界面
-  if (gameState === GAME_STATES.CLASS_SELECTION && classes.length > 0) {
-    return (
-      <div style={{ padding: '2rem' }}>
-        <h2 style={{ textAlign: 'center' }}>🧙‍♂️ 选择你的职业</h2>
-        <p style={{ textAlign: 'center' }}>选择一个职业开始你的冒险：</p>
-        
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginTop: '20px', justifyContent: 'center' }}>
-          {classes.map((characterClass) => (
-            <div 
-              key={characterClass.slug} 
-              style={{ 
-                border: '1px solid #ccc',
-                borderRadius: '8px',
-                padding: '16px',
-                width: '240px',
-                cursor: 'pointer',
-                backgroundColor: selectedClass?.slug === characterClass.slug ? '#f0f8ff' : 'white',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}
-              onClick={() => handleClassSelect(characterClass.slug)}
-            >
-              <h3 style={{ textAlign: 'center', marginTop: 0 }}>{characterClass.name}</h3>
-              <div style={{ 
-                marginBottom: '15px', 
-                display: 'flex',
-                justifyContent: 'center'
-              }}>
-                <div style={{ 
-                  width: '80px', 
-                  height: '80px',
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '36px',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-                }}>
-                  {characterClass.slug === 'warrior' && '⚔️'}
-                  {characterClass.slug === 'mage' && '🔮'}
-                  {characterClass.slug === 'archer' && '🏹'}
-                  {characterClass.slug === 'cleric' && '✨'}
-                  {!['warrior', 'mage', 'archer', 'cleric'].includes(characterClass.slug) && '👤'}
-                </div>
-              </div>
-              <p style={{ 
-                fontSize: '14px', 
-                color: '#666',
-                minHeight: '60px'
-              }}>
-                {characterClass.description || '一位勇敢的冒险者，准备迎接任何挑战。'}
-              </p>
-              
-              <div style={{ 
-                marginTop: '15px',
-                backgroundColor: '#f9f9f9',
-                padding: '10px',
-                borderRadius: '6px'
-              }}>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '15px' }}>基础属性：</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                  <div>HP: {characterClass.baseStats?.hp || 0}</div>
-                  <div>攻击: {characterClass.baseStats?.attack || 0}</div>
-                  <div>防御: {characterClass.baseStats?.defense || 0}</div>
-                  <div>速度: {characterClass.baseStats?.speed || 0}</div>
-                </div>
-              </div>
-              
-              <div style={{ marginTop: '10px' }}>
-                <h4 style={{ margin: '5px 0', fontSize: '15px' }}>技能：</h4>
-                <ul style={{ 
-                  paddingLeft: '20px',
-                  margin: '5px 0',
-                  fontSize: '14px',
-                  color: '#555'
-                }}>
-                  {characterClass.skills?.map((skill) => (
-                    <li key={skill.id || skill._id}>{skill.name}</li>
-                  )) || <li>无可用技能</li>}
-                </ul>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // 主游戏界面，不同的状态
+  // 主游戏界面
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <h2 style={{ textAlign: 'center' }}>🧩 地下城探索</h2>
-      
-      {/* 角色信息 */}
-      {userStats?.hasClass && (
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '15px', 
-          backgroundColor: '#f5f5f5', 
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <h3 style={{ margin: '0 0 10px 0' }}>你的角色</h3>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        {userStats.unspentPoints > 0 && (
-          <button
-            onClick={() => setGameState(GAME_STATES.STATS_ALLOCATION)}
-            style={{
-              backgroundColor: '#4caf50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '6px 12px',
-              fontSize: '14px',
-              marginRight: '10px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <span style={{ marginRight: '5px' }}>💪</span>
-            分配属性点 ({userStats.unspentPoints})
-          </button>
-        )}
-          <div style={{ 
-                backgroundColor: '#f8d64e', 
-                padding: '8px 12px', 
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <span style={{ marginRight: '4px' }}>💰</span>
-                <span style={{ fontWeight: 'bold' }}>{gold} 金币</span>
-              </div>
-            </div>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-            <div style={{ 
-              width: '50px',
-              height: '50px',
-              backgroundColor: '#e8e8e8',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '24px',
-              marginRight: '15px'
-            }}>
-              {userStats.slug === 'warrior' && '⚔️'}
-              {userStats.slug === 'mage' && '🔮'}
-              {userStats.slug === 'archer' && '🏹'}
-              {userStats.slug === 'cleric' && '✨'}
-              {!['warrior', 'mage', 'archer', 'cleric'].includes(userStats.slug) && '👤'}
-            </div>
-            <div>
-              <div style={{ fontWeight: 'bold', fontSize: '18px' }}>{userStats.name}</div>
-              <div style={{ 
-                color: '#555',
-                marginTop: '5px',
-                fontSize: '14px'
-              }}>
-                等级: {userStats.level || 1} | 经验: {userStats.exp || 0}
-                {userStats.unspentPoints > 0 && (
-                  <span style={{ 
-                    marginLeft: '10px',
-                    color: '#28a745',
-                    fontWeight: 'bold'
-                  }}>
-                    可用属性点: {userStats.unspentPoints}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-    
-    {/* 属性展示 */}
     <div style={{ 
-      display: 'grid', 
-      gridTemplateColumns: '1fr 1fr 1fr', 
-      gap: '10px',
-      marginTop: '15px'
+      padding: '20px', 
+      fontFamily: 'Courier New, monospace',
+      color: '#e0e0e0'
     }}>
-      <div style={{ backgroundColor: '#e8f5e9', padding: '8px', borderRadius: '4px' }}>
-        <div style={{ fontSize: '12px', color: '#555' }}>HP</div>
-        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.hp || playerStats.hp}</div>
-      </div>
-      <div style={{ backgroundColor: '#fff3e0', padding: '8px', borderRadius: '4px' }}>
-        <div style={{ fontSize: '12px', color: '#555' }}>攻击</div>
-        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.attack || playerStats.attack}</div>
-      </div>
-      <div style={{ backgroundColor: '#e3f2fd', padding: '8px', borderRadius: '4px' }}>
-        <div style={{ fontSize: '12px', color: '#555' }}>防御</div>
-        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.defense || playerStats.defense}</div>
-      </div>
-      <div style={{ backgroundColor: '#e8eaf6', padding: '8px', borderRadius: '4px' }}>
-        <div style={{ fontSize: '12px', color: '#555' }}>魔法</div>
-        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.magicPower || 0}</div>
-      </div>
-      <div style={{ backgroundColor: '#f3e5f5', padding: '8px', borderRadius: '4px' }}>
-        <div style={{ fontSize: '12px', color: '#555' }}>速度</div>
-        <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.speed || 0}</div>
-      </div>
-      <div style={{ backgroundColor: '#fff8e1', padding: '8px', borderRadius: '4px' }}>
-        <div style={{ fontSize: '12px', color: '#555' }}>当前层</div>
-        <div style={{ fontWeight: 'bold' }}>{currentFloor}</div>
-      </div>
-    </div>
-    
-    {/* 高级属性（可展开） */}
-    <div 
-      style={{ 
-        marginTop: '10px', 
-        backgroundColor: '#f9f9f9', 
-        padding: '10px', 
-        borderRadius: '4px',
-        cursor: 'pointer'
-      }}
-      onClick={() => setShowAdvancedStats(!showAdvancedStats)}
-    >
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <span>高级属性</span>
-        <span>{showAdvancedStats ? '▲' : '▼'}</span>
-      </div>
-      
-      {showAdvancedStats && (
-        <div style={{ 
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '10px',
-          marginTop: '10px'
-        }}>
-          <div style={{ backgroundColor: '#ffebee', padding: '8px', borderRadius: '4px' }}>
-            <div style={{ fontSize: '12px', color: '#555' }}>暴击率</div>
-            <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.critRate || 0}%</div>
-          </div>
-          <div style={{ backgroundColor: '#e0f7fa', padding: '8px', borderRadius: '4px' }}>
-            <div style={{ fontSize: '12px', color: '#555' }}>闪避率</div>
-            <div style={{ fontWeight: 'bold' }}>{userStats.baseStats?.evasion || 0}%</div>
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
-)}
-      
       {/* 冒险日志 */}
       <div style={{
-        border: '1px solid #ddd',
-        borderRadius: '6px',
+        border: '2px solid #5d3494',
+        borderRadius: '12px',
         padding: '15px',
         marginBottom: '20px',
-        backgroundColor: '#fafafa',
+        backgroundColor: '#3a1f6b',
         maxHeight: '200px',
         overflowY: 'auto'
       }}>
-        <h3 style={{ margin: '0 0 10px 0', borderBottom: '1px solid #eee', paddingBottom: '8px' }}>
-          📜 冒险日志
+        <h3 style={{ 
+          margin: '0 0 10px 0', 
+          borderBottom: '1px solid #5d3494', 
+          paddingBottom: '8px',
+          color: '#ffffff'
+        }}>
+          📜 冒险日志 - 第 {currentFloor} 层
         </h3>
         
         {logs.length === 0 ? (
-          <p style={{ color: '#777', fontStyle: 'italic', textAlign: 'center' }}>
+          <p style={{ color: '#b89be6', fontStyle: 'italic', textAlign: 'center' }}>
             你的冒险等待开始。启程后记录你的探索经历。
           </p>
         ) : (
@@ -944,10 +659,11 @@ const startExploration = async () => {
               key={index}
               style={{
                 padding: '6px 0',
-                borderBottom: index < logs.length - 1 ? '1px solid #eee' : 'none',
+                borderBottom: index < logs.length - 1 ? '1px solid #5d3494' : 'none',
                 display: 'flex',
                 alignItems: 'flex-start',
-                fontSize: '14px'
+                fontSize: '14px',
+                color: '#e0e0e0'
               }}
             >
               {log.includes('进入:') && <span style={{ marginRight: '8px' }}>✅</span>}
@@ -955,7 +671,8 @@ const startExploration = async () => {
               {log.includes('完成') && <span style={{ marginRight: '8px' }}>🎉</span>}
               {log.includes('击败') && <span style={{ marginRight: '8px' }}>💀</span>}
               {log.includes('错误') && <span style={{ marginRight: '8px' }}>❌</span>}
-              {!log.includes('进入:') && !log.includes('暂停') && !log.includes('完成') && !log.includes('击败') && !log.includes('错误') && (
+              {!log.includes('进入:') && !log.includes('暂停') && !log.includes('完成') && 
+               !log.includes('击败') && !log.includes('错误') && (
                 <span style={{ marginRight: '8px' }}>🔸</span>
               )}
               <span>{log}</span>
@@ -975,16 +692,26 @@ const startExploration = async () => {
               backgroundColor: '#4caf50',
               color: 'white',
               border: 'none',
-              borderRadius: '5px',
+              borderRadius: '8px',
               cursor: 'pointer',
               fontSize: '16px',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+              fontFamily: 'Courier New, monospace',
+              fontWeight: 'bold',
+              border: '2px solid #388e3c',
               transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#388e3c';
+              e.target.style.transform = 'translateY(-1px)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#4caf50';
+              e.target.style.transform = 'translateY(0)';
             }}
           >
             开始探索
           </button>
-          <p style={{ fontSize: '14px', color: '#777', marginTop: '10px' }}>
+          <p style={{ fontSize: '14px', color: '#b89be6', marginTop: '10px' }}>
             进入地下城，面对怪物，寻找宝藏，测试你的技能。
           </p>
         </div>
@@ -995,11 +722,12 @@ const startExploration = async () => {
           textAlign: 'center', 
           marginBottom: '20px',
           padding: '20px',
-          backgroundColor: '#f5f5f5',
-          borderRadius: '8px'
+          backgroundColor: '#3a1f6b',
+          borderRadius: '12px',
+          border: '2px solid #5d3494'
         }}>
           <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-          <div>正在进入地下城...</div>
+          <div style={{ color: '#e0e0e0' }}>正在进入地下城...</div>
         </div>
       )}
       
@@ -1008,13 +736,15 @@ const startExploration = async () => {
           textAlign: 'center', 
           marginBottom: '20px',
           padding: '20px',
-          backgroundColor: '#f5f5f5',
-          borderRadius: '8px'
+          backgroundColor: '#3a1f6b',
+          borderRadius: '12px',
+          border: '2px solid #5d3494'
         }}>
           <div style={{ fontSize: '24px', marginBottom: '10px' }}>🔍</div>
-          <div>正在探索第 {currentFloor} 层...</div>
+          <div style={{ color: '#e0e0e0' }}>正在探索第 {currentFloor} 层...</div>
         </div>
       )}
+      
       {gameState === GAME_STATES.COMBAT && (
         <CombatSystem
           monsters={monsters}
@@ -1025,22 +755,23 @@ const startExploration = async () => {
           userToken={token} 
           onCombatEnd={handleCombatEnd}
         />
-        
       )}
       
       {gameState === GAME_STATES.SHOP && (
         <ShopInterface
           items={shopItems}
-          gold={gold}
+          gold={gold || 0}
           onBuyItem={handleBuyItem}
           onLeaveShop={handleLeaveShop}
         />
       )}
+      
       {gameState === GAME_STATES.STATS_ALLOCATION && (
         <StatAllocation 
           onClose={() => setGameState(GAME_STATES.IDLE)} 
         />
       )}
+      
       {userStats?.hasClass && userStats.unspentPoints > 0 && (
         <div style={{ 
           position: 'fixed', 
@@ -1058,11 +789,12 @@ const startExploration = async () => {
               width: '60px',
               height: '60px',
               fontSize: '24px',
-              boxShadow: '0 3px 5px rgba(0,0,0,0.2)',
+              boxShadow: '0 3px 5px rgba(0,0,0,0.3)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: '2px solid #f57800'
             }}
           >
             💪
@@ -1091,19 +823,20 @@ const startExploration = async () => {
         <div style={{ 
           marginBottom: '20px',
           padding: '25px',
-          backgroundColor: '#e8f5e9',
-          borderRadius: '8px',
+          backgroundColor: '#3a1f6b',
+          borderRadius: '12px',
           border: '2px solid #4caf50'
         }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '36px', marginBottom: '10px' }}>🏆</div>
-            <h3 style={{ color: '#2e7d32', marginBottom: '15px' }}>探索结算！</h3>
+            <h3 style={{ color: '#ffffff', marginBottom: '15px' }}>探索结算！</h3>
           </div>
           
           <div style={{ 
-            backgroundColor: 'rgba(255,255,255,0.7)', 
+            backgroundColor: '#2c1810', 
             padding: '15px',
-            borderRadius: '6px'
+            borderRadius: '8px',
+            color: '#e0e0e0'
           }}>
             <div style={{ marginBottom: '10px' }}>
               <span style={{ fontWeight: 'bold' }}>获得经验：</span> {summary.gainedExp}
@@ -1117,11 +850,11 @@ const startExploration = async () => {
             
             {summary.levelUp && (
               <div style={{ 
-                color: '#2e7d32', 
+                color: '#4caf50', 
                 fontWeight: 'bold',
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                backgroundColor: '#1b5e20',
                 padding: '10px',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 marginTop: '10px'
               }}>
                 🎉 升级了！ +{summary.statPointsGained || 0} 属性点
@@ -1140,8 +873,20 @@ const startExploration = async () => {
                 backgroundColor: '#4caf50',
                 color: 'white',
                 border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontFamily: 'Courier New, monospace',
+                fontWeight: 'bold',
+                border: '2px solid #388e3c',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = '#388e3c';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = '#4caf50';
+                e.target.style.transform = 'translateY(0)';
               }}
             >
               返回首页
@@ -1153,4 +898,4 @@ const startExploration = async () => {
   );
 };
 
-export default DungeonExplorer;
+export default DungeonTest;

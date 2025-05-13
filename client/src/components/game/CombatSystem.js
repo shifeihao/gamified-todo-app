@@ -81,6 +81,11 @@ const CombatSystem = ({
   userToken // 新增：用户token用于API调用
 }) => {
   // 如果提供了className但没有classSlug，则转换
+  console.log('=== CombatSystem 接收到的数据 ===');
+  console.log('playerStats:', playerStats);
+  console.log('playerClass:', playerClass);
+  console.log('magicPower:', playerStats.magicPower);
+  console.log('baseStats:', playerStats.baseStats);
   const actualPlayerClass = playerClass || getClassSlugFromName(playerClassName);
   
   const [currentMonsterIndex, setCurrentMonsterIndex] = useState(0);
@@ -330,7 +335,7 @@ const CombatSystem = ({
   };
   
   // 新增：处理掉落的函数
-const handleDropProcessing = async () => {
+  const handleDropProcessing = async () => {
     if (isProcessingDrops) return; // 防止重复调用
     
     try {
@@ -467,7 +472,6 @@ const handleDropProcessing = async () => {
       setIsProcessingDrops(false);
     }
   };
-  
   // 处理回合制战斗
   useEffect(() => {
     if (skills && skills.length > 0) {
@@ -676,27 +680,39 @@ const handleDropProcessing = async () => {
     return (
       <div style={{
         marginTop: '15px',
-        padding: '10px',
-        backgroundColor: '#f0f0f0',
-        borderRadius: '6px',
-        fontSize: '12px'
+        padding: '12px',
+        backgroundColor: '#4c2a85',
+        borderRadius: '8px',
+        fontSize: '13px',
+        border: '2px solid #5d3494',
+        color: '#e0e0e0'
       }}>
-        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>被动技能:</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+        <div style={{ 
+          fontWeight: 'bold', 
+          marginBottom: '8px',
+          color: '#ffffff',
+          textAlign: 'center'
+        }}>
+          ⚡ 被动技能
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {activeSkills.map(skill => {
             const skillId = skill.id || skill._id;
             const isOnCooldown = skillCooldowns[skillId] > 0;
             
             return (
               <div key={skillId} style={{
-                padding: '5px',
-                backgroundColor: isOnCooldown ? '#e0e0e0' : '#fff',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                opacity: isOnCooldown ? 0.7 : 1
+                padding: '6px 10px',
+                backgroundColor: isOnCooldown ? '#2c1810' : '#3a1f6b',
+                border: `2px solid ${isOnCooldown ? '#666' : '#7e4ab8'}`,
+                borderRadius: '6px',
+                opacity: isOnCooldown ? 0.6 : 1,
+                color: '#e0e0e0'
               }}>
                 <span style={{ fontWeight: 'bold' }}>{skill.name}</span>
-                {isOnCooldown && <span> (CD: {skillCooldowns[skillId]})</span>}
+                {isOnCooldown && (
+                  <span style={{ color: '#b89be6' }}> (CD: {skillCooldowns[skillId]})</span>
+                )}
               </div>
             );
           })}
@@ -704,7 +720,6 @@ const handleDropProcessing = async () => {
       </div>
     );
   };
-  
   // 新增：掉落动画组件
   const DropAnimation = () => {
     if (!showDropAnimation || !dropResults) return null;
@@ -716,26 +731,28 @@ const handleDropProcessing = async () => {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        backgroundColor: 'rgba(44, 24, 16, 0.95)',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 1000,
-        animation: 'fadeIn 0.5s ease-in'
+        animation: 'fadeIn 0.5s ease-in',
+        fontFamily: 'Courier New, monospace'
       }}>
         <div style={{
-          backgroundColor: 'white',
-          borderRadius: '15px',
+          backgroundColor: '#3a1f6b',
+          borderRadius: '12px',
           padding: '30px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+          border: '3px solid #5d3494',
           maxWidth: '500px',
           width: '90%',
-          textAlign: 'center'
+          textAlign: 'center',
+          color: '#e0e0e0'
         }}>
           <h2 style={{ 
-            color: '#ffd700',
+            color: '#ffa726',
             marginBottom: '20px',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            textShadow: '2px 2px 0px #2c1810'
           }}>
             🏆 战利品获得！
           </h2>
@@ -753,7 +770,11 @@ const handleDropProcessing = async () => {
                   display: 'flex',
                   alignItems: 'center',
                   fontSize: '24px',
-                  color: '#ffd700'
+                  color: '#ffa726',
+                  backgroundColor: '#2c1810',
+                  padding: '10px 15px',
+                  borderRadius: '8px',
+                  border: '2px solid #ffa726'
                 }}>
                   <span style={{ fontSize: '36px', marginRight: '10px' }}>💰</span>
                   +{dropResults.gold}
@@ -764,7 +785,11 @@ const handleDropProcessing = async () => {
                   display: 'flex',
                   alignItems: 'center',
                   fontSize: '24px',
-                  color: '#00bfff'
+                  color: '#81c784',
+                  backgroundColor: '#2c1810',
+                  padding: '10px 15px',
+                  borderRadius: '8px',
+                  border: '2px solid #81c784'
                 }}>
                   <span style={{ fontSize: '36px', marginRight: '10px' }}>✨</span>
                   +{dropResults.exp}
@@ -774,9 +799,9 @@ const handleDropProcessing = async () => {
           )}
           
           {/* 物品 */}
-          {dropResults.items.length > 0 && (
+          {dropResults.items && dropResults.items.length > 0 && (
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#4caf50', marginBottom: '10px' }}>获得物品</h3>
+              <h3 style={{ color: '#ffffff', marginBottom: '10px' }}>获得物品</h3>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
@@ -784,14 +809,14 @@ const handleDropProcessing = async () => {
               }}>
                 {dropResults.items.map((item, index) => (
                   <div key={index} style={{
-                    backgroundColor: '#f0f8ff',
+                    backgroundColor: '#2c1810',
                     border: '2px solid #4caf50',
                     borderRadius: '8px',
                     padding: '10px',
                     animation: `bounceIn 0.6s ease-out ${index * 0.2}s both`
                   }}>
                     <div style={{ fontSize: '24px', marginBottom: '5px' }}>🎁</div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>
                       {item.name}
                     </div>
                   </div>
@@ -801,9 +826,9 @@ const handleDropProcessing = async () => {
           )}
           
           {/* 卡片 */}
-          {dropResults.cards.length > 0 && (
+          {dropResults.cards && dropResults.cards.length > 0 && (
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#9c27b0', marginBottom: '10px' }}>获得任务卡片</h3>
+              <h3 style={{ color: '#ffffff', marginBottom: '10px' }}>获得任务卡片</h3>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
@@ -811,19 +836,19 @@ const handleDropProcessing = async () => {
               }}>
                 {dropResults.cards.map((card, index) => (
                   <div key={index} style={{
-                    backgroundColor: '#f3e5f5',
+                    backgroundColor: '#2c1810',
                     border: '2px solid #9c27b0',
                     borderRadius: '8px',
                     padding: '10px',
                     animation: `bounceIn 0.6s ease-out ${index * 0.2}s both`
                   }}>
                     <div style={{ fontSize: '24px', marginBottom: '5px' }}>🃏</div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>
                       {card.title}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-                      {card.bonus.experienceMultiplier > 1 && `经验 +${Math.round((card.bonus.experienceMultiplier - 1) * 100)}%`}
-                      {card.bonus.goldMultiplier > 1 && ` 金币 +${Math.round((card.bonus.goldMultiplier - 1) * 100)}%`}
+                    <div style={{ fontSize: '12px', color: '#b89be6', marginTop: '5px' }}>
+                      {card.bonus && card.bonus.experienceMultiplier > 1 && `经验 +${Math.round((card.bonus.experienceMultiplier - 1) * 100)}%`}
+                      {card.bonus && card.bonus.goldMultiplier > 1 && ` 金币 +${Math.round((card.bonus.goldMultiplier - 1) * 100)}%`}
                     </div>
                   </div>
                 ))}
@@ -834,7 +859,7 @@ const handleDropProcessing = async () => {
           <div style={{
             marginTop: '20px',
             fontSize: '16px',
-            color: '#666'
+            color: '#b89be6'
           }}>
             3秒后自动关闭...
           </div>
@@ -845,17 +870,23 @@ const handleDropProcessing = async () => {
   
   return (
     <div className="combat-container" style={{
-      border: '2px solid #444',
-      borderRadius: '8px',
+      border: '3px solid #5d3494',
+      borderRadius: '12px',
       padding: '20px',
-      backgroundColor: '#f5f5f5',
+      backgroundColor: '#3a1f6b',
       maxWidth: '700px',
       margin: '0 auto',
-      boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+      fontFamily: 'Courier New, monospace',
+      color: '#e0e0e0'
     }}>
-      <h3 style={{ textAlign: 'center', marginTop: 0 }}>
+      <h3 style={{ 
+        textAlign: 'center', 
+        marginTop: 0,
+        color: '#ffffff',
+        textShadow: '1px 1px 0px #2c1810'
+      }}>
         ⚔️ 战斗 {currentMonsterIndex + 1}/{monsters.length} 
-        <span style={{ marginLeft: '10px', fontSize: '0.8em', color: '#666' }}>
+        <span style={{ marginLeft: '10px', fontSize: '0.8em', color: '#b89be6' }}>
           ({classConfig.name})
         </span>
       </h3>
@@ -867,9 +898,10 @@ const handleDropProcessing = async () => {
         padding: '20px',
         position: 'relative',
         minHeight: '180px',
-        backgroundColor: '#e8e8e8',
-        borderRadius: '6px',
-        marginBottom: '15px'
+        backgroundColor: '#2c1810',
+        borderRadius: '8px',
+        marginBottom: '15px',
+        border: '2px solid #4c2a85'
       }}>
         {/* 玩家 */}
         <div className={`player ${isAttacking && isPlayerTurn ? 'attacking' : ''}`} style={{
@@ -885,14 +917,14 @@ const handleDropProcessing = async () => {
                              actualPlayerClass === 'mage' ? '#9c27b0' : 
                              actualPlayerClass === 'rogue' ? '#546e7a' : 
                              actualPlayerClass === 'archer' ? '#2e7d32' : '#4c6ef5',
-            borderRadius: '5px',
+            borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '24px',
             color: 'white',
             margin: '0 auto',
-            boxShadow: '0 3px 6px rgba(0,0,0,0.16)'
+            border: '2px solid #7e4ab8'
           }}>
             {actualPlayerClass === 'warrior' ? '⚔️' : 
              actualPlayerClass === 'mage' ? '🔮' : 
@@ -900,23 +932,24 @@ const handleDropProcessing = async () => {
              actualPlayerClass === 'archer' ? '🏹' : '👤'}
           </div>
           <div style={{ marginTop: '10px' }}>
-            <div style={{ fontWeight: 'bold' }}>你 ({classConfig.name})</div>
+            <div style={{ fontWeight: 'bold', color: '#ffffff' }}>你 ({classConfig.name})</div>
             <div className="health-bar" style={{
               width: '120px',
               height: '12px',
-              backgroundColor: '#e74c3c',
+              backgroundColor: '#d32f2f',
               borderRadius: '6px',
               overflow: 'hidden',
-              marginTop: '5px'
+              marginTop: '5px',
+              border: '1px solid #7e4ab8'
             }}>
               <div style={{
                 width: `${(playerHp / playerStats.hp) * 100}%`,
                 height: '100%',
-                backgroundColor: '#2ecc71',
+                backgroundColor: '#4caf50',
                 transition: 'width 0.5s ease-out'
               }}></div>
             </div>
-            <div style={{ fontSize: '12px', marginTop: '3px' }}>
+            <div style={{ fontSize: '12px', marginTop: '3px', color: '#b89be6' }}>
               HP: {playerHp}/{playerStats.hp}
             </div>
           </div>
@@ -927,10 +960,11 @@ const handleDropProcessing = async () => {
               top: '-20px',
               left: '50%',
               transform: 'translateX(-50%)',
-              color: 'red',
+              color: '#f44336',
               fontWeight: 'bold',
               fontSize: '20px',
-              animation: 'damage-float 0.8s ease-out'
+              animation: 'damage-float 0.8s ease-out',
+              textShadow: '2px 2px 0px #2c1810'
             }}>
               -{showDamage.value}
             </div>
@@ -960,11 +994,12 @@ const handleDropProcessing = async () => {
                     width: '20px',
                     height: '20px',
                     borderRadius: '50%',
-                    backgroundColor: '#fff',
+                    backgroundColor: '#4c2a85',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    fontSize: '12px'
+                    fontSize: '12px',
+                    border: '1px solid #7e4ab8'
                   }}>
                     {icon}
                   </div>
@@ -978,7 +1013,7 @@ const handleDropProcessing = async () => {
         <div style={{
           fontSize: '24px',
           fontWeight: 'bold',
-          color: '#777'
+          color: '#b89be6'
         }}>
           VS
         </div>
@@ -993,38 +1028,39 @@ const handleDropProcessing = async () => {
           <div style={{ 
             width: '90px', 
             height: '110px', 
-            backgroundColor: currentMonster.type === 'boss' ? '#e74c3c' : '#444',
-            borderRadius: '5px',
+            backgroundColor: currentMonster.type === 'boss' ? '#d32f2f' : '#5d3494',
+            borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '28px',
             color: 'white',
             margin: '0 auto',
-            boxShadow: '0 3px 6px rgba(0,0,0,0.16)'
+            border: '2px solid #7e4ab8'
           }}>
             {currentMonster.type === 'boss' ? '👹' : '👾'}
           </div>
           <div style={{ marginTop: '10px' }}>
-            <div style={{ fontWeight: 'bold' }}>
+            <div style={{ fontWeight: 'bold', color: '#ffffff' }}>
               {currentMonster.name} {currentMonster.type === 'boss' && '(BOSS)'}
             </div>
             <div className="health-bar" style={{
               width: '120px',
               height: '12px',
-              backgroundColor: '#e74c3c',
+              backgroundColor: '#d32f2f',
               borderRadius: '6px',
               overflow: 'hidden',
-              marginTop: '5px'
+              marginTop: '5px',
+              border: '1px solid #7e4ab8'
             }}>
               <div style={{
                 width: `${monsterHp}%`,
                 height: '100%',
-                backgroundColor: '#f39c12',
+                backgroundColor: '#ff9800',
                 transition: 'width 0.5s ease-out'
               }}></div>
             </div>
-            <div style={{ fontSize: '12px', marginTop: '3px' }}>
+            <div style={{ fontSize: '12px', marginTop: '3px', color: '#b89be6' }}>
               HP: {monsterHp}/100
             </div>
           </div>
@@ -1035,10 +1071,11 @@ const handleDropProcessing = async () => {
               top: '-20px',
               left: '50%',
               transform: 'translateX(-50%)',
-              color: 'red',
+              color: '#f44336',
               fontWeight: 'bold',
               fontSize: '20px',
-              animation: 'damage-float 0.8s ease-out'
+              animation: 'damage-float 0.8s ease-out',
+              textShadow: '2px 2px 0px #2c1810'
             }}>
               -{showDamage.value}
             </div>
@@ -1056,19 +1093,19 @@ const handleDropProcessing = async () => {
             }}>
               {Object.entries(monsterStatuses).map(([status, data]) => {
                 let icon = '⚡';
-                let bgColor = '#f5f5f5';
+                let bgColor = '#4c2a85';
                 
                 if (status === 'bleed') {
                   icon = '🩸';
-                  bgColor = '#ffebee';
+                  bgColor = '#d32f2f';
                 }
                 if (status === 'poison') {
                   icon = '☠️';
-                  bgColor = '#e8f5e9';
+                  bgColor = '#2e7d32';
                 }
                 if (status === 'confusion') {
                   icon = '😵';
-                  bgColor = '#fff8e1';
+                  bgColor = '#ff9800';
                 }
                 
                 return (
@@ -1081,7 +1118,7 @@ const handleDropProcessing = async () => {
                     justifyContent: 'center',
                     alignItems: 'center',
                     fontSize: '12px',
-                    border: '1px solid #ddd',
+                    border: '1px solid #7e4ab8',
                     position: 'relative'
                   }}>
                     {icon}
@@ -1090,7 +1127,7 @@ const handleDropProcessing = async () => {
                         position: 'absolute',
                         top: '-8px',
                         right: '-8px',
-                        backgroundColor: '#333',
+                        backgroundColor: '#2c1810',
                         color: 'white',
                         borderRadius: '50%',
                         width: '14px',
@@ -1098,7 +1135,8 @@ const handleDropProcessing = async () => {
                         fontSize: '10px',
                         display: 'flex',
                         justifyContent: 'center',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        border: '1px solid #7e4ab8'
                       }}>
                         {data.duration}
                       </span>
@@ -1118,9 +1156,9 @@ const handleDropProcessing = async () => {
       <div className="combat-logs" style={{
         maxHeight: '150px',
         overflowY: 'auto',
-        backgroundColor: '#fff',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
+        backgroundColor: '#2c1810',
+        border: '2px solid #5d3494',
+        borderRadius: '8px',
         padding: '10px',
         marginTop: '15px'
       }}>
@@ -1139,18 +1177,18 @@ const handleDropProcessing = async () => {
           return (
             <div key={index} style={{
               padding: '4px 0',
-              borderBottom: index < combatLogs.length - 1 ? '1px solid #eee' : 'none',
-              color: isCritical ? '#ff4d4d' : 
+              borderBottom: index < combatLogs.length - 1 ? '1px solid #4c2a85' : 'none',
+              color: isCritical ? '#f44336' : 
                     isEvade ? '#4caf50' : 
-                    isSkill ? '#3f51b5' :
-                    isStatus ? '#ff9800' : 'inherit',
+                    isSkill ? '#2196f3' :
+                    isStatus ? '#ff9800' : '#e0e0e0',
               fontWeight: isCritical || isEvade || isSkill ? 'bold' : 'normal'
             }}>
               {displayLog}
               {isCritical && (
                 <span style={{ 
                   marginLeft: '5px', 
-                  color: '#ff4d4d',
+                  color: '#f44336',
                   fontSize: '12px',
                   fontWeight: 'bold'
                 }}>
