@@ -13,6 +13,7 @@ import {
 } from '../services/characterService.js';
 import axios from 'axios';
 import StatAllocation from '../components/game/StatAllocation.js';
+import CombatSystem from '../components/game/CombatSystem';
 
 // 游戏状态
 const GAME_STATES = {
@@ -30,352 +31,7 @@ const GAME_STATES = {
 const DEBUG = true;
 
 // 战斗动画组件
-const CombatAnimation = ({ monsters, playerStats, onCombatEnd }) => {
-  const [currentMonsterIndex, setCurrentMonsterIndex] = useState(0);
-  const [playerHp, setPlayerHp] = useState(playerStats.hp);
-  const [monsterHp, setMonsterHp] = useState(100);
-  const [combatLogs, setCombatLogs] = useState([]);
-  const [isAttacking, setIsAttacking] = useState(false);
-  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
-  const [combatEnded, setCombatEnded] = useState(false);
-  const [showDamage, setShowDamage] = useState(null);
-  
-  const currentMonster = monsters[currentMonsterIndex];
-  const logsEndRef = useRef(null);
-  
-  // 滚动到日志底部
-  useEffect(() => {
-    if (logsEndRef.current) {
-      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [combatLogs]);
-  
-  // 处理回合制战斗
-  useEffect(() => {
-    if (combatEnded) return;
-    
-    // 玩家回合
-    if (isPlayerTurn) {
-      const timer = setTimeout(() => {
-        const damage = Math.floor((playerStats.attack || 10) * (0.8 + Math.random() * 0.4));
-        setShowDamage({ target: 'monster', value: damage });
-        setIsAttacking(true);
-        
-        setTimeout(() => {
-          setIsAttacking(false);
-          setShowDamage(null);
-          
-          const newMonsterHp = Math.max(0, monsterHp - damage);
-          setMonsterHp(newMonsterHp);
-          
-          const logMessage = `🗡️ 你攻击了 ${currentMonster.name}，造成了 ${damage} 点伤害！`;
-          setCombatLogs(prev => [...prev, logMessage]);
-          
-          // 检查怪物是否被击败
-          if (newMonsterHp <= 0) {
-            setCombatLogs(prev => [...prev, `💥 你击败了 ${currentMonster.name}！`]);
-            
-            // 移至下一个怪物或结束战斗
-            if (currentMonsterIndex < monsters.length - 1) {
-              setCurrentMonsterIndex(prev => prev + 1);
-              setMonsterHp(100);
-              setIsPlayerTurn(true); // 玩家对新怪物先手
-            } else {
-              setCombatEnded(true);
-              setTimeout(() => {
-                onCombatEnd({ 
-                  result: 'victory', 
-                  remainingHp: playerHp
-                });
-              }, 1500);
-            }
-          } else {
-            setIsPlayerTurn(false);
-          }
-        }, 600);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    } 
-    // 怪物回合
-    else {
-      const timer = setTimeout(() => {
-        const monsterDamage = Math.floor(((currentMonster.attack || 8) * (0.7 + Math.random() * 0.5)));
-        setShowDamage({ target: 'player', value: monsterDamage });
-        
-        setTimeout(() => {
-          setShowDamage(null);
-          
-          const newPlayerHp = Math.max(0, playerHp - monsterDamage);
-          setPlayerHp(newPlayerHp);
-          
-          const logMessage = `👹 ${currentMonster.name} 攻击了你，造成了 ${monsterDamage} 点伤害！`;
-          setCombatLogs(prev => [...prev, logMessage]);
-          
-          // 检查玩家是否被击败 (HP为0)
-          if (newPlayerHp <= 0) {
-            setCombatLogs(prev => [...prev, `💀 你被 ${currentMonster.name} 击败了！`]);
-            setCombatEnded(true);
-            setTimeout(() => {
-              // 在这里不是GameOver，而是自动结算
-              onCombatEnd({ 
-                result: 'settlement', 
-                remainingHp: 0
-              });
-            }, 1500);
-          } else {
-            setIsPlayerTurn(true);
-          }
-        }, 600);
-      }, 1500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isPlayerTurn, currentMonsterIndex, combatEnded, currentMonster, monsterHp, playerHp, playerStats.attack, onCombatEnd]);
-  
-  return (
-    <div className="combat-container" style={{
-      border: '2px solid #444',
-      borderRadius: '8px',
-      padding: '20px',
-      backgroundColor: '#f5f5f5',
-      maxWidth: '700px',
-      margin: '0 auto',
-      boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-    }}>
-      <h3 style={{ textAlign: 'center', marginTop: 0 }}>⚔️ 战斗 {currentMonsterIndex + 1}/{monsters.length}</h3>
-      
-      <div className="combat-arena" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '20px',
-        position: 'relative',
-        minHeight: '180px',
-        backgroundColor: '#e8e8e8',
-        borderRadius: '6px',
-        marginBottom: '15px'
-      }}>
-        {/* 玩家 */}
-        <div className={`player ${isAttacking && isPlayerTurn ? 'attacking' : ''}`} style={{
-          textAlign: 'center',
-          position: 'relative',
-          transform: isAttacking && isPlayerTurn ? 'translateX(20px)' : 'translateX(0)',
-          transition: 'transform 0.2s ease-in-out'
-        }}>
-          <div style={{ 
-            width: '80px', 
-            height: '100px', 
-            backgroundColor: '#4c6ef5',
-            borderRadius: '5px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '24px',
-            color: 'white',
-            margin: '0 auto',
-            boxShadow: '0 3px 6px rgba(0,0,0,0.16)'
-          }}>
-            👤
-          </div>
-          <div style={{ marginTop: '10px' }}>
-            <div style={{ fontWeight: 'bold' }}>你</div>
-            <div className="health-bar" style={{
-              width: '120px',
-              height: '12px',
-              backgroundColor: '#e74c3c',
-              borderRadius: '6px',
-              overflow: 'hidden',
-              marginTop: '5px'
-            }}>
-              <div style={{
-                width: `${(playerHp / playerStats.hp) * 100}%`,
-                height: '100%',
-                backgroundColor: '#2ecc71',
-                transition: 'width 0.5s ease-out'
-              }}></div>
-            </div>
-            <div style={{ fontSize: '12px', marginTop: '3px' }}>
-              HP: {playerHp}/{playerStats.hp}
-            </div>
-          </div>
-          
-          {showDamage && showDamage.target === 'player' && (
-            <div className="damage-indicator" style={{
-              position: 'absolute',
-              top: '-20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: 'red',
-              fontWeight: 'bold',
-              fontSize: '20px',
-              animation: 'damage-float 0.8s ease-out'
-            }}>
-              -{showDamage.value}
-            </div>
-          )}
-        </div>
-        
-        {/* VS */}
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#777'
-        }}>
-          VS
-        </div>
-        
-        {/* 怪物 */}
-        <div className={`monster ${isAttacking && !isPlayerTurn ? 'attacking' : ''}`} style={{
-          textAlign: 'center',
-          position: 'relative',
-          transform: isAttacking && !isPlayerTurn ? 'translateX(-20px)' : 'translateX(0)',
-          transition: 'transform 0.2s ease-in-out'
-        }}>
-          <div style={{ 
-            width: '90px', 
-            height: '110px', 
-            backgroundColor: currentMonster.isBoss ? '#e74c3c' : '#444',
-            borderRadius: '5px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '28px',
-            color: 'white',
-            margin: '0 auto',
-            boxShadow: '0 3px 6px rgba(0,0,0,0.16)'
-          }}>
-            {currentMonster.isBoss ? '👹' : '👾'}
-          </div>
-          <div style={{ marginTop: '10px' }}>
-            <div style={{ fontWeight: 'bold' }}>
-              {currentMonster.name} {currentMonster.isBoss && '(BOSS)'}
-            </div>
-            <div className="health-bar" style={{
-              width: '120px',
-              height: '12px',
-              backgroundColor: '#e74c3c',
-              borderRadius: '6px',
-              overflow: 'hidden',
-              marginTop: '5px'
-            }}>
-              <div style={{
-                width: `${monsterHp}%`,
-                height: '100%',
-                backgroundColor: '#f39c12',
-                transition: 'width 0.5s ease-out'
-              }}></div>
-            </div>
-            <div style={{ fontSize: '12px', marginTop: '3px' }}>
-              HP: {monsterHp}/100
-            </div>
-          </div>
-          
-          {showDamage && showDamage.target === 'monster' && (
-            <div className="damage-indicator" style={{
-              position: 'absolute',
-              top: '-20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: 'red',
-              fontWeight: 'bold',
-              fontSize: '20px',
-              animation: 'damage-float 0.8s ease-out'
-            }}>
-              -{showDamage.value}
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* 战斗日志 */}
-      <div className="combat-logs" style={{
-  maxHeight: '150px',
-  overflowY: 'auto',
-  backgroundColor: '#fff',
-  border: '1px solid #ddd',
-  borderRadius: '4px',
-  padding: '10px'
-}}>
-  {combatLogs.map((log, index) => {
-    // 检测特殊事件标记
-    const isCritical = log.includes('CRITICAL!');
-    const isEvade = log.includes('EVADE!');
-    
-    // 移除标记文本，保留原始格式
-    const displayLog = log
-      .replace('CRITICAL! ', '')
-      .replace('EVADE! ', '');
-    
-    return (
-      <div key={index} style={{
-        padding: '4px 0',
-          borderBottom: index < combatLogs.length - 1 ? '1px solid #eee' : 'none',
-          color: isCritical ? '#ff4d4d' : isEvade ? '#4caf50' : 'inherit',
-          fontWeight: isCritical || isEvade ? 'bold' : 'normal'
-        }}>
-          {displayLog}
-          {isCritical && (
-            <span style={{ 
-              marginLeft: '5px', 
-              color: '#ff4d4d',
-              fontSize: '12px',
-              fontWeight: 'bold'
-            }}>
-              暴击!
-            </span>
-          )}
-          {isEvade && (
-            <span style={{ 
-              marginLeft: '5px', 
-              color: '#4caf50',
-              fontSize: '12px',
-              fontWeight: 'bold'
-            }}>
-              闪避!
-            </span>
-          )}
-        </div>
-      );
-    })}
-    <div ref={logsEndRef} />
-    </div>
-      
-      <style jsx>{`
-        @keyframes damage-float {
-          0% {
-            opacity: 1;
-            transform: translateY(0) translateX(-50%);
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(-20px) translateX(-50%);
-          }
-        }
-        
-        .player.attacking {
-          animation: attack-right 0.5s ease-in-out;
-        }
-        
-        .monster.attacking {
-          animation: attack-left 0.5s ease-in-out;
-        }
-        
-        @keyframes attack-right {
-          0% { transform: translateX(0); }
-          50% { transform: translateX(20px); }
-          100% { transform: translateX(0); }
-        }
-        
-        @keyframes attack-left {
-          0% { transform: translateX(0); }
-          50% { transform: translateX(-20px); }
-          100% { transform: translateX(0); }
-        }
-      `}</style>
-    </div>
-  );
-};
+
 
 // 商店界面组件
 const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
@@ -557,6 +213,7 @@ const DungeonExplorer = () => {
         
         setUserStats({
           ...stats,
+          skills: stats.skills || [] 
         });
         
         // 如果用户需要选择职业
@@ -687,14 +344,29 @@ const handleCombatEnd = async (result) => {
   console.log("战斗结束:", result);
   
   if (result.result === 'victory') {
-    setLogs(prev => [...prev, '🎯 战斗胜利！继续探索...']);
+    // 基本胜利日志
+    setLogs(prev => [...prev, '🎯 战斗胜利！']);
+    
+    // 如果有掉落结果，显示掉落信息
+    if (result.drops) {
+      const { gold, exp, items, cards } = result.drops;
+      
+      // 更新金币（如果有掉落）
+      if (gold > 0) {
+        setGold(prev => prev + gold);
+      }
+      
+      // 注意：这里不需要再次调用掉落API，因为已经在CombatSystem中处理了
+      setLogs(prev => [...prev, '✨ 战利品已添加到库存中']);
+    }
+    
     setPlayerStats(prev => ({
       ...prev,
       hp: result.remainingHp
     }));
     
     try {
-      // 更新战斗结果
+      // 更新战斗后状态（不包含掉落处理，因为已经在前端完成）
       const updateResponse = await axios.post(
         '/api/dungeon/update-after-combat',
         { 
@@ -706,18 +378,15 @@ const handleCombatEnd = async (result) => {
       
       console.log('战斗后状态更新:', updateResponse.data);
       
-      // 处理返回的日志
+      // 处理等级提升等其他更新
       if (updateResponse.data.logs && Array.isArray(updateResponse.data.logs)) {
-        console.log('从战斗更新中添加日志:', updateResponse.data.logs);
         setLogs(prev => [...prev, ...updateResponse.data.logs]);
       }
       
-      // 处理经验值
       if (updateResponse.data.expGained) {
         setLogs(prev => [...prev, `✨ 获得 ${updateResponse.data.expGained} 点经验`]);
       }
 
-      // 处理等级提升
       if (updateResponse.data.levelUp) {
         setLogs(prev => [
           ...prev, 
@@ -732,11 +401,10 @@ const handleCombatEnd = async (result) => {
         }
       }
       
-      // 更新前端层数
+      // 更新楼层
       if (updateResponse.data.nextFloor) {
         console.log(`更新楼层: ${currentFloor} -> ${updateResponse.data.nextFloor}`);
         setCurrentFloor(updateResponse.data.nextFloor);
-        // 添加进入新层的日志，即使后端没有提供
         setLogs(prev => [...prev, `🚪 你进入了第 ${updateResponse.data.nextFloor} 层`]);
       }
       
@@ -746,13 +414,12 @@ const handleCombatEnd = async (result) => {
       }, 1000);
     } catch (err) {
       console.error('更新战斗结果出错:', err);
-      // 即使更新失败，也尝试继续探索
       setTimeout(() => {
         continueExploration();
       }, 1000);
     }
   } else if (result.result === 'settlement') {
-    // HP为0时，直接结算，不显示GameOver
+    // HP为0时的处理
     setLogs(prev => [...prev, '💀 你被击败了，自动结算...']);
     
     try {
@@ -1348,13 +1015,17 @@ const startExploration = async () => {
           <div>正在探索第 {currentFloor} 层...</div>
         </div>
       )}
-      
       {gameState === GAME_STATES.COMBAT && (
-        <CombatAnimation 
-          monsters={monsters} 
-          playerStats={playerStats} 
+        <CombatSystem
+          monsters={monsters}
+          playerStats={playerStats}
+          playerClass={userStats?.classSlug || "warrior"}
+          playerClassName={userStats?.name}
+          skills={userStats?.skills || []} 
+          userToken={token} 
           onCombatEnd={handleCombatEnd}
         />
+        
       )}
       
       {gameState === GAME_STATES.SHOP && (

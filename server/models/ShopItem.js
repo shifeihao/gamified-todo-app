@@ -28,7 +28,10 @@ const WeaponItem = ShopItem.discriminator('weapon', new mongoose.Schema({
     accuracy: { type: Number, default: 0 }
   },
   slot: { type: String, enum: ['mainHand', 'offHand'], required: true },
-  allowedClasses:  [{ type: ObjectId, ref: 'CharacterClass' }],
+  allowedClasses: {
+    type: [String],
+    default: ['all']  // 与 ArmorItem 保持一致
+  },
   isEquipped: {type:Boolean,default:false},
   requiredLevel: {
     type: Number,

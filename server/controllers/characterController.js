@@ -123,12 +123,15 @@ export const getUserStats = async (req, res) => {
     const userId = req.user._id;
 
     // 获取用户统计信息
-    const stats = await UserDungeonStats.findOne({ user: userId }).populate(
-      "Skills"
-    );
-
-    console.log("getUserStats found stats:", !!stats);
-
+    const stats = await UserDungeonStats.findOne({ user: userId })
+      .populate({
+       path: "Skills",
+     // 明确指定要包含的字段，确保不会遗漏
+      select: "_id name description icon trigger effect effectValue cooldown once priority triggerCondition allowedClasses"
+    })
+    
+    console.log('getUserStats found stats:', !!stats);
+    
     // 如果没有统计或职业属性不完整
     if (!stats || !stats.assignedStats || !stats.assignedStats.hp) {
       console.log("User needs to select a class");
@@ -153,17 +156,29 @@ export const getUserStats = async (req, res) => {
 
     return res.json({
       hasClass: true,
-      name: stats.className || "Unknown Class", // 你可能需要存储职业名称
+      name: stats.className || 'Unknown Class',
+      classSlug: stats.classSlug,
+      className: stats.className, // 修正了拼写错误 clsssName -> className
       level: stats.dungeonLevel,
       exp: stats.dungeonExp,
       unspentPoints: stats.unspentStatPoints,
-      baseStats: stats.assignedStats, // 使用 baseStats 而不是 stats
-      skills: skills.map((s) => ({
+      baseStats: stats.assignedStats,
+      
+      // 修改这部分，返回更完整的技能信息
+      skills: skills.map(s => ({
         id: s._id,
         name: s.name,
         description: s.description,
-        type: s.type,
-      })),
+        icon: s.icon,
+        trigger: s.trigger,
+        effect: s.effect,
+        effectValue: s.effectValue,
+        cooldown: s.cooldown,
+        once: s.once || false,
+        priority: s.priority || 0,
+        triggerCondition: s.triggerCondition,
+        allowedClasses: s.allowedClasses
+      }))
     });
   } catch (err) {
     console.error("getUserStats error:", err);

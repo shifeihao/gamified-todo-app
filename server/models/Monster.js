@@ -30,7 +30,13 @@ const monsterSchema = new mongoose.Schema({
     itemDrops: [
       {
         item: { type: mongoose.Schema.Types.ObjectId, ref: 'ShopItem' },
-        rate: Number
+        rate: { type: Number, default: 10 }
+      }
+    ],
+
+    taskCardDrops: [
+      {
+        rate: { type: Number, default: 3 }
       }
     ],
   

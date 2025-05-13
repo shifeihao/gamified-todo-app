@@ -3,18 +3,7 @@ const router = express.Router();
 
 import { protect } from '../../middleware/auth.js';
 
-import {
-  consumeCard, 
-  getCardInventory, 
-  issueDailyCards, 
-  issueWeeklyCards, 
-  issueRewardCard, 
-  issueBlankCard,
-  getCardById
-} from '../../controllers/cardController.js';
-
-// 注意：路由的顺序非常重要
-// 具体路径必须放在参数路径(如:id)之前，否则Express会将所有请求匹配到参数路由
+import {consumeCard,processDrops,getCardInventory, issueDailyCards, issueWeeklyCards, issueRewardCard, issueBlankCard,getCardById} from '../../controllers/cardController.js';
 
 // 获取卡片库存
 router.route('/inventory')
@@ -40,8 +29,12 @@ router.route('/consume')
 router.route('/issue-blank')
   .post(protect, issueBlankCard);
 
-// 获取单张卡片 - 必须放在所有特定路由之后
+router.route('/process-drops')
+  .post(protect, processDrops);    
+
 router.route('/:id')
   .get(protect, getCardById);
 
-export default router;
+
+
+export default router;  

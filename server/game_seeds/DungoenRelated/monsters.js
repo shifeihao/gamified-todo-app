@@ -1,14 +1,38 @@
-// ✅ Final Version: seedMonsters.js with Boss Skill Resolution
+// ✅ Final Version: seedMonsters.js with Drops Data
 import mongoose from "mongoose";
 import { Monster } from "../../models/Monster.js";
 import { Skill } from "../../models/Skill.js";
+import { ShopItem } from "../../models/ShopItem.js";
 
 await mongoose.connect(
   "mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 );
 
+// 获取现有物品ID
+const existingItems = await ShopItem.find();
+console.log(`Found ${existingItems.length} items in database`);
+
+// 创建物品ID映射（按类型）
+const itemsByType = {
+  weapon: existingItems.filter(item => item.type === 'weapon'),
+  armor: existingItems.filter(item => item.type === 'armor'),
+  consumable: existingItems.filter(item => item.type === 'consumable')
+};
+
+// 辅助函数：随机获取物品ID
+const getRandomItem = (type, fallbackIndex = 0) => {
+  const items = itemsByType[type];
+  if (items && items.length > 0) {
+    return items[Math.floor(Math.random() * items.length)]._id;
+  }
+  // 如果没有特定类型的物品，返回任意物品
+  return existingItems[fallbackIndex]?._id;
+};
+
 await Promise.all([Monster.deleteMany({})]);
+
 const monsters = [
+  // 低级怪物 (Lv 1-10)
   {
     name: "Echo Bat",
     slug: "echo-bat",
@@ -28,6 +52,20 @@ const monsters = [
       evasion: 1.5,
       speed: 1.6,
     },
+    // 添加掉落数据
+    expDrop: 10,
+    goldDrop: 3,
+    itemDrops: [
+      {
+        item: getRandomItem('consumable', 0),
+        rate: 8 // 8%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 3 // 3%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Sloth Slime",
@@ -48,6 +86,20 @@ const monsters = [
       evasion: 0.7,
       speed: 0.6,
     },
+    // 添加掉落数据
+    expDrop: 15,
+    goldDrop: 5,
+    itemDrops: [
+      {
+        item: getRandomItem('consumable', 1),
+        rate: 10 // 10%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 4 // 4%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Hollow Child",
@@ -68,6 +120,20 @@ const monsters = [
       evasion: 1.0,
       speed: 1.0,
     },
+    // 添加掉落数据
+    expDrop: 20,
+    goldDrop: 8,
+    itemDrops: [
+      {
+        item: getRandomItem('armor', 0),
+        rate: 9 // 9%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 5 // 5%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "False Prophet",
@@ -95,25 +161,34 @@ const monsters = [
       speed: 14,
     },
 
+    // BOSS掉落
     expDrop: 120,
     goldDrop: 200,
     spawnRate: 1,
-
-    skills: ["Invert Faith", "Echo of Doubt", "Veil of Truth"], // 请在 seed/controller 中插入对应 ObjectId
-
     itemDrops: [
-      //   {
-      //     item: ObjectId("codex-of-clarity"), // 替换为真实 ObjectId
-      //     rate: 0.1
-      //   },
-      //   {
-      //     item: ObjectId("rare-catalyst"), // 替换为真实 ObjectId
-      //     rate: 0.3
-      //   }
+      {
+        item: getRandomItem('weapon', 0),
+        rate: 50 // 50%概率掉落武器（BOSS特殊）
+      },
+      {
+        item: getRandomItem('armor', 1),
+        rate: 40 // 40%概率掉落护甲（BOSS特殊）
+      },
+      {
+        item: getRandomItem('consumable', 2),
+        rate: 60 // 60%概率掉落消耗品（BOSS特殊）
+      }
     ],
+    taskCardDrops: [
+      {
+        rate: 80 // BOSS有较高卡片掉落率（80%）
+      }
+    ],
+
+    skills: ["Invert Faith", "Echo of Doubt", "Veil of Truth"],
   },
 
-  // Lv 11–20
+  // 中级怪物 (Lv 11–20)
   {
     name: "Dread Hound",
     slug: "dread-hound",
@@ -132,6 +207,20 @@ const monsters = [
       evasion: 1.1,
       speed: 1.3,
     },
+    // 添加掉落数据
+    expDrop: 35,
+    goldDrop: 15,
+    itemDrops: [
+      {
+        item: getRandomItem('weapon', 1),
+        rate: 8 // 8%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 4 // 4%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Guilt Phantom",
@@ -152,6 +241,20 @@ const monsters = [
       evasion: 1.0,
       speed: 0.9,
     },
+    // 添加掉落数据
+    expDrop: 40,
+    goldDrop: 18,
+    itemDrops: [
+      {
+        item: getRandomItem('armor', 2),
+        rate: 9 // 9%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 5 // 5%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Shadow Doll",
@@ -171,6 +274,20 @@ const monsters = [
       evasion: 1.0,
       speed: 1.0,
     },
+    // 添加掉落数据
+    expDrop: 45,
+    goldDrop: 20,
+    itemDrops: [
+      {
+        item: getRandomItem('consumable', 3),
+        rate: 12 // 12%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 6 // 6%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Obsession Wasp",
@@ -191,6 +308,20 @@ const monsters = [
       evasion: 1.0,
       speed: 1.2,
     },
+    // 添加掉落数据
+    expDrop: 70,
+    goldDrop: 35,
+    itemDrops: [
+      {
+        item: getRandomItem('weapon', 2),
+        rate: 10 // 10%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 5 // 5%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Jealous Flame",
@@ -210,6 +341,20 @@ const monsters = [
       evasion: 1.0,
       speed: 0.9,
     },
+    // 添加掉落数据
+    expDrop: 75,
+    goldDrop: 40,
+    itemDrops: [
+      {
+        item: getRandomItem('armor', 3),
+        rate: 11 // 11%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 5 // 5%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Judgement Eye",
@@ -229,6 +374,20 @@ const monsters = [
       evasion: 0.9,
       speed: 0.9,
     },
+    // 添加掉落数据
+    expDrop: 80,
+    goldDrop: 45,
+    itemDrops: [
+      {
+        item: getRandomItem('consumable', 4),
+        rate: 12 // 12%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 6 // 6%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Misery Wraith",
@@ -248,6 +407,20 @@ const monsters = [
       evasion: 1.1,
       speed: 1.0,
     },
+    // 添加掉落数据
+    expDrop: 100,
+    goldDrop: 60,
+    itemDrops: [
+      {
+        item: getRandomItem('weapon', 3),
+        rate: 11 // 11%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 6 // 6%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Whisper Raven",
@@ -267,6 +440,20 @@ const monsters = [
       evasion: 1.6,
       speed: 1.4,
     },
+    // 添加掉落数据
+    expDrop: 105,
+    goldDrop: 65,
+    itemDrops: [
+      {
+        item: getRandomItem('armor', 4),
+        rate: 12 // 12%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 6 // 6%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Vile Husk",
@@ -286,6 +473,20 @@ const monsters = [
       evasion: 0.7,
       speed: 0.8,
     },
+    // 添加掉落数据
+    expDrop: 110,
+    goldDrop: 70,
+    itemDrops: [
+      {
+        item: getRandomItem('consumable', 1),
+        rate: 13 // 13%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 6 // 6%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Rage Beast",
@@ -305,6 +506,20 @@ const monsters = [
       evasion: 1.0,
       speed: 1.2,
     },
+    // 添加掉落数据
+    expDrop: 140,
+    goldDrop: 90,
+    itemDrops: [
+      {
+        item: getRandomItem('weapon', 4),
+        rate: 13 // 13%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 7 // 7%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Doubt Elemental",
@@ -324,6 +539,20 @@ const monsters = [
       evasion: 1.1,
       speed: 1.0,
     },
+    // 添加掉落数据
+    expDrop: 145,
+    goldDrop: 95,
+    itemDrops: [
+      {
+        item: getRandomItem('armor', 1),
+        rate: 14 // 14%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 7 // 7%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Masked Knight",
@@ -344,6 +573,24 @@ const monsters = [
       evasion: 0.9,
       speed: 0.9,
     },
+    // 添加掉落数据
+    expDrop: 150,
+    goldDrop: 100,
+    itemDrops: [
+      {
+        item: getRandomItem('weapon', 5),
+        rate: 15 // 15%概率掉落武器
+      },
+      {
+        item: getRandomItem('armor', 5),
+        rate: 10 // 10%概率掉落护甲
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 8 // 8%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Time Leech",
@@ -363,6 +610,20 @@ const monsters = [
       evasion: 1.1,
       speed: 1.1,
     },
+    // 添加掉落数据
+    expDrop: 170,
+    goldDrop: 120,
+    itemDrops: [
+      {
+        item: getRandomItem('consumable', 2),
+        rate: 15 // 15%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 8 // 8%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "Silence Idol",
@@ -383,6 +644,20 @@ const monsters = [
       evasion: 0.6,
       speed: 0.5,
     },
+    // 添加掉落数据
+    expDrop: 175,
+    goldDrop: 125,
+    itemDrops: [
+      {
+        item: getRandomItem('armor', 6),
+        rate: 16 // 16%概率掉落
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 8 // 8%概率掉落任务卡片
+      }
+    ]
   },
   {
     name: "The Whisper of Doubt",
@@ -403,8 +678,27 @@ const monsters = [
       evasion: 1.2,
       speed: 1.0,
     },
+    // 添加掉落数据
+    expDrop: 180,
+    goldDrop: 130,
+    itemDrops: [
+      {
+        item: getRandomItem('weapon', 6),
+        rate: 17 // 17%概率掉落武器
+      },
+      {
+        item: getRandomItem('consumable', 3),
+        rate: 12 // 12%概率掉落消耗品
+      }
+    ],
+    taskCardDrops: [
+      {
+        rate: 9 // 9%概率掉落任务卡片
+      }
+    ]
   },
 ];
+
 const getSkillIds = async (names) => {
   const skills = await Skill.find({ name: { $in: names } });
   const map = Object.fromEntries(skills.map((s) => [s.name, s._id]));
@@ -432,8 +726,6 @@ const computeStatsWithBias = (level, bias) => {
   return scaled;
 };
 
-// monster data defined inline // Assuming you separate out the monster array
-
 const sharedSkills = await getSkillIds([
   "Smash",
   "Poison Needle",
@@ -446,9 +738,10 @@ for (const m of monsters) {
 
   const skillIds = m.skills
     ? await getSkillIds(m.skills)
-    : sharedSkills.slice(0, 2); // Default skills for normal monsters
+    : sharedSkills.slice(0, 2);
 
-  await Monster.create({
+  // 确保每个怪物都有掉落数据
+  const monsterData = {
     name: m.name,
     slug: m.slug,
     icon: m.icon || `${m.slug}.png`,
@@ -460,14 +753,17 @@ for (const m of monsters) {
     stats: m.stats || computeStatsWithBias(m.level, m.bias),
     skills: skillIds,
     behavior: m.behavior || "basic",
-    expDrop: m.expDrop || Math.floor(m.level * 3.2),
-    goldDrop: m.goldDrop || Math.floor(m.level * 2.5),
+    expDrop: m.expDrop !== undefined ? m.expDrop : Math.floor(m.level * 3.2),
+    goldDrop: m.goldDrop !== undefined ? m.goldDrop : Math.floor(m.level * 2.5),
     itemDrops: m.itemDrops || [],
+    taskCardDrops: m.taskCardDrops || [{ rate: 5 }], // 默认5%概率掉落任务卡片
     spawnRate: m.spawnRate || 1,
     floors: m.floors,
     environmentTags: m.environmentTags || [],
-  });
+  };
+
+  await Monster.create(monsterData);
 }
 
-console.log("✅ Monsters and Bosses seeded successfully.");
+console.log("✅ Monsters and Bosses seeded successfully with drop data.");
 await mongoose.disconnect();
