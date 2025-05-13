@@ -27,10 +27,14 @@ const createTask = async (req, res) => {
     // 校验必要字段
     console.log(req.body);
     if (!req.body.title || !req.body.experienceReward || !req.body.goldReward) {
-      return res.status(400).json({ message: "Missing required task information" });
+      return res
+        .status(400)
+        .json({ message: "Missing required task information" });
     }
     if (!req.body.cardUsed) {
-      return res.status(400).json({ message: "Must specify a card to use (cardUsed)" });
+      return res
+        .status(400)
+        .json({ message: "Must specify a card to use (cardUsed)" });
     }
 
     // 验证卡片是否存在且可用
@@ -38,40 +42,59 @@ const createTask = async (req, res) => {
     const card = await Card.findOne({
       _id: req.body.cardUsed,
       user: req.user._id,
-      used: false // 确保卡片未被使用
+      used: false, // 确保卡片未被使用
     });
 
     if (!card) {
-      return res.status(400).json({ message: "The specified card does not exist or has already been used" });
+      return res
+        .status(400)
+        .json({
+          message: "The specified card does not exist or has already been used",
+        });
     }
 
     // 验证卡片类型与任务类型匹配
-    if (card.taskDuration !== 'general' && card.taskDuration !== req.body.type) {
+    if (
+      card.taskDuration !== "general" &&
+      card.taskDuration !== req.body.type
+    ) {
       return res.status(400).json({
-        message: `This card only supports ${card.taskDuration} type tasks and cannot be used for ${req.body.type} type tasks`
+        message: `This card only supports ${card.taskDuration} type tasks and cannot be used for ${req.body.type} type tasks`,
       });
     }
 
     // 如果是长期任务，验证子任务
-    if (req.body.type === 'long') {
-      if (!req.body.subTasks || !Array.isArray(req.body.subTasks) || req.body.subTasks.length === 0) {
-        return res.status(400).json({ message: "Long-term tasks must include at least one subtask" });
+    if (req.body.type === "long") {
+      if (
+        !req.body.subTasks ||
+        !Array.isArray(req.body.subTasks) ||
+        req.body.subTasks.length === 0
+      ) {
+        return res
+          .status(400)
+          .json({
+            message: "Long-term tasks must include at least one subtask",
+          });
       }
 
       // 验证每个子任务
       for (const subTask of req.body.subTasks) {
         if (!subTask.title || !subTask.title.trim()) {
-          return res.status(400).json({ message: "Subtasks must include a title" });
+          return res
+            .status(400)
+            .json({ message: "Subtasks must include a title" });
         }
         if (!subTask.dueDate) {
-          return res.status(400).json({ message: "Subtasks must have a deadline" });
+          return res
+            .status(400)
+            .json({ message: "Subtasks must have a deadline" });
         }
       }
     }
 
     // 为短期任务自动设置截止时间为创建时间+24小时
     let taskDueDate = req.body.dueDate;
-    if (req.body.type === 'short') {
+    if (req.body.type === "short") {
       const now = new Date();
       now.setHours(now.getHours() + 24);
       taskDueDate = now.toISOString();
@@ -96,9 +119,9 @@ const createTask = async (req, res) => {
     await card.save();
 
     // 如果是空白卡片，从用户库存中减少计数
-    if (card.type === 'blank') {
+    if (card.type === "blank") {
       await User.findByIdAndUpdate(req.user._id, {
-        $inc: { "dailyCards.blank": -1 }
+        $inc: { "dailyCards.blank": -1 },
       });
     }
 
@@ -183,8 +206,10 @@ const updateTask = async (req, res) => {
       }
 
       // 检查子任务是否已完成
-      if (task.subTasks[subTaskIndex].status === 'completed') {
-        return res.status(400).json({ message: "Subtask has already been completed" });
+      if (task.subTasks[subTaskIndex].status === "completed") {
+        return res
+          .status(400)
+          .json({ message: "Subtask has already been completed" });
       }
 
       // 调用子任务完成处理函数
@@ -198,15 +223,14 @@ const updateTask = async (req, res) => {
       });
 
       // 检查是否所有子任务都已完成
-      const allSubTasksCompleted = task.subTasks.every(st =>
-        st.status === 'completed' || (st === task.subTasks[subTaskIndex])
+      const allSubTasksCompleted = task.subTasks.every(
+        (st) => st.status === "completed" || st === task.subTasks[subTaskIndex]
       );
 
-
       return res.json({
-        message: allSubTasksCompleted ?
-          "Subtask completed! All subtasks have been completed, click the Complete Quest button to get additional rewards" :
-          "Subtask completed",
+        message: allSubTasksCompleted
+          ? "Subtask completed! All subtasks have been completed, click the Complete Quest button to get additional rewards"
+          : "Subtask completed",
         task: result.task,
         subTaskReward: result.subTaskReward,
         longTaskReward: result.longTaskReward,
@@ -254,7 +278,11 @@ const updateTask = async (req, res) => {
 
     let rewardResult = null;
 
-    if (req.body.status && req.body.status.toLowerCase() === "completed" && oldStatus !== "completed") {
+    if (
+      req.body.status &&
+      req.body.status.toLowerCase() === "completed" &&
+      oldStatus !== "completed"
+    ) {
       // 如果主任务变为已完成，处理奖励与历史记录
       if (
         task.type === "short" &&
@@ -398,7 +426,9 @@ const equipTask = async (req, res) => {
     });
 
     if (existingTask && existingTask._id.toString() !== task._id.toString()) {
-      return res.status(400).json({ message: "This slot is occupied by a task of the same type" });
+      return res
+        .status(400)
+        .json({ message: "This slot is occupied by a task of the same type" });
     }
     // 装备新任务
     task.equipped = true;
