@@ -4,7 +4,7 @@ const AchievementSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: { type: String, required: true },
-    condition: { type: String, required: true }, // 仅用于展示
+    condition: { type: String, required: true }, 
     points: { type: Number, default: 0 },
     category: {
       type: String,
@@ -21,7 +21,7 @@ const AchievementSchema = new mongoose.Schema(
     icon: { type: String, default: null },
     isEnabled: { type: Boolean, default: true },
 
-    // 🧠 成就判定逻辑字段（新增）
+
     logic: {
       type: {
         type: String,
@@ -29,11 +29,11 @@ const AchievementSchema = new mongoose.Schema(
       },
       value: {
         type: mongoose.Schema.Types.Mixed,
-        default: null, // 可以是数字、字符串、布尔
+        default: null, 
       },
       op: {
         type: String,
-        default: null, // 可以是数字、字符串、布尔
+        default: null, 
       },
     },
   },
