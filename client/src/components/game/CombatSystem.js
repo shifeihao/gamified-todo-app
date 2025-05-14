@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// 职业战斗配置
+// Class combat configuration
 const CLASS_COMBAT_CONFIG = {
   warrior: {
-    name: '战士',
+    name: 'Warrior',
     getDamage: (playerStats) => {
       return Math.floor((playerStats.attack || 10) * (0.7 + Math.random() * 0.2));
     },
@@ -16,7 +16,7 @@ const CLASS_COMBAT_CONFIG = {
     }
   },
   mage: {
-    name: '法师',
+    name: 'Mage',
     getDamage: (playerStats) => {
       return Math.floor((playerStats.magicPower || 10) * (0.9 + Math.random() * 0.6));
     },
@@ -25,11 +25,11 @@ const CLASS_COMBAT_CONFIG = {
       return Math.max(1, damage - defenseReduction);
     },
     getCritChance: (playerStats) => {
-      return (playerStats.critRate || 5) + 5; // 法师基础暴击率略高
+      return (playerStats.critRate || 5) + 5; // Mage has slightly higher base crit rate
     }
   },
   rogue: {
-    name: '盗贼',
+    name: 'Rogue',
     getDamage: (playerStats) => {
       const speedBonus = Math.floor((playerStats.speed || 5) * 0.2);
       return Math.floor((playerStats.attack || 10) * 0.6 + speedBonus + (Math.random() * 5));
@@ -46,7 +46,7 @@ const CLASS_COMBAT_CONFIG = {
     }
   },
   archer: {
-    name: '弓手',
+    name: 'Archer',
     getDamage: (playerStats) => {
       const critBonus = Math.floor((playerStats.critRate || 5) * 0.3);
       return Math.floor((playerStats.attack || 10) * 0.7 + critBonus + (Math.random() * 3));
@@ -61,7 +61,7 @@ const CLASS_COMBAT_CONFIG = {
   }
 };
 
-// 将英文类名转换为slug
+// Convert English class name to slug
 const getClassSlugFromName = (className) => {
   if (!className) return 'warrior';
   const name = className.toLowerCase();
@@ -76,16 +76,11 @@ const CombatSystem = ({
   playerStats, 
   playerClass = "warrior", 
   playerClassName,
+  userInfo,
   onCombatEnd,
   skills = [],
-  userToken // 新增：用户token用于API调用
+  userToken // New: user token for API calls
 }) => {
-  // 如果提供了className但没有classSlug，则转换
-  console.log('=== CombatSystem 接收到的数据 ===');
-  console.log('playerStats:', playerStats);
-  console.log('playerClass:', playerClass);
-  console.log('magicPower:', playerStats.magicPower);
-  console.log('baseStats:', playerStats.baseStats);
   const actualPlayerClass = playerClass || getClassSlugFromName(playerClassName);
   
   const [currentMonsterIndex, setCurrentMonsterIndex] = useState(0);
@@ -104,25 +99,25 @@ const CombatSystem = ({
   );
  
   
-  // 技能和状态效果相关状态
+  // Skill and status effect related states
   const [activeSkills, setActiveSkills] = useState(skills || []);
   const [skillCooldowns, setSkillCooldowns] = useState({});
   const [monsterStatuses, setMonsterStatuses] = useState({});
   const [playerStatuses, setPlayerStatuses] = useState({});
   const [skillTriggeredEffects, setSkillTriggeredEffects] = useState([]);
   
-  // 新增：掉落相关状态
+  // New: drop related states
   const [dropResults, setDropResults] = useState(null);
   const [showDropAnimation, setShowDropAnimation] = useState(false);
   const [isProcessingDrops, setIsProcessingDrops] = useState(false);
-  
+ 
   const currentMonster = monsters[currentMonsterIndex];
   const logsEndRef = useRef(null);
 
-  // 获取当前职业配置
+  // Get current class configuration
   const classConfig = CLASS_COMBAT_CONFIG[actualPlayerClass] || CLASS_COMBAT_CONFIG.warrior;
   
-  // 初始化战斗状态
+  // Initialize combat state
   useEffect(() => {
   const hp = currentMonster?.stats?.hp ?? 100;
    setMonsterHp(hp);
@@ -130,45 +125,45 @@ const CombatSystem = ({
   }, [currentMonster]);
   
   useEffect(() => {
-    // 初始化技能冷却
+    // Initialize skill cooldowns
     const initialCooldowns = {};
     activeSkills.forEach(skill => {
       initialCooldowns[skill.id || skill._id] = 0;
     });
     setSkillCooldowns(initialCooldowns);
     
-    // 战斗开始日志
+    // Combat start log
     setCombatLogs([
-      `开始战斗! 职业: ${classConfig.name}`,
-      `可用技能: ${activeSkills.map(s => s.name).join(', ') || '无'}`
+      `Combat started! Class: ${classConfig.name}`,
+      `Available skills: ${activeSkills.map(s => s.name).join(', ') || 'None'}`
     ]);
     
-    // 触发战斗开始技能
+    // Trigger battle start skills
     triggerSkills('onStartBattle', null);
   }, [activeSkills, classConfig.name]);
   
-  // 滚动到日志底部
+  // Scroll to bottom of logs
   useEffect(() => {
     if (logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [combatLogs]);
   
-  // 技能触发处理函数
+  // Skill trigger handler function
   const triggerSkills = (triggerType, context) => {
-    // 过滤出可触发的技能
+    // Filter out triggerable skills
     const triggeredSkills = activeSkills.filter(skill => {
-      // 检查技能触发类型匹配
+      // Check skill trigger type match
       if (skill.trigger !== triggerType) return false;
       
-      // 检查技能是否在冷却中
+      // Check if skill is on cooldown
       const skillId = skill.id || skill._id;
       if (skillCooldowns[skillId] > 0) return false;
       
-      // 检查技能是否已经是一次性的且已使用
+      // Check if skill is one-time and already used
       if (skill.once && playerStatuses[`used_${skillId}`]) return false;
       
-      // 检查特殊触发条件
+      // Check special trigger conditions
       if (triggerType === 'onHpBelow' && skill.triggerCondition?.hpBelow) {
         const hpPercentage = playerHp / playerStats.hp;
         if (hpPercentage > skill.triggerCondition.hpBelow) return false;
@@ -177,20 +172,20 @@ const CombatSystem = ({
       return true;
     });
     
-    // 按优先级排序
+    // Sort by priority
     triggeredSkills.sort((a, b) => (b.priority || 0) - (a.priority || 0));
     
-    // 应用技能效果
+    // Apply skill effects
     const effects = triggeredSkills.map(skill => {
       const skillId = skill.id || skill._id;
       
-      // 设置冷却
+      // Set cooldown
       setSkillCooldowns(prev => ({ 
         ...prev, 
         [skillId]: skill.cooldown || 0 
       }));
       
-      // 标记一次性技能已使用
+      // Mark one-time skill as used
       if (skill.once) {
         setPlayerStatuses(prev => ({ 
           ...prev, 
@@ -198,7 +193,7 @@ const CombatSystem = ({
         }));
       }
       
-      // 创建效果对象
+      // Create effect object
       const effectObj = {
         name: skill.name,
         effect: skill.effect,
@@ -206,56 +201,57 @@ const CombatSystem = ({
         source: 'player',
         skillId
       };
+     
       
-      // 添加到日志
+      // Add to logs
       let logMessage = '';
       switch (skill.effect) {
         case 'dealDamage':
-          logMessage = `🔥 发动技能 "${skill.name}"，造成了 ${skill.effectValue} 点伤害！`;
+          logMessage = `🔥 Activated skill "${skill.name}", dealt ${skill.effectValue} damage!`;
           break;
         case 'gainShield':
-          logMessage = `🛡️ 发动技能 "${skill.name}"，获得了 ${skill.effectValue} 点护盾！`;
+          logMessage = `🛡️ Activated skill "${skill.name}", gained ${skill.effectValue} shield!`;
           break;
         case 'heal':
-          logMessage = `💚 发动技能 "${skill.name}"，恢复了 ${skill.effectValue} 点生命！`;
+          logMessage = `💚 Activated skill "${skill.name}", healed ${skill.effectValue} HP!`;
           break;
         case 'buffAttack':
-          logMessage = `⚔️ 发动技能 "${skill.name}"，攻击力提升了 ${skill.effectValue}！`;
+          logMessage = `⚔️ Activated skill "${skill.name}", attack increased by ${skill.effectValue}!`;
           break;
         case 'debuffEnemy':
-          logMessage = `⬇️ 发动技能 "${skill.name}"，降低了敌人属性 ${skill.effectValue}！`;
+          logMessage = `⬇️ Activated skill "${skill.name}", enemy attribute reduced by ${skill.effectValue}!`;
           break;
         default:
-          logMessage = `✨ 发动技能 "${skill.name}"！`;
+          logMessage = `✨ Activated skill "${skill.name}"!`;
       }
       
       setCombatLogs(prev => [...prev, logMessage]);
       
-      // 特殊状态效果处理
+      // Special status effect handling
       if (skill.triggerCondition?.applyStatus) {
         const statusType = skill.triggerCondition.applyStatus;
         setMonsterStatuses(prev => ({
           ...prev,
           [statusType]: {
-            duration: 3, // 默认3回合
+            duration: 3, // Default 3 turns
             source: 'player'
           }
         }));
         
-        // 添加状态效果日志
+        // Add status effect log
         let statusMessage = '';
         switch (statusType) {
           case 'bleed':
-            statusMessage = `🩸 ${currentMonster.name} 开始流血！`;
+            statusMessage = `🩸 ${currentMonster.name} starts bleeding!`;
             break;
           case 'poison':
-            statusMessage = `☠️ ${currentMonster.name} 中毒了！`;
+            statusMessage = `☠️ ${currentMonster.name} is poisoned!`;
             break;
           case 'confusion':
-            statusMessage = `😵 ${currentMonster.name} 陷入混乱！`;
+            statusMessage = `😵 ${currentMonster.name} is confused!`;
             break;
           default:
-            statusMessage = `⚡ ${currentMonster.name} 受到了 ${statusType} 效果！`;
+            statusMessage = `⚡ ${currentMonster.name} is affected by ${statusType}!`;
         }
         
         setCombatLogs(prev => [...prev, statusMessage]);
@@ -267,8 +263,41 @@ const CombatSystem = ({
     setSkillTriggeredEffects(effects);
     return effects;
   };
+   const getPlayerAvatar = () => {
+          if (userInfo?.images && userInfo?.gender) {
+            const spritePath = userInfo.images[userInfo.gender]?.sprite;
+            if (spritePath) {
+              return (
+                <img 
+                  src={`/icon/characters/${spritePath}`}
+                  alt={`${actualPlayerClass} ${userInfo.gender}`}
+                  className="w-4/5 h-4/5 object-contain"
+                  onError={(e) => {
+                    // Handle image loading failure
+                    console.log('Player avatar loading failed, using emoji fallback');
+                    e.target.style.display = 'none';
+                    e.target.parentNode.innerHTML = getEmojiAvatar();
+                  }}
+                />
+              );
+            }
+          }
+    
+        // Otherwise use emoji fallback
+        return getEmojiAvatar();
+      };
+      const getEmojiAvatar = () => {
+        const emojiMap = {
+          'warrior': '⚔️',
+          'mage': '🔮',
+          'rogue': '🗡️',
+          'archer': '🏹'
+        };
+        
+        return `<span style="font-size: 24px; color: white;">${emojiMap[actualPlayerClass] || '👤'}</span>`;
+      };
   
-  // 应用技能效果
+  // Apply skill effects
   const applySkillEffects = (effects, target) => {
     effects.forEach(effect => {
       switch (effect.effect) {
@@ -280,23 +309,23 @@ const CombatSystem = ({
           }
           break;
         case 'gainShield':
-          // 护盾效果 - 这里简化为增加HP
+          // Shield effect - simplified as HP increase
           setPlayerHp(prev => Math.min(playerStats.hp, prev + effect.value));
           break;
         case 'heal':
           setPlayerHp(prev => Math.min(playerStats.hp, prev + effect.value));
           break;
-        // 其他效果可以继续扩展...
+        // Other effects can be extended...
       }
     });
   };
   
-  // 处理状态效果
+  // Process status effects
   const processStatusEffects = () => {
-    // 处理怪物状态效果
+    // Process monster status effects
     Object.entries(monsterStatuses).forEach(([statusType, status]) => {
       if (status.duration <= 0) {
-        // 移除过期状态
+        // Remove expired status
         setMonsterStatuses(prev => {
           const newStatuses = {...prev};
           delete newStatuses[statusType];
@@ -305,21 +334,21 @@ const CombatSystem = ({
         return;
       }
       
-      // 应用状态效果
+      // Apply status effects
       switch (statusType) {
         case 'bleed':
-          const bleedDamage = Math.floor(5 + (currentTurn * 1.5)); // 流血伤害随回合增加
+          const bleedDamage = Math.floor(5 + (currentTurn * 1.5)); // Bleed damage increases with turns
           setMonsterHp(prev => Math.max(0, prev - bleedDamage));
-          setCombatLogs(prev => [...prev, `🩸 流血效果: ${currentMonster.name} 受到 ${bleedDamage} 点伤害`]);
+          setCombatLogs(prev => [...prev, `🩸 Bleed effect: ${currentMonster.name} takes ${bleedDamage} damage`]);
           break;
         case 'poison':
-          const poisonDamage = 8; // 固定毒药伤害
+          const poisonDamage = 8; // Fixed poison damage
           setMonsterHp(prev => Math.max(0, prev - poisonDamage));
-          setCombatLogs(prev => [...prev, `☠️ 中毒效果: ${currentMonster.name} 受到 ${poisonDamage} 点伤害`]);
+          setCombatLogs(prev => [...prev, `☠️ Poison effect: ${currentMonster.name} takes ${poisonDamage} damage`]);
           break;
       }
       
-      // 减少状态持续时间
+      // Reduce status duration
       setMonsterStatuses(prev => ({
         ...prev,
         [statusType]: {
@@ -330,7 +359,7 @@ const CombatSystem = ({
     });
   };
   
-  // 更新技能冷却
+  // Update skill cooldowns
   const updateCooldowns = () => {
     setSkillCooldowns(prev => {
       const newCooldowns = {...prev};
@@ -345,55 +374,55 @@ const CombatSystem = ({
     });
   };
   
-  // 新增：处理掉落的函数
+  // New: handle drop processing function
   const handleDropProcessing = async () => {
-    if (isProcessingDrops) return; // 防止重复调用
+    if (isProcessingDrops) return; // Prevent duplicate calls
     
     try {
       setIsProcessingDrops(true);
       
-      // 显示掉落处理信息
-      setCombatLogs(prev => [...prev, '💎 正在计算战利品...']);
+      // Show drop processing info
+      setCombatLogs(prev => [...prev, '💎 Calculating loot...']);
       
-      // 获取所有被击败的怪物ID，增强兼容性
+      // Get all defeated monster IDs, enhanced compatibility
       const monsterIds = monsters.map(monster => {
-        // 优先使用 _id，如果没有则使用 id
+        // Prioritize _id, use id if not available
         const id = monster._id || monster.id;
         
-        // 确保ID是字符串格式
+        // Ensure ID is in string format
         if (id && typeof id === 'object' && id.$oid) {
-          // 处理特殊的ObjectId格式
+          // Handle special ObjectId format
           return id.$oid;
         }
         
         return typeof id === 'object' ? String(id) : id;
-      }).filter(id => id); // 过滤掉无效的ID
+      }).filter(id => id); // Filter out invalid IDs
 
       console.log('=== FRONTEND DROP DEBUG ===');
-      console.log('原始怪物数据:', monsters);
-      console.log('提取的ID:', monsterIds);
-      console.log('有效ID数量:', monsterIds.length);
-      console.log('怪物数量:', monsters.length);
+      console.log('Original monster data:', monsters);
+      console.log('Extracted IDs:', monsterIds);
+      console.log('Valid ID count:', monsterIds.length);
+      console.log('Monster count:', monsters.length);
       
-      // 验证ID格式
+      // Validate ID format
       const invalidIds = monsterIds.filter(id => {
-        // 检查是否为有效的ObjectId格式（24位hex字符串）
+        // Check if valid ObjectId format (24-character hex string)
         return !id || typeof id !== 'string' || !/^[0-9a-fA-F]{24}$/.test(id);
       });
       
       if (invalidIds.length > 0) {
-        console.error('发现无效的怪物ID:', invalidIds);
-        throw new Error(`发现 ${invalidIds.length} 个无效的怪物ID`);
+        console.error('Found invalid monster IDs:', invalidIds);
+        throw new Error(`Found ${invalidIds.length} invalid monster IDs`);
       }
       
       if (monsterIds.length !== monsters.length) {
-        console.warn(`怪物ID数量(${monsterIds.length})与怪物数量(${monsters.length})不匹配`);
+        console.warn(`Monster ID count(${monsterIds.length}) doesn't match monster count(${monsters.length})`);
         const missingIds = monsters.filter(monster => !monster._id && !monster.id);
-        console.error('缺少ID的怪物:', missingIds);
-        throw new Error('部分怪物缺少有效的ID');
+        console.error('Monsters missing IDs:', missingIds);
+        throw new Error('Some monsters lack valid IDs');
       }
       
-      console.log('请求payload:', JSON.stringify({ monsterIds }, null, 2));
+      console.log('Request payload:', JSON.stringify({ monsterIds }, null, 2));
       
       const response = await fetch('/api/cards/process-drops', {
         method: 'POST',
@@ -407,18 +436,18 @@ const CombatSystem = ({
       });
       
       if (!response.ok) {
-        // 尝试获取错误详情
-        let errorMessage = `掉落处理失败: ${response.statusText}`;
+        // Try to get error details
+        let errorMessage = `Drop processing failed: ${response.statusText}`;
         try {
           const errorData = await response.json();
           if (errorData.error) {
-            errorMessage = `掉落处理失败: ${errorData.error}`;
+            errorMessage = `Drop processing failed: ${errorData.error}`;
             if (errorData.details) {
-              console.error('错误详情:', errorData.details);
+              console.error('Error details:', errorData.details);
             }
           }
         } catch (e) {
-          console.error('无法解析错误响应:', e);
+          console.error('Cannot parse error response:', e);
         }
         throw new Error(errorMessage);
       }
@@ -428,30 +457,30 @@ const CombatSystem = ({
       if (dropData.success) {
         setDropResults(dropData.data);
         
-        // 显示掉落结果in logs
+        // Show drop results in logs
         const logs = [];
         if (dropData.data.gold > 0) {
-          logs.push(`💰 获得 ${dropData.data.gold} 金币`);
+          logs.push(`💰 Gained ${dropData.data.gold} gold`);
         }
         if (dropData.data.exp > 0) {
-          logs.push(`✨ 获得 ${dropData.data.exp} 经验`);
+          logs.push(`✨ Gained ${dropData.data.exp} experience`);
         }
         if (dropData.data.items && dropData.data.items.length > 0) {
-          logs.push(`🎒 获得物品: ${dropData.data.items.map(item => item.name).join(', ')}`);
+          logs.push(`🎒 Gained items: ${dropData.data.items.map(item => item.name).join(', ')}`);
         }
         if (dropData.data.cards && dropData.data.cards.length > 0) {
-          logs.push(`🃏 获得任务卡片: ${dropData.data.cards.map(card => card.title).join(', ')}`);
+          logs.push(`🃏 Gained quest cards: ${dropData.data.cards.map(card => card.title).join(', ')}`);
         }
         
         setCombatLogs(prev => [...prev, ...logs]);
         
-        // 显示掉落动画
+        // Show drop animation
         setShowDropAnimation(true);
         
-        // 3秒后关闭动画并结束战斗
+        // Close animation and end combat after 3 seconds
         setTimeout(() => {
           setShowDropAnimation(false);
-          // 结束战斗，传递掉落结果
+          // End combat, pass drop results
           onCombatEnd({ 
             result: 'victory', 
             remainingHp: playerHp,
@@ -459,20 +488,20 @@ const CombatSystem = ({
           });
         }, 3000);
       } else {
-        throw new Error(dropData.message || '掉落处理失败');
+        throw new Error(dropData.message || 'Drop processing failed');
       }
     } catch (error) {
-      console.error('掉落处理错误:', error);
-      console.error('错误详情:', {
+      console.error('Drop processing error:', error);
+      console.error('Error details:', {
         message: error.message,
         stack: error.stack,
         monsters: monsters,
         monstersWithIds: monsters.map(m => ({ name: m.name, _id: m._id, id: m.id }))
       });
       
-      setCombatLogs(prev => [...prev, `❌ 掉落处理出错: ${error.message}`]);
+      setCombatLogs(prev => [...prev, `❌ Drop processing error: ${error.message}`]);
       
-      // 即使掉落处理失败，也要结束战斗
+      // End combat even if drop processing fails
       setTimeout(() => {
         onCombatEnd({ 
           result: 'victory', 
@@ -483,31 +512,32 @@ const CombatSystem = ({
       setIsProcessingDrops(false);
     }
   };
-  // 处理回合制战斗
+  // Handle turn-based combat
+  
   useEffect(() => {
     if (skills && skills.length > 0) {
       const triggerTypes = {};
       skills.forEach(skill => {
-        const trigger = skill.trigger || "未设置";
+        const trigger = skill.trigger || "Not set";
         triggerTypes[trigger] = (triggerTypes[trigger] || 0) + 1;
       });
     }
     
     if (combatEnded) return;
     
-    // 玩家回合
+    // Player turn
     if (isPlayerTurn) {
       const timer = setTimeout(() => {
-        // 增加回合计数
+        // Increase turn count
         setCurrentTurn(prev => prev + 1);
         
-        // 处理状态效果
+        // Process status effects
         processStatusEffects();
         
-        // 根据职业计算伤害
+        // Calculate damage based on class
         const baseDamage = classConfig.getDamage(playerStats);
         
-        // 暴击检测
+        // Critical hit detection
         const critChance = typeof classConfig.getCritChance === 'function' 
           ? classConfig.getCritChance(playerStats, isFirstAttack)
           : (playerStats.critRate || 5);
@@ -519,10 +549,10 @@ const CombatSystem = ({
           damage = Math.floor(damage * 1.5);
         }
         
-        // 触发攻击技能
+        // Trigger attack skills
         const attackSkillEffects = triggerSkills('onAttack', { isCritical });
         
-        // 计算技能额外伤害
+        // Calculate skill additional damage
         let skillDamage = 0;
         attackSkillEffects.forEach(effect => {
           if (effect.effect === 'dealDamage') {
@@ -530,7 +560,7 @@ const CombatSystem = ({
           }
         });
         
-        // 总伤害
+        // Total damage
         const totalDamage = damage + skillDamage;
         
         setShowDamage({ target: 'monster', value: totalDamage });
@@ -543,44 +573,44 @@ const CombatSystem = ({
           const newMonsterHp = Math.max(0, monsterHp - totalDamage);
           setMonsterHp(newMonsterHp);
           
-          // 创建日志消息
-          let logMessage = `🗡️ 你攻击了 ${currentMonster.name}，造成了 ${totalDamage} 点伤害！`;
+          // Create log message
+          let logMessage = `🗡️ You attacked ${currentMonster.name}, dealing ${totalDamage} damage!`;
           if (isCritical) {
             logMessage = `CRITICAL! ${logMessage}`;
           }
           
-          // 如果有技能触发，添加伤害分析
+          // If skills triggered, add damage breakdown
           if (skillDamage > 0) {
-            logMessage += ` (技能: ${skillDamage}, 基础: ${damage})`;
+            logMessage += ` (Skill: ${skillDamage}, Base: ${damage})`;
           }
           
           setCombatLogs(prev => [...prev, logMessage]);
           
-          // 检查怪物是否被击败
+          // Check if monster is defeated
           if (newMonsterHp <= 0) {
-            setCombatLogs(prev => [...prev, `💥 你击败了 ${currentMonster.name}！`]);
+            setCombatLogs(prev => [...prev, `💥 You defeated ${currentMonster.name}!`]);
             
-            // 检查是否所有怪物都被击败
+            // Check if all monsters are defeated
             if (currentMonsterIndex >= monsters.length - 1) {
-              // 所有怪物都被击败，处理掉落
+              // All monsters defeated, process drops
               setCombatEnded(true);
               handleDropProcessing();
             } else {
-              // 移至下一个怪物
+              // Move to next monster
               setCurrentMonsterIndex(prev => prev + 1);
               setMonsterHp(monsters[currentMonsterIndex + 1]?.stats?.hp|| 100);
               
-              setIsPlayerTurn(true); // 玩家对新怪物先手
-              setIsFirstAttack(true); // 重置首次攻击标志
+              setIsPlayerTurn(true); // Player goes first against new monster
+              setIsFirstAttack(true); // Reset first attack flag
               
-              // 重置怪物状态
+              // Reset monster statuses
               setMonsterStatuses({});
             }
           } else {
-            setIsFirstAttack(false); // 非首次攻击
+            setIsFirstAttack(false); // Not first attack
             setIsPlayerTurn(false);
             
-            // 更新技能冷却
+            // Update skill cooldowns
             updateCooldowns();
           }
         }, 600);
@@ -588,10 +618,10 @@ const CombatSystem = ({
       
       return () => clearTimeout(timer);
     } 
-    // 怪物回合
+    // Monster turn
     else {
       const timer = setTimeout(() => {
-        // 闪避检测
+        // Evasion detection
         const baseEvasion = playerStats.evasion || 0;
         const bonusEvasion = actualPlayerClass === 'rogue' && classConfig.getEvasionBonus 
           ? classConfig.getEvasionBonus(playerStats) 
@@ -601,59 +631,59 @@ const CombatSystem = ({
         const isEvaded = Math.random() * 100 < totalEvasion;
         
         if (isEvaded) {
-          // 闪避成功
-          setCombatLogs(prev => [...prev, `EVADE! 👹 ${currentMonster.name} 的攻击被你闪避了！`]);
+          // Evasion successful
+          setCombatLogs(prev => [...prev, `EVADE! 👹 ${currentMonster.name}'s attack was evaded!`]);
           
-          // 触发受击闪避技能
+          // Trigger evasion skills
           const evadeSkillEffects = triggerSkills('onReceiveHit', { evaded: true });
           
           setIsPlayerTurn(true);
         } else {
-          // 计算怪物伤害
+          // Calculate monster damage
           const monsterDamage = Math.floor(((currentMonster.stats.attack || 8) * (0.7 + Math.random() * 0.5)));
           
-          // 触发受击技能
+          // Trigger hit skills
           const hitSkillEffects = triggerSkills('onReceiveHit', { evaded: false });
           
-          // 计算减伤后的伤害
+          // Calculate damage after reduction
           const reducedDamage = classConfig.reduceDamage(monsterDamage, playerStats);
           setShowDamage({ target: 'player', value: reducedDamage });
           
           setTimeout(() => {
             setShowDamage(null);
             
-            // 应用技能效果
+            // Apply skill effects
             applySkillEffects(hitSkillEffects, 'player');
             
             const newPlayerHp = Math.max(0, playerHp - reducedDamage);
             setPlayerHp(newPlayerHp);
             
-            // 日志显示原伤害和减免后伤害
+            // Log shows original damage and reduced damage
             const damageReduction = monsterDamage - reducedDamage;
-            let logMessage = `👹 ${currentMonster.name} 攻击了你，造成了 ${reducedDamage} 点伤害！`;
+            let logMessage = `👹 ${currentMonster.name} attacked you, dealing ${reducedDamage} damage!`;
             
             setCombatLogs(prev => [...prev, logMessage]);
             
             if (damageReduction > 0) {
-              setCombatLogs(prev => [...prev, `🛡️ 你的防御减免了 ${damageReduction} 点伤害`]);
+              setCombatLogs(prev => [...prev, `🛡️ Your defense reduced ${damageReduction} damage`]);
             }
             
-            // 检查血量低于阈值的技能
+            // Check low HP threshold skills
             if (newPlayerHp < playerStats.hp * 0.5) {
               const lowHpSkillEffects = triggerSkills('onHpBelow', { 
                 hpPercentage: newPlayerHp / playerStats.hp 
               });
               
-              // 应用低血量触发的技能效果
+              // Apply low HP triggered skill effects
               applySkillEffects(lowHpSkillEffects, 'player');
             }
             
-            // 检查玩家是否被击败 (HP为0)
+            // Check if player is defeated (HP is 0)
             if (newPlayerHp <= 0) {
-              setCombatLogs(prev => [...prev, `💀 你被 ${currentMonster.name} 击败了！`]);
+              setCombatLogs(prev => [...prev, `💀 You were defeated by ${currentMonster.name}!`]);
               setCombatEnded(true);
               setTimeout(() => {
-                // 在这里不是GameOver，而是自动结算
+                // Here it's not GameOver, but auto settlement
                 onCombatEnd({ 
                   result: 'settlement', 
                   remainingHp: 0
@@ -685,45 +715,32 @@ const CombatSystem = ({
     isProcessingDrops
   ]);
   
-  // 渲染技能UI（这部分可以扩展为主动技能按钮）
+  // Render skills UI (can be extended to active skill buttons)
   const renderSkillsUI = () => {
     if (!activeSkills || activeSkills.length === 0) return null;
     
     return (
-      <div style={{
-        marginTop: '15px',
-        padding: '12px',
-        backgroundColor: '#4c2a85',
-        borderRadius: '8px',
-        fontSize: '13px',
-        border: '2px solid #5d3494',
-        color: '#e0e0e0'
-      }}>
-        <div style={{ 
-          fontWeight: 'bold', 
-          marginBottom: '8px',
-          color: '#ffffff',
-          textAlign: 'center'
-        }}>
-          ⚡ 被动技能
+      <div className="mt-4 p-3 bg-[#4c2a85] rounded-lg text-sm border-2 border-[#5d3494] text-[#e0e0e0]">
+        <div className="font-bold mb-2 text-white text-center">
+          ⚡ Passive Skills
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <div className="flex flex-wrap gap-2">
           {activeSkills.map(skill => {
             const skillId = skill.id || skill._id;
             const isOnCooldown = skillCooldowns[skillId] > 0;
             
             return (
-              <div key={skillId} style={{
-                padding: '6px 10px',
-                backgroundColor: isOnCooldown ? '#2c1810' : '#3a1f6b',
-                border: `2px solid ${isOnCooldown ? '#666' : '#7e4ab8'}`,
-                borderRadius: '6px',
-                opacity: isOnCooldown ? 0.6 : 1,
-                color: '#e0e0e0'
-              }}>
-                <span style={{ fontWeight: 'bold' }}>{skill.name}</span>
+              <div 
+                key={skillId} 
+                className={`px-2.5 py-1.5 border-2 rounded-md text-[#e0e0e0] ${
+                  isOnCooldown 
+                    ? 'bg-[#2c1810] border-[#666] opacity-60' 
+                    : 'bg-[#3a1f6b] border-[#7e4ab8]'
+                }`}
+              >
+                <span className="font-bold">{skill.name}</span>
                 {isOnCooldown && (
-                  <span style={{ color: '#b89be6' }}> (CD: {skillCooldowns[skillId]})</span>
+                  <span className="text-[#b89be6]"> (CD: {skillCooldowns[skillId]})</span>
                 )}
               </div>
             );
@@ -732,103 +749,49 @@ const CombatSystem = ({
       </div>
     );
   };
-  // 新增：掉落动画组件
+
+  // New: Drop animation component
   const DropAnimation = () => {
     if (!showDropAnimation || !dropResults) return null;
     
     return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(44, 24, 16, 0.95)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000,
-        animation: 'fadeIn 0.5s ease-in',
-        fontFamily: 'Courier New, monospace'
-      }}>
-        <div style={{
-          backgroundColor: '#3a1f6b',
-          borderRadius: '12px',
-          padding: '30px',
-          border: '3px solid #5d3494',
-          maxWidth: '500px',
-          width: '90%',
-          textAlign: 'center',
-          color: '#e0e0e0'
-        }}>
-          <h2 style={{ 
-            color: '#ffa726',
-            marginBottom: '20px',
-            textShadow: '2px 2px 0px #2c1810'
-          }}>
-            🏆 战利品获得！
+      <div className="fixed inset-0 bg-[#2c1810] bg-opacity-95 flex justify-center items-center z-50 font-mono animate-fade-in">
+        <div className="bg-[#3a1f6b] rounded-xl p-8 border-3 border-[#5d3494] max-w-md w-11/12 text-center text-[#e0e0e0]">
+          <h2 className="text-[#ffa726] mb-5 text-2xl font-bold text-shadow-lg">
+            🏆 Loot Obtained!
           </h2>
           
-          {/* 金币和经验 */}
+          {/* Gold and experience */}
           {(dropResults.gold > 0 || dropResults.exp > 0) && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '30px',
-              marginBottom: '20px'
-            }}>
+            <div className="flex justify-center gap-8 mb-5">
               {dropResults.gold > 0 && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontSize: '24px',
-                  color: '#ffa726',
-                  backgroundColor: '#2c1810',
-                  padding: '10px 15px',
-                  borderRadius: '8px',
-                  border: '2px solid #ffa726'
-                }}>
-                  <span style={{ fontSize: '36px', marginRight: '10px' }}>💰</span>
+                <div className="flex items-center text-2xl text-[#ffa726] bg-[#2c1810] px-4 py-2 rounded-lg border-2 border-[#ffa726]">
+                  <span className="text-4xl mr-2">💰</span>
                   +{dropResults.gold}
                 </div>
               )}
               {dropResults.exp > 0 && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontSize: '24px',
-                  color: '#81c784',
-                  backgroundColor: '#2c1810',
-                  padding: '10px 15px',
-                  borderRadius: '8px',
-                  border: '2px solid #81c784'
-                }}>
-                  <span style={{ fontSize: '36px', marginRight: '10px' }}>✨</span>
+                <div className="flex items-center text-2xl text-[#81c784] bg-[#2c1810] px-4 py-2 rounded-lg border-2 border-[#81c784]">
+                  <span className="text-4xl mr-2">✨</span>
                   +{dropResults.exp}
                 </div>
               )}
             </div>
           )}
           
-          {/* 物品 */}
+          {/* Items */}
           {dropResults.items && dropResults.items.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#ffffff', marginBottom: '10px' }}>获得物品</h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: '10px'
-              }}>
+            <div className="mb-5">
+              <h3 className="text-white mb-2 text-lg">Items Obtained</h3>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2">
                 {dropResults.items.map((item, index) => (
-                  <div key={index} style={{
-                    backgroundColor: '#2c1810',
-                    border: '2px solid #4caf50',
-                    borderRadius: '8px',
-                    padding: '10px',
-                    animation: `bounceIn 0.6s ease-out ${index * 0.2}s both`
-                  }}>
-                    <div style={{ fontSize: '24px', marginBottom: '5px' }}>🎁</div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>
+                  <div 
+                    key={index} 
+                    className="bg-[#2c1810] border-2 border-[#4caf50] rounded-lg p-2 animate-bounce-in"
+                    style={{ animationDelay: `${index * 0.2}s` }}
+                  >
+                    <div className="text-2xl mb-1">🎁</div>
+                    <div className="text-sm font-bold text-white">
                       {item.name}
                     </div>
                   </div>
@@ -837,30 +800,24 @@ const CombatSystem = ({
             </div>
           )}
           
-          {/* 卡片 */}
+          {/* Cards */}
           {dropResults.cards && dropResults.cards.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ color: '#ffffff', marginBottom: '10px' }}>获得任务卡片</h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                gap: '10px'
-              }}>
+            <div className="mb-5">
+              <h3 className="text-white mb-2 text-lg">Quest Cards Obtained</h3>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2">
                 {dropResults.cards.map((card, index) => (
-                  <div key={index} style={{
-                    backgroundColor: '#2c1810',
-                    border: '2px solid #9c27b0',
-                    borderRadius: '8px',
-                    padding: '10px',
-                    animation: `bounceIn 0.6s ease-out ${index * 0.2}s both`
-                  }}>
-                    <div style={{ fontSize: '24px', marginBottom: '5px' }}>🃏</div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffffff' }}>
+                  <div 
+                    key={index} 
+                    className="bg-[#2c1810] border-2 border-[#9c27b0] rounded-lg p-2 animate-bounce-in"
+                    style={{ animationDelay: `${index * 0.2}s` }}
+                  >
+                    <div className="text-2xl mb-1">🃏</div>
+                    <div className="text-sm font-bold text-white">
                       {card.title}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#b89be6', marginTop: '5px' }}>
-                      {card.bonus && card.bonus.experienceMultiplier > 1 && `经验 +${Math.round((card.bonus.experienceMultiplier - 1) * 100)}%`}
-                      {card.bonus && card.bonus.goldMultiplier > 1 && ` 金币 +${Math.round((card.bonus.goldMultiplier - 1) * 100)}%`}
+                    <div className="text-xs text-[#b89be6] mt-1">
+                      {card.bonus && card.bonus.experienceMultiplier > 1 && `EXP +${Math.round((card.bonus.experienceMultiplier - 1) * 100)}%`}
+                      {card.bonus && card.bonus.goldMultiplier > 1 && ` Gold +${Math.round((card.bonus.goldMultiplier - 1) * 100)}%`}
                     </div>
                   </div>
                 ))}
@@ -868,12 +825,8 @@ const CombatSystem = ({
             </div>
           )}
           
-          <div style={{
-            marginTop: '20px',
-            fontSize: '16px',
-            color: '#b89be6'
-          }}>
-            3秒后自动关闭...
+          <div className="mt-5 text-base text-[#b89be6]">
+            Auto-closing in 3 seconds...
           </div>
         </div>
       </div>
@@ -881,119 +834,51 @@ const CombatSystem = ({
   };
   
   return (
-    <div className="combat-container" style={{
-      border: '3px solid #5d3494',
-      borderRadius: '12px',
-      padding: '20px',
-      backgroundColor: '#3a1f6b',
-      maxWidth: '700px',
-      margin: '0 auto',
-      fontFamily: 'Courier New, monospace',
-      color: '#e0e0e0'
-    }}>
-      <h3 style={{ 
-        textAlign: 'center', 
-        marginTop: 0,
-        color: '#ffffff',
-        textShadow: '1px 1px 0px #2c1810'
-      }}>
-        ⚔️ 战斗 {currentMonsterIndex + 1}/{monsters.length} 
-        <span style={{ marginLeft: '10px', fontSize: '0.8em', color: '#b89be6' }}>
+    <div className="border-3 border-[#5d3494] rounded-xl p-5 bg-[#3a1f6b] max-w-3xl mx-auto font-mono text-[#e0e0e0]">
+      <h3 className="text-center mt-0 text-white text-shadow-sm">
+        ⚔️ Combat {currentMonsterIndex + 1}/{monsters.length} 
+        <span className="ml-2 text-sm text-[#b89be6]">
           ({classConfig.name})
         </span>
       </h3>
       
-      <div className="combat-arena" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '20px',
-        position: 'relative',
-        minHeight: '180px',
-        backgroundColor: '#2c1810',
-        borderRadius: '8px',
-        marginBottom: '15px',
-        border: '2px solid #4c2a85'
-      }}>
-        {/* 玩家 */}
-        <div className={`player ${isAttacking && isPlayerTurn ? 'attacking' : ''}`} style={{
-          textAlign: 'center',
-          position: 'relative',
-          transform: isAttacking && isPlayerTurn ? 'translateX(20px)' : 'translateX(0)',
-          transition: 'transform 0.2s ease-in-out'
-        }}>
-          <div style={{ 
-            width: '80px', 
-            height: '100px', 
-            backgroundColor: actualPlayerClass === 'warrior' ? '#4c6ef5' : 
-                             actualPlayerClass === 'mage' ? '#9c27b0' : 
-                             actualPlayerClass === 'rogue' ? '#546e7a' : 
-                             actualPlayerClass === 'archer' ? '#2e7d32' : '#4c6ef5',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '24px',
-            color: 'white',
-            margin: '0 auto',
-            border: '2px solid #7e4ab8'
-          }}>
-            {actualPlayerClass === 'warrior' ? '⚔️' : 
-             actualPlayerClass === 'mage' ? '🔮' : 
-             actualPlayerClass === 'rogue' ? '🗡️' : 
-             actualPlayerClass === 'archer' ? '🏹' : '👤'}
+      <div className="flex justify-between items-center p-5 relative min-h-[180px] bg-[#2c1810] rounded-lg mb-4 border-2 border-[#4c2a85] px-8">
+        {/* Player */}
+        <div className={`text-center relative transition-transform duration-200 ease-in-out ${
+          isAttacking && isPlayerTurn ? 'transform translate-x-5' : 'transform translate-x-0'
+        }`}>
+          <div className={`w-20 h-24 rounded-lg flex items-center justify-center text-2xl text-white mx-auto border-2 border-[#7e4ab8] overflow-hidden ${
+            actualPlayerClass === 'warrior' ? 'bg-[#4c6ef5]' :
+            actualPlayerClass === 'mage' ? 'bg-[#9c27b0]' :
+            actualPlayerClass === 'rogue' ? 'bg-[#546e7a]' :
+            actualPlayerClass === 'archer' ? 'bg-[#2e7d32]' : 'bg-[#4c6ef5]'
+          }`}>
+            {getPlayerAvatar()}
           </div>
-          <div style={{ marginTop: '10px' }}>
-            <div style={{ fontWeight: 'bold', color: '#ffffff' }}>你 ({classConfig.name})</div>
-            <div className="health-bar" style={{
-              width: '120px',
-              height: '12px',
-              backgroundColor: '#d32f2f',
-              borderRadius: '6px',
-              overflow: 'hidden',
-              marginTop: '5px',
-              border: '1px solid #7e4ab8'
-            }}>
-              <div style={{
-                width: `${(playerHp / maxPlayerHpRef.current) * 100}%`,
-                height: '100%',
-                backgroundColor: '#4caf50',
-                transition: 'width 0.5s ease-out'
-              }}></div>
+          <div className="mt-2">
+            <div className="font-bold text-white">{userInfo.name}</div>
+            <div className="w-30 h-3 bg-[#d32f2f] rounded-md overflow-hidden mt-1 border border-[#7e4ab8]">
+              <div 
+                className="h-full bg-[#4caf50] transition-all duration-500 ease-out"
+                style={{ width: `${(playerHp / maxPlayerHpRef.current) * 100}%` }}
+              ></div>
             </div>
-            <div style={{ fontSize: '12px', marginTop: '3px', color: '#b89be6' }}>
+            <div className="text-xs mt-1 text-[#b89be6]">
               HP: {playerHp}/{maxPlayerHpRef.current}
             </div>
           </div>
           
           {showDamage && showDamage.target === 'player' && (
-            <div className="damage-indicator" style={{
-              position: 'absolute',
-              top: '-20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: '#f44336',
-              fontWeight: 'bold',
-              fontSize: '20px',
-              animation: 'damage-float 0.8s ease-out',
-              textShadow: '2px 2px 0px #2c1810'
-            }}>
+            <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[#f44336] font-bold text-xl animate-damage-float text-shadow-lg">
               -{showDamage.value}
             </div>
           )}
           
-          {/* 玩家状态效果显示 */}
+          {/* Player status effects display */}
           {Object.keys(playerStatuses).length > 0 && (
-            <div style={{
-              position: 'absolute',
-              bottom: '-25px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              gap: '5px'
-            }}>
+            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex gap-1">
               {Object.entries(playerStatuses).map(([status, data]) => {
-                // 只显示真正的状态效果，不显示技能使用标记
+                // Only show real status effects, not skill usage markers
                 if (status.startsWith('used_')) return null;
                 
                 let icon = '⚡';
@@ -1002,17 +887,7 @@ const CombatSystem = ({
                 if (status === 'confusion') icon = '😵';
                 
                 return (
-                  <div key={status} style={{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    backgroundColor: '#4c2a85',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    fontSize: '12px',
-                    border: '1px solid #7e4ab8'
-                  }}>
+                  <div key={status} className="w-5 h-5 rounded-full bg-[#4c2a85] flex justify-center items-center text-xs border border-[#7e4ab8]">
                     {icon}
                   </div>
                 );
@@ -1022,143 +897,75 @@ const CombatSystem = ({
         </div>
         
         {/* VS */}
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#b89be6'
-        }}>
+        <div className="text-2xl font-bold text-[#b89be6]">
           VS
         </div>
         
-        {/* 怪物 */}
-        <div className={`monster ${isAttacking && !isPlayerTurn ? 'attacking' : ''}`} style={{
-          textAlign: 'center',
-          position: 'relative',
-          transform: isAttacking && !isPlayerTurn ? 'translateX(-20px)' : 'translateX(0)',
-          transition: 'transform 0.2s ease-in-out'
-        }}>
-          {/* 怪物头像 */}
-          <div style={{
-            width: '90px',
-            height: '110px',
-            backgroundColor: currentMonster.type === 'boss' ? '#d32f2f' : '#5d3494',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto',
-            border: '2px solid #7e4ab8',
-            overflow: 'hidden'
-          }}>
+        {/* Monster */}
+        <div className={`text-center relative transition-transform duration-200 ease-in-out ${
+          isAttacking && !isPlayerTurn ? 'transform -translate-x-5' : 'transform translate-x-0'
+        }`}>
+          {/* Monster avatar */}
+          <div className={`w-20 h-24 rounded-lg flex items-center justify-center mx-auto border-2 border-[#7e4ab8] overflow-hidden ${
+            currentMonster.type === 'boss' ? 'bg-[#d32f2f]' : 'bg-[#5d3494]'
+          }`}>
             {currentMonster.icon ? (
               <img
                 src={`/Icon/Monster/${currentMonster.icon}.png`}
                 alt={currentMonster.name}
-                style={{ maxWidth: '100%', maxHeight: '100%' }}
+                className="max-w-full max-h-full"
               />
             ) : (
               currentMonster.type === 'boss' ? '👹' : '👾'
             )}
           </div>
 
-          <div style={{ marginTop: '10px' }}>
-            <div style={{ fontWeight: 'bold', color: '#ffffff' }}>
+          <div className="mt-2">
+            <div className="font-bold text-white">
               {currentMonster.name} {currentMonster.type === 'boss' && '(BOSS)'}
             </div>
-            <div className="health-bar" style={{
-              width: '120px',
-              height: '12px',
-              backgroundColor: '#d32f2f',
-              borderRadius: '6px',
-              overflow: 'hidden',
-              marginTop: '5px',
-              border: '1px solid #7e4ab8'
-            }}>
-              <div style={{
-                width: `${(monsterHp / maxMonsterHp) * 100}%`,
-                height: '100%',
-                backgroundColor: '#ff9800',
-                transition: 'width 0.5s ease-out'
-              }}></div>
+            <div className="w-30 h-3 bg-[#d32f2f] rounded-md overflow-hidden mt-1 border border-[#7e4ab8]">
+              <div 
+                className="h-full bg-[#ff9800] transition-all duration-500 ease-out"
+                style={{ width: `${(monsterHp / maxMonsterHp) * 100}%` }}
+              ></div>
             </div>
-            <div style={{ fontSize: '12px', marginTop: '3px', color: '#b89be6' }}>
+            <div className="text-xs mt-1 text-[#b89be6]">
               HP: {monsterHp}/{maxMonsterHp}
             </div>
           </div>
           
           {showDamage && showDamage.target === 'monster' && (
-            <div className="damage-indicator" style={{
-              position: 'absolute',
-              top: '-20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: '#f44336',
-              fontWeight: 'bold',
-              fontSize: '20px',
-              animation: 'damage-float 0.8s ease-out',
-              textShadow: '2px 2px 0px #2c1810'
-            }}>
+            <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-[#f44336] font-bold text-xl animate-damage-float text-shadow-lg">
               -{showDamage.value}
             </div>
           )}
           
-          {/* 怪物状态效果显示 */}
+          {/* Monster status effects display */}
           {Object.keys(monsterStatuses).length > 0 && (
-            <div style={{
-              position: 'absolute',
-              bottom: '-25px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              gap: '5px'
-            }}>
+            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex gap-1">
               {Object.entries(monsterStatuses).map(([status, data]) => {
                 let icon = '⚡';
-                let bgColor = '#4c2a85';
+                let bgColor = 'bg-[#4c2a85]';
                 
                 if (status === 'bleed') {
                   icon = '🩸';
-                  bgColor = '#d32f2f';
+                  bgColor = 'bg-[#d32f2f]';
                 }
                 if (status === 'poison') {
                   icon = '☠️';
-                  bgColor = '#2e7d32';
+                  bgColor = 'bg-[#2e7d32]';
                 }
                 if (status === 'confusion') {
                   icon = '😵';
-                  bgColor = '#ff9800';
+                  bgColor = 'bg-[#ff9800]';
                 }
                 
                 return (
-                  <div key={status} style={{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    backgroundColor: bgColor,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    fontSize: '12px',
-                    border: '1px solid #7e4ab8',
-                    position: 'relative'
-                  }}>
+                  <div key={status} className={`w-5 h-5 rounded-full ${bgColor} flex justify-center items-center text-xs border border-[#7e4ab8] relative`}>
                     {icon}
                     {data.duration && (
-                      <span style={{
-                        position: 'absolute',
-                        top: '-8px',
-                        right: '-8px',
-                        backgroundColor: '#2c1810',
-                        color: 'white',
-                        borderRadius: '50%',
-                        width: '14px',
-                        height: '14px',
-                        fontSize: '10px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        border: '1px solid #7e4ab8'
-                      }}>
+                      <span className="absolute -top-2 -right-2 bg-[#2c1810] text-white rounded-full w-3.5 h-3.5 text-xs flex justify-center items-center border border-[#7e4ab8]">
                         {data.duration}
                       </span>
                     )}
@@ -1170,60 +977,39 @@ const CombatSystem = ({
         </div>
       </div>
       
-      {/* 技能UI */}
+      {/* Skills UI */}
       {renderSkillsUI()}
       
-      {/* 战斗日志 */}
-      <div className="combat-logs" style={{
-        maxHeight: '150px',
-        overflowY: 'auto',
-        backgroundColor: '#2c1810',
-        border: '2px solid #5d3494',
-        borderRadius: '8px',
-        padding: '10px',
-        marginTop: '15px'
-      }}>
+      {/* Combat logs */}
+      <div className="max-h-36 overflow-y-auto bg-[#2c1810] border-2 border-[#5d3494] rounded-lg p-2 mt-4">
         {combatLogs.map((log, index) => {
-          // 检测特殊事件标记
+          // Detect special event markers
           const isCritical = log.includes('CRITICAL!');
           const isEvade = log.includes('EVADE!');
-          const isSkill = log.includes('发动技能') || log.includes('技能触发');
-          const isStatus = log.includes('流血效果') || log.includes('中毒效果') || log.includes('开始流血') || log.includes('中毒了');
+          const isSkill = log.includes('Activated skill') || log.includes('skill triggered');
+          const isStatus = log.includes('Bleed effect') || log.includes('Poison effect') || log.includes('starts bleeding') || log.includes('is poisoned');
           
-          // 移除标记文本，保留原始格式
+          // Remove marker text, keep original format
           const displayLog = log
             .replace('CRITICAL! ', '')
             .replace('EVADE! ', '');
           
           return (
-            <div key={index} style={{
-              padding: '4px 0',
-              borderBottom: index < combatLogs.length - 1 ? '1px solid #4c2a85' : 'none',
-              color: isCritical ? '#f44336' : 
-                    isEvade ? '#4caf50' : 
-                    isSkill ? '#2196f3' :
-                    isStatus ? '#ff9800' : '#e0e0e0',
-              fontWeight: isCritical || isEvade || isSkill ? 'bold' : 'normal'
-            }}>
+            <div key={index} className={`py-1 border-b last:border-b-0 border-[#4c2a85] ${
+              isCritical ? 'text-[#f44336] font-bold' : 
+              isEvade ? 'text-[#4caf50] font-bold' : 
+              isSkill ? 'text-[#2196f3] font-bold' :
+              isStatus ? 'text-[#ff9800]' : 'text-[#e0e0e0]'
+            }`}>
               {displayLog}
               {isCritical && (
-                <span style={{ 
-                  marginLeft: '5px', 
-                  color: '#f44336',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
-                }}>
-                  暴击!
+                <span className="ml-1 text-[#f44336] text-xs font-bold">
+                  Critical!
                 </span>
               )}
               {isEvade && (
-                <span style={{ 
-                  marginLeft: '5px', 
-                  color: '#4caf50',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
-                }}>
-                  闪避!
+                <span className="ml-1 text-[#4caf50] text-xs font-bold">
+                  Evaded!
                 </span>
               )}
             </div>
@@ -1232,7 +1018,7 @@ const CombatSystem = ({
         <div ref={logsEndRef} />
       </div>
       
-      {/* 掉落动画 */}
+      {/* Drop animation */}
       <DropAnimation />
       
       <style jsx>{`
@@ -1269,24 +1055,24 @@ const CombatSystem = ({
           }
         }
         
-        .player.attacking {
-          animation: attack-right 0.5s ease-in-out;
+        .animate-fade-in {
+          animation: fadeIn 0.5s ease-in;
         }
         
-        .monster.attacking {
-          animation: attack-left 0.5s ease-in-out;
+        .animate-bounce-in {
+          animation: bounceIn 0.6s ease-out both;
         }
         
-        @keyframes attack-right {
-          0% { transform: translateX(0); }
-          50% { transform: translateX(20px); }
-          100% { transform: translateX(0); }
+        .animate-damage-float {
+          animation: damage-float 0.8s ease-out;
         }
         
-        @keyframes attack-left {
-          0% { transform: translateX(0); }
-          50% { transform: translateX(-20px); }
-          100% { transform: translateX(0); }
+        .text-shadow-sm {
+          text-shadow: 1px 1px 0px #2c1810;
+        }
+        
+        .text-shadow-lg {
+          text-shadow: 2px 2px 0px #2c1810;
         }
       `}</style>
     </div>

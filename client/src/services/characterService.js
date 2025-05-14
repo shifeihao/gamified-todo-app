@@ -16,7 +16,7 @@ export const getAvailableClasses = async (token) => {
     }
   };
   
-  export const selectClass = async (token, classSlug) => {
+  export const selectClass = async (token, classSlug, gender = 'male') => {
     try {
       const config = {
         headers: {
@@ -26,7 +26,7 @@ export const getAvailableClasses = async (token) => {
       
       const response = await axios.post(
         `/api/character/select-class`,
-        { classSlug },
+        { classSlug, gender},
         config
       );
       return response.data;

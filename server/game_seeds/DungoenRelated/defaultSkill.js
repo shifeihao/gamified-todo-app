@@ -17,19 +17,38 @@ const classes = [
     {
       name: 'Warrior',
       slug: 'warrior',
-      icon: 'warrior.png',
+      fullIcon:'warrior',
+      images: {
+        male: {
+          avatar: 'warrior-male-avatar.png',
+          sprite: 'warrior-male-sprite.png'
+        },
+        female: {
+          avatar: 'warrior-female-avatar.png',
+          sprite: 'warrior-female-sprite.png'
+        }
+      },
       description: 'Strong melee fighters with great durability.',
-      baseStats: { hp: 120, attack: 18, defense: 12, magicPower: 0, speed: 6, critRate: 3, evasion: 2 },
+      baseStats: { hp: 130, attack: 18, defense: 12, magicPower: 0, speed: 6, critRate: 3, evasion: 2 },
       weaponTypes: ['sword'],
       defaultSkillNames: ['Smash', 'Iron Defense', 'Battle Cry']
     },
   {
     name: "Mage",
     slug: "mage",
-    icon: "mage.png",
+    images: {
+      male: {
+        avatar: 'mage-male-avatar.png',
+        sprite: 'mage-male-sprite.png'
+      },
+      female: {
+        avatar: 'mage-female-avatar.png',
+        sprite: 'mage-female-sprite.png'
+      }
+    },
     description: "Masters of elemental and arcane power.",
     baseStats: {
-      hp: 80,
+      hp: 90,
       attack: 5,
       defense: 6,
       magicPower: 20,
@@ -43,10 +62,19 @@ const classes = [
   {
     name: "Rogue",
     slug: "rogue",
-    icon: "rogue.png",
+    images: {
+      male: {
+        avatar: 'rogue-male-avatar.png',
+        sprite: 'rogue-male-sprite.png'
+      },
+      female: {
+        avatar: 'rogue-female-avatar.png',
+        sprite: 'rogue-female-sprite.png'
+      }
+    },
     description: "Agile and deadly in close combat.",
     baseStats: {
-      hp: 90,
+      hp: 100,
       attack: 15,
       defense: 7,
       magicPower: 0,
@@ -60,10 +88,19 @@ const classes = [
   {
     name: "Archer",
     slug: "archer",
-    icon: "archer.png",
+    images: {
+      male: {
+        avatar: 'archer-male-avatar.png',
+        sprite: 'archer-male-sprite.png'
+      },
+      female: {
+        avatar: 'archer-female-avatar.png',
+        sprite: 'archer-female-sprite.png'
+      }
+    },
     description: "Skilled ranged attackers who exploit enemy weaknesses.",
     baseStats: {
-      hp: 95,
+      hp: 105,
       attack: 14,
       defense: 7,
       magicPower: 0,
@@ -83,7 +120,7 @@ for (const charClass of classes) {
   await CharacterClass.create({
     name: charClass.name,
     slug: charClass.slug,
-    icon: charClass.icon,
+    images: charClass.images,
     description: charClass.description,
     baseStats: charClass.baseStats,
     weaponTypes: charClass.weaponTypes,
