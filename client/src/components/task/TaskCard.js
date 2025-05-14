@@ -278,13 +278,6 @@ export const TaskCard = ({
                 >
                   <Info className="h-4 w-4" />
                 </button>
-                <button
-                  onClick={() => onUnequip?.(task._id)}
-                  className="rounded p-1 text-red-600 hover:bg-red-100 transition-colors"
-                  title="Unequip"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
               </div>
             </div>
           </div>

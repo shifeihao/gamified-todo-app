@@ -66,6 +66,7 @@ const TasksPage = () => {
         console.log("获取到的卡片库存数据:", cardData);
       } catch (err) {
         console.error("获取卡片库存失败:", err);
+        // 不显示错误提示，继续执行其他获取
       }
       
       // 如果卡片库存为空或少于5张，尝试初始化新用户卡片
@@ -78,6 +79,7 @@ const TasksPage = () => {
           console.log("成功获取每日卡片");
         } catch (err) {
           console.log("尝试获取每日卡片失败，可能已经获取过", err);
+          // 不显示错误提示，继续执行
         }
         
         // 如果卡片仍然不足，尝试通过login/register中的初始化逻辑获取卡片
@@ -90,6 +92,7 @@ const TasksPage = () => {
             console.log("成功创建补充空白卡片");
           } catch (err) {
             console.log("创建空白卡片失败", err);
+            // 不显示错误提示，继续执行
           }
         }
         
@@ -99,12 +102,16 @@ const TasksPage = () => {
           console.log("更新后的卡片库存:", cardData);
         } catch (err) {
           console.error("重新获取卡片库存失败:", err);
+          // 不阻止后续操作
         }
       }
 
       // 获取任务和其他必要数据
-      const [allTasks, equipped, shortTasks, longTasks, levelInfo] =
-        await Promise.all([
+      let allTasks = [], equipped = [], shortTasks = [], longTasks = [], levelInfo = { data: {} };
+      
+      try {
+        // 尝试并行获取所有任务数据
+        [allTasks, equipped, shortTasks, longTasks, levelInfo] = await Promise.all([
           getTasks(user.token),
           getEquippedTasks(user.token),
           getEquippedShortTasks(user.token),
@@ -113,13 +120,40 @@ const TasksPage = () => {
             headers: { Authorization: `Bearer ${user.token}` },
           }),
         ]);
+        
+        // 成功获取所有数据，清除错误状态
+        setError("");
+      } catch (err) {
+        console.error("获取任务数据部分失败:", err);
+        // 这里我们不立即显示错误，而是尝试单独获取各个数据
+        try {
+          // 尝试单独获取任务列表
+          allTasks = await getTasks(user.token);
+        } catch (getTasksErr) {
+          console.error("获取所有任务失败:", getTasksErr);
+        }
+        
+        try {
+          // 尝试单独获取已装备任务
+          shortTasks = await getEquippedShortTasks(user.token);
+          longTasks = await getEquippedLongTasks(user.token);
+        } catch (getEquippedErr) {
+          console.error("获取已装备任务失败:", getEquippedErr);
+        }
+      }
       
-      setTasks(allTasks);
-      setEquippedShortTasks(shortTasks);
-      setEquippedLongTasks(longTasks);
-      setCards(cardData.inventory || []); // 确保使用正确的数据结构
-      setRewardInfo(levelInfo.data);
-      setError("");
+      // 即使部分数据获取失败，我们仍然更新已获取的数据
+      if (allTasks.length > 0) setTasks(allTasks);
+      if (shortTasks.length > 0) setEquippedShortTasks(shortTasks);
+      if (longTasks.length > 0) setEquippedLongTasks(longTasks);
+      if (cardData.inventory) setCards(cardData.inventory);
+      if (levelInfo.data) setRewardInfo(levelInfo.data);
+      
+      // 只有在所有数据都没有获取到时才显示错误
+      if (allTasks.length === 0 && shortTasks.length === 0 && longTasks.length === 0) {
+        console.error("所有任务数据获取失败");
+        showError("获取任务数据失败，请尝试刷新页面");
+      }
     } catch (err) {
       console.error("获取任务数据出错:", err);
       showError("获取任务数据失败");
@@ -290,18 +324,63 @@ const TasksPage = () => {
     },
   });
 
-  const handleComplete = (id) => {
-    // 找到对应的任务
-    const taskToComplete = tasks.find(t => t._id === id) || 
+  const handleComplete = async (id) => {
+    try {
+      // 找到对应的任务
+      let taskToComplete = tasks.find(t => t._id === id) || 
                           equippedShortTasks.find(t => t._id === id) ||
                           equippedLongTasks.find(t => t._id === id);
 
-    // 如果是长期任务，使用专用的完成方法
-    if (taskToComplete && taskToComplete.type === 'long') {
-      doCompleteLongTask(id, user.token);
-    } else {
-      // 否则使用普通完成方法
-      doCompleteTask(id, user.token);
+      // 如果任务不存在，尝试重新获取任务列表后再查找
+      if (!taskToComplete) {
+        console.log(`找不到ID为 ${id} 的任务，尝试重新获取任务列表...`);
+        
+        try {
+          // 尝试直接获取单个任务
+          const result = await axios.get(`/api/tasks/${id}`, {
+            headers: { Authorization: `Bearer ${user.token}` }
+          });
+          
+          if (result.data) {
+            taskToComplete = result.data;
+            console.log("成功获取单个任务:", taskToComplete);
+          }
+        } catch (err) {
+          console.error("获取单个任务失败:", err);
+          // 尝试刷新所有任务
+          try {
+            await fetchTasks();
+            taskToComplete = tasks.find(t => t._id === id) || 
+                            equippedShortTasks.find(t => t._id === id) ||
+                            equippedLongTasks.find(t => t._id === id);
+          } catch (fetchErr) {
+            console.error("刷新任务列表失败:", fetchErr);
+          }
+        }
+        
+        if (!taskToComplete) {
+          console.error(`无法找到ID为 ${id} 的任务`);
+          showError("找不到要完成的任务，请刷新页面后再试");
+          return;
+        }
+      }
+
+      console.log(`准备完成任务: ${taskToComplete.title} (ID: ${id}, 类型: ${taskToComplete.type})`);
+      
+      // 如果是长期任务，使用专用的完成方法
+      if (taskToComplete.type === 'long') {
+        await doCompleteLongTask(id, user.token);
+      } else {
+        // 否则使用普通完成方法
+        await doCompleteTask(id, user.token);
+      }
+      
+      // 任务完成后，确保我们有最新的任务列表
+      setTimeout(() => fetchTasks(), 500);
+      
+    } catch (err) {
+      console.error("完成任务过程出错:", err);
+      showError("完成任务失败，请稍后再试");
     }
   };
 
@@ -486,6 +565,21 @@ const TasksPage = () => {
 
   // 拖放装备
   const handleDropToSlot = (taskId, slotIndex, slotType = "short") => {
+    // 检查任务类型是否与槽位类型匹配
+    const task = tasks.find(t => t._id === taskId);
+    if (!task) {
+      showError("任务不存在");
+      return;
+    }
+    
+    // 检查任务类型是否与槽位类型匹配
+    const expectedType = slotType === "long" ? "long" : "short";
+    if (task.type !== expectedType) {
+      showError(`Only can put ${expectedType === "long" ? "long-term" : "short-term"} task into this slot`);
+      return;
+    }
+    
+    // 类型匹配，继续装备
     doEquipTask(taskId, slotIndex, user.token, slotType);
   };
 
