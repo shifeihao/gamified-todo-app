@@ -148,6 +148,17 @@ const CombatSystem = ({
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [combatLogs]);
+
+  useEffect(() => {
+  setCurrentMonsterIndex(0);
+  setIsPlayerTurn(true);
+  setIsFirstAttack(true);
+  setCurrentTurn(0);
+  setMonsterStatuses({});
+  const hp = monsters[0]?.stats?.hp ?? maxMonsterHp;
+  setMonsterHp(hp);
+  setMaxMonsterHp(hp);
+}, [monsters]);
   
   // Skill trigger handler function
   const triggerSkills = (triggerType, context) => {

@@ -154,26 +154,25 @@ export const enterDungeon = async (req, res) => {
         return res.status(400).json({ error: "Invalid user ID" });
       }
       console.log("Exploring floor for user:", userId);
-
+      
       // Fetch user stats – ensure complete data
       const stats = await UserDungeonStats.findOne({ user: userId })
         .populate("currentExploration.activeEvents")
         .populate("currentExploration.activeMonsters")
         .populate({
           path: "Skills",
-          // Explicitly select fields to avoid missing data
-          select:
-            "_id name description icon trigger effect effectValue cooldown once priority triggerCondition allowedClasses",
-        });
+        // Explicitly select fields to avoid missing data
+            select: "_id name description icon trigger effect effectValue cooldown once priority triggerCondition allowedClasses"
+        })
 
       console.log("User stats found:", !!stats);
-
+      
       // Log player class info for debugging
       if (stats) {
         console.log("Player class info:", {
-          classSlug: stats.classSlug || "not set",
-          className: stats.className || "not set",
-          magicPower: stats.assignedStats?.magicPower || 0,
+          classSlug: stats.classSlug || 'not set',
+          className: stats.className || 'not set',
+          magicPower: stats.assignedStats?.magicPower || 0
         });
       }
 
@@ -228,10 +227,7 @@ export const enterDungeon = async (req, res) => {
       floorIndex = parseInt(floorIndex, 10);
 
       if (isNaN(floorIndex) || floorIndex < 1) {
-        console.error(
-          "Invalid floorIndex:",
-          stats.currentExploration.floorIndex
-        );
+        console.error("Invalid floorIndex:", stats.currentExploration.floorIndex);
         // Reset to 1
         floorIndex = 1;
         stats.currentExploration.floorIndex = 1;
@@ -265,9 +261,7 @@ export const enterDungeon = async (req, res) => {
       console.log("Floor found:", !!floor);
 
       if (!floor) {
-        console.error(
-          `Floor ${floorIndex} not found in dungeon ${dungeonSlug}`
-        );
+        console.error(`Floor ${floorIndex} not found in dungeon ${dungeonSlug}`);
 
         if (dungeon.floors && dungeon.floors.length > 0) {
           console.log(
@@ -279,9 +273,7 @@ export const enterDungeon = async (req, res) => {
           const firstFloor = dungeon.floors[0];
           stats.currentExploration.floorIndex = firstFloor.floorIndex;
           await stats.save();
-          console.log(
-            `Reset to first available floor: ${firstFloor.floorIndex}`
-          );
+          console.log(`Reset to first available floor: ${firstFloor.floorIndex}`);
 
           return res.status(200).json({
             message: `Floor reset to ${firstFloor.floorIndex}. Please try again.`,
@@ -362,9 +354,7 @@ export const enterDungeon = async (req, res) => {
           if (monsterInfo?.monster?._id) {
             const count = monsterInfo.count || 1;
             console.log(
-              `Adding monster ${
-                monsterInfo.monster.name || "Unknown"
-              } x${count}`
+              `Adding monster ${monsterInfo.monster.name || "Unknown"} x${count}`
             );
             for (let i = 0; i < count; i++) {
               monsterIds.push(monsterInfo.monster._id);
@@ -430,13 +420,8 @@ export const enterDungeon = async (req, res) => {
       console.log("Monsters to fight:", monsterIds.length);
 
       // 	Confirm class info before combat execution
-      console.log(
-        "Preparing for combat with class:",
-        stats.classSlug || "unknown",
-        "and className:",
-        stats.className || "unknown"
-      );
-
+      console.log("Preparing for combat with class:", stats.classSlug || "unknown", "and className:", stats.className || "unknown");
+      
       let combatResult;
       try {
         combatResult = await executeCombat(monsterIds, stats, hp);
@@ -444,7 +429,7 @@ export const enterDungeon = async (req, res) => {
           survived: combatResult.survived,
           remainingHp: combatResult.remainingHp,
           logCount: combatResult.logs?.length || 0,
-          classUsed: combatResult.debug?.playerClass,
+          classUsed: combatResult.debug?.playerClass
         });
 
         if (Array.isArray(combatResult.logs)) {
@@ -460,7 +445,10 @@ export const enterDungeon = async (req, res) => {
         logs.push("Combat system error");
       }
 
+
       logs.push(`🔍 Exploring floor ${floorIndex}...`);
+
+
 
       // Handle defeat case
       if (!combatResult.survived) {
@@ -479,12 +467,10 @@ export const enterDungeon = async (req, res) => {
       // On victory, continue exploration
       console.log(`Combat victory, advancing to floor ${floorIndex + 1}`);
       stats.currentExploration.floorIndex = floorIndex + 1;
-
       stats.currentExploration.currentHp = combatResult.remainingHp;
       logs.push(`🚪 You have entered floor ${floorIndex + 1}`);
 
-      // add a check for achievements
-      eventBus.emit("checkAchievements", req.user._id);
+      
 
       // Ensure exploredFloors is an array and update it
       stats.exploredFloors = Array.isArray(stats.exploredFloors)
@@ -500,8 +486,7 @@ export const enterDungeon = async (req, res) => {
       console.log(`Gained ${expGained} EXP, total EXP: ${stats.dungeonExp}`);
 
       // Check if dungeon is completed
-      const isEnd =
-        stats.currentExploration.floorIndex > (dungeon.maxFloor || 1);
+      const isEnd = stats.currentExploration.floorIndex > (dungeon.maxFloor || 1);
 
       if (isEnd) {
         console.log("Reached dungeon end");
@@ -527,32 +512,26 @@ export const enterDungeon = async (req, res) => {
 
         try {
           await stats.save();
-
-          // 检查成就
-          const { checkAndUnlockAchievements } = await import(
-            "../utils/checkAchievements.js"
-          );
-          const newlyUnlocked = await checkAndUnlockAchievements(userId);
-
-          return res.json({
-            logs,
-            monsters: monsterInfos,
-            result: "completed",
-            gainedExp: expGained,
-            totalExp,
-            levelUp: levelDiff > 0,
-            newLevel,
-            statPointsGained: levelDiff * 5,
-            unspentStatPoints: stats.unspentStatPoints,
-            message: `You have completed ${dungeon.name}!`,
-            newlyUnlockedAchievements: newlyUnlocked,
-          });
         } catch (saveError) {
           console.error("Error saving completion stats:", saveError);
-          return res
-            .status(500)
-            .json({ error: "Failed to save game progress" });
+          return res.status(500).json({ error: "Failed to save game progress" });
         }
+
+        return res.json({
+          logs,
+          monsters: monsterInfos,
+          result: "completed",
+          gainedExp: expGained,
+          totalExp,
+          levelUp: levelDiff > 0,
+          newLevel,
+          statPointsGained: levelDiff * 5,
+          
+          unspentStatPoints: stats.unspentStatPoints, // Save user progress
+          message: `You have completed ${dungeon.name}!`
+
+
+        });
       }
 
       // Check if checkpoint is reached
@@ -569,25 +548,6 @@ export const enterDungeon = async (req, res) => {
         logs.push(
           `You have reached a checkpoint at floor ${stats.currentExploration.floorIndex}!`
         );
-
-        // Check for achievements when reaching checkpoint
-        const { checkAndUnlockAchievements } = await import(
-          "../utils/checkAchievements.js"
-        );
-        const newlyUnlocked = await checkAndUnlockAchievements(userId);
-
-        if (newlyUnlocked.length > 0) {
-          return res.json({
-            logs,
-            monsters: monsterInfos,
-            result: "continue",
-            nextFloor: stats.currentExploration.floorIndex,
-            gainedExp: expGained,
-            currentHp: combatResult.remainingHp,
-            atCheckpoint: true,
-            newlyUnlockedAchievements: newlyUnlocked,
-          });
-        }
       }
 
       try {
@@ -737,7 +697,7 @@ export const interactWithShopEvent = async (req, res) => {
       return res.status(400).json({ error: "Not currently in an exploration" });
     }
 
-    // Handle purchase action
+    //  Handle purchase action
     if (action === "buy" && itemId) {
       const shopItem = await ShopInventory.findById(itemId);
       if (!shopItem) {
@@ -752,21 +712,16 @@ export const interactWithShopEvent = async (req, res) => {
 
       await stats.save();
 
-      // Check for achievements after purchase
-      const { checkAndUnlockAchievements } = await import("../utils/checkAchievements.js");
-      const newlyUnlocked = await checkAndUnlockAchievements(userId);
-
       return res.json({
         success: true,
         message: `You bought ${shopItem.name} for ${shopItem.price} gold!`,
         gold: stats.gold,
-        newlyUnlockedAchievements: newlyUnlocked
       });
     } else if (action === "leave") {
       return res.json({
         success: true,
         message: "You left the shop.",
-        canContinue: true
+        canContinue: true,
       });
     }
 

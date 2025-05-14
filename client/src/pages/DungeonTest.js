@@ -3,14 +3,11 @@ import { getShopItems, buyItem } from '../services/inventoryShopService.js';
 import {
   enterDungeon,
   exploreCurrentFloor,
-  summarizeExploration,
-  updateCombatResult
+  summarizeExploration
 } from '../services/dungeonTestService.js';
 import axios from 'axios';
 import StatAllocation from '../components/game/StatAllocation.js';
 import CombatSystem from '../components/game/CombatSystem';
-import { toast } from 'react-hot-toast';
-import AchievementUnlockNotification from '../components/achievement/AchievementUnlockNotification';
 
 // Game states
 const GAME_STATES = {
@@ -216,7 +213,7 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         return;
       }
       
-      const purchaseResponse = await axios.post(
+      await axios.post(
         '/api/shop/buy', 
         { itemId }, 
         { headers: { Authorization: `Bearer ${token}` }}
@@ -387,27 +384,6 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         console.log('No monsters after shop, continuing exploration');
         continueExploration();
       }
-
-      const summary = await summarizeExploration(token);
-      setSummary(summary);
-
-      // 显示成就解锁提醒
-      if (summary.newlyUnlockedAchievements?.length > 0) {
-        summary.newlyUnlockedAchievements.forEach(achievement => {
-          toast.success(
-            <AchievementUnlockNotification achievement={achievement} />,
-            {
-              duration: 5000,
-              position: "top-right",
-              style: {
-                minWidth: '320px'
-              }
-            }
-          );
-        });
-      }
-
-      setGameState(GAME_STATES.VICTORY);
     } catch (err) {
       console.error('Leave shop error:', err);
       setLogs(prev => [...prev, `❌ Error: ${err.message}`]);
@@ -510,22 +486,6 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         setTimeout(() => {
           continueExploration();
         }, 500);
-      }
-
-      // 显示成就解锁提醒
-      if (res.newlyUnlockedAchievements?.length > 0) {
-        res.newlyUnlockedAchievements.forEach(achievement => {
-          toast.success(
-            <AchievementUnlockNotification achievement={achievement} />,
-            {
-              duration: 5000,
-              position: "top-right",
-              style: {
-                minWidth: '320px'
-              }
-            }
-          );
-        });
       }
     } catch (err) {
       console.error('Error during exploration:', err);
