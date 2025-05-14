@@ -209,7 +209,51 @@ const TasksPage = () => {
   // Monitor task and subtask completion events and refresh task data
   useEffect(() => {
     // Creating an event handler
-    const handleTaskOrSubtaskCompleted = () => {
+    const handleTaskOrSubtaskCompleted = (event) => {
+      console.log("Task or subtask completion event triggered", event.type, event.detail);
+      
+      // If we have detailed task information in the event, update state directly
+      if (event.detail && event.detail.taskId && event.detail.updatedTask) {
+        const { taskId, updatedTask, isLongTask, isSubtaskCompletion } = event.detail;
+        
+        // Update tasks in repository
+        setTasks(prevTasks => 
+          prevTasks.map(task => 
+            task._id === taskId ? updatedTask : task
+          )
+        );
+        
+        // Update equipped short tasks
+        setEquippedShortTasks(prevTasks => 
+          prevTasks.map(task => 
+            task._id === taskId ? updatedTask : task
+          )
+        );
+        
+        // Update equipped long tasks
+        setEquippedLongTasks(prevTasks => 
+          prevTasks.map(task => 
+            task._id === taskId ? updatedTask : task
+          )
+        );
+        
+        // If task is completed and was a long task, ensure it's unequipped
+        if (updatedTask.status === 'completed' && isLongTask) {
+          try {
+            unequipTaskService(taskId, user?.token);
+            console.log("Unequipping completed long task from event handler");
+          } catch (err) {
+            console.error("Failed to unequip task from event handler:", err);
+          }
+        }
+        
+        // For subtask completion, we don't need to do anything special except update the state
+        if (isSubtaskCompletion) {
+          console.log("Subtask completion detected, state updated without opening edit window");
+        }
+      }
+      
+      // Always fetch tasks to ensure we have the latest data
       fetchTasks();
     };
 
@@ -231,7 +275,7 @@ const TasksPage = () => {
         handleTaskOrSubtaskCompleted
       );
     };
-  }, []);
+  }, [user?.token]); // Add user token as dependency to ensure we have it available
 
   // Display success information
   const showSuccessMessage = (msg) => {
@@ -707,9 +751,8 @@ const TasksPage = () => {
     <div
       className="min-h-screen bg-cover bg-center bg-fixed"
       style={{
-        // backgroundImage: "url('/rpg-background.png')",
-        backgroundColor: "rgba(191, 191, 191, 0.6)", // Dark background as fallback
-        // backgroundBlendMode: "overlay" // Darken background images to improve content readability
+        background: "linear-gradient(to bottom, #7b5cd6, #9370db)",
+        backgroundSize: "cover"
       }}
     >
       <Navbar />
@@ -790,7 +833,13 @@ const TasksPage = () => {
                 equippedTasks={equippedShortTasks}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
-                onEdit={(task) => {
+                onEdit={(task, forceEdit = false, isCompletion = false) => {
+                  // If this is a task completion update, just update the state without opening edit window
+                  if (isCompletion) {
+                    console.log("Task completed, updating state without opening edit window");
+                    return;
+                  }
+                  
                   setEditingTask(task);
                   setShowForm(true);
                   if (task.type) {
@@ -808,7 +857,13 @@ const TasksPage = () => {
                 equippedTasks={equippedLongTasks}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
-                onEdit={(task, forceEdit = false) => {
+                onEdit={(task, forceEdit = false, isCompletion = false) => {
+                  // If this is a task completion update, just update the state without opening edit window
+                  if (isCompletion) {
+                    console.log("Task completed, updating state without opening edit window");
+                    return;
+                  }
+                  
                   // When the task has the isFromSubtaskComplete flag and is not forced to edit, only update the task without opening the edit window
                   if (!forceEdit && task.isFromSubtaskComplete) {
                     // Only update the task data, do not open the edit window

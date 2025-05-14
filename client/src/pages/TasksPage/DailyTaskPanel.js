@@ -17,18 +17,18 @@ const DailyTaskPanel = ({
   const shortTasks = equippedTasks.filter((t) => t.type === "short");
 
   return (
-        <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-4 border-2 border-purple-300 backdrop-blur-sm">
-            {/* Fixed height title area */}
-            <div className="flex items-center justify-between h-14">
-                <h2 className="text-xl font-bold text-purple-900 flex items-center">
-                    <Zap className="h-6 w-6 mr-2" />
-                    Quick Quests
-                </h2>
-                {/* Empty div, keeping the same structure as the other panel */}
-                <div className="flex space-x-2">
-                </div>
-            </div>
-            
+    <div className="bg-[#e8e0f5] rounded-xl shadow-lg p-4 border border-purple-200 backdrop-blur-sm">
+      {/* Fixed height title area */}
+      <div className="flex items-center justify-between h-14">
+        <h2 className="text-xl font-bold text-purple-900 flex items-center">
+          <Zap className="h-6 w-6 mr-2" />
+          Quick Quests
+        </h2>
+        {/* Empty div, keeping the same structure as the other panel */}
+        <div className="flex space-x-2">
+        </div>
+      </div>
+      
       <TaskSlots
         items={shortTasks}
         totalSlots={5}

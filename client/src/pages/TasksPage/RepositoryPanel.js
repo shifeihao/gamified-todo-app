@@ -149,7 +149,7 @@ const RepositoryPanel = ({
     };
 
     return (
-        <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-4 border-2 border-amber-300 backdrop-blur-sm h-full relative">
+        <div className="bg-[#e8e0f5] rounded-xl shadow-lg p-4 border border-amber-200 backdrop-blur-sm h-full relative">
             {/* 展开/收起按钮 */}
             <button
                 onClick={() => onExpand(!isExpanded)}
