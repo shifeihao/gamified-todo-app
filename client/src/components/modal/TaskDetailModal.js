@@ -145,7 +145,8 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
       if (updatedTask) {
         setTask(updatedTask);
         if (onTaskUpdated) {
-          onTaskUpdated(updatedTask);
+          // Pass additional parameter to indicate this is from subtask completion
+          onTaskUpdated(updatedTask, false, true);
         }
         
         // Show reward information
@@ -162,14 +163,29 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
                 </span>
               </div>
             </div>,
-            { duration: 5000, position: 'top-center' }
+            { 
+              duration: 3000, 
+              position: 'top-center',
+              id: 'subtask-completion', // 使用固定ID，确保新通知会替换旧通知
+            }
           );
         } else {
-          toast.success('Subtask completed!');
+          toast.success('Subtask completed!', {
+            duration: 3000,
+            position: 'top-center',
+            id: 'subtask-completion', // 使用固定ID，确保新通知会替换旧通知
+          });
         }
         
-        // Trigger task completion event
-        window.dispatchEvent(new CustomEvent('subtaskCompleted'));
+        // Trigger task completion event with detailed information
+        window.dispatchEvent(new CustomEvent('subtaskCompleted', {
+          detail: {
+            taskId,
+            updatedTask,
+            subTaskIndex,
+            isSubtaskCompletion: true
+          }
+        }));
       }
     } catch (err) {
       console.error('Failed to complete subtask:', err);
@@ -206,14 +222,14 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
           if (updatedTask) {
             setTask(updatedTask);
             if (onTaskUpdated) {
-              onTaskUpdated(updatedTask);
+              onTaskUpdated(updatedTask, false, true);
             }
           } else {
             // If no updated task data is obtained, the current task is also marked as completed
             const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
             setTask(localUpdatedTask);
             if (onTaskUpdated) {
-              onTaskUpdated(localUpdatedTask);
+              onTaskUpdated(localUpdatedTask, false, true);
             }
             console.log("No update task data was obtained, using local update status");
           }
@@ -222,10 +238,26 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
           const { showLongTaskCompletedToast } = await import('./TaskCompletedToast');
           showLongTaskCompletedToast(response, updatedTask || task);
 
-          // Triggering a task completion event
-          window.dispatchEvent(new CustomEvent('taskCompleted'));
+          // Automatically unequip completed long-term task
+          try {
+            const { unequipTask } = await import('../../services/taskService');
+            await unequipTask(taskId, user.token);
+            console.log("Successfully unequipped completed long-term task");
+          } catch (unequipError) {
+            console.error("Failed to unequip completed long-term task:", unequipError);
+          }
 
-            // Delay closing the details modal after the task is completed
+          // Triggering a task completion event with detailed task data
+          window.dispatchEvent(new CustomEvent('taskCompleted', {
+            detail: {
+              taskId,
+              updatedTask: updatedTask || task,
+              isLongTask: true,
+              status: 'completed'
+            }
+          }));
+
+          // Delay closing the details modal after the task is completed
           setTimeout(() => {
             onClose();
           }, 1000);
@@ -240,11 +272,27 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
           const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
           setTask(localUpdatedTask);
           if (onTaskUpdated) {
-            onTaskUpdated(localUpdatedTask);
+            onTaskUpdated(localUpdatedTask, false, true);
           }
 
-          // Triggering a task completion event
-          window.dispatchEvent(new CustomEvent('taskCompleted'));
+          // Automatically unequip completed long-term task (in error handler)
+          try {
+            const { unequipTask } = await import('../../services/taskService');
+            await unequipTask(taskId, user.token);
+            console.log("Successfully unequipped completed long-term task (error handler)");
+          } catch (unequipError) {
+            console.error("Failed to unequip completed long-term task (error handler):", unequipError);
+          }
+
+          // Triggering a task completion event with detailed task data
+          window.dispatchEvent(new CustomEvent('taskCompleted', {
+            detail: {
+              taskId,
+              updatedTask: localUpdatedTask,
+              isLongTask: true,
+              status: 'completed'
+            }
+          }));
 
           // Delay closing modal
           setTimeout(() => onClose(), 1000);
@@ -278,14 +326,14 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
           if (updatedTask) {
             setTask(updatedTask);
             if (onTaskUpdated) {
-              onTaskUpdated(updatedTask);
+              onTaskUpdated(updatedTask, false, true);
             }
           } else {
             // Mark the current task as completed even if no updated task data is obtained
             const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
             setTask(localUpdatedTask);
             if (onTaskUpdated) {
-              onTaskUpdated(localUpdatedTask);
+              onTaskUpdated(localUpdatedTask, false, true);
             }
             console.log("No update task data was obtained, using local update status");
           }
@@ -361,7 +409,13 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
           }
           
           // Triggering a task completion event
-          window.dispatchEvent(new CustomEvent('taskCompleted'));
+          window.dispatchEvent(new CustomEvent('taskCompleted', {
+            detail: {
+              taskId,
+              updatedTask: updatedTask || (task ? {...task, status: 'completed', completedAt: new Date()} : null),
+              status: 'completed'
+            }
+          }));
           
           // Delay closing the details modal after the task is completed
           setTimeout(() => {
@@ -395,12 +449,28 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
           const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
           setTask(localUpdatedTask);
           if (onTaskUpdated) {
-            onTaskUpdated(localUpdatedTask);
+            onTaskUpdated(localUpdatedTask, false, true);
           }
           
-          // Triggering a task completion event
-          window.dispatchEvent(new CustomEvent('taskCompleted'));
-          
+          // Automatically unequip completed long-term task (in error handler)
+          try {
+            const { unequipTask } = await import('../../services/taskService');
+            await unequipTask(taskId, user.token);
+            console.log("Successfully unequipped completed long-term task (error handler)");
+          } catch (unequipError) {
+            console.error("Failed to unequip completed long-term task (error handler):", unequipError);
+          }
+
+          // Triggering a task completion event with detailed task data
+          window.dispatchEvent(new CustomEvent('taskCompleted', {
+            detail: {
+              taskId,
+              updatedTask: localUpdatedTask,
+              isLongTask: true,
+              status: 'completed'
+            }
+          }));
+
           // Delay closing modal
           setTimeout(() => onClose(), 1000);
         }
@@ -417,7 +487,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
           const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
           setTask(localUpdatedTask);
           if (onTaskUpdated) {
-            onTaskUpdated(localUpdatedTask);
+            onTaskUpdated(localUpdatedTask, false, true);
           }
           
           toast.success(
@@ -521,7 +591,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="mx-auto w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg"
+            className="mx-auto w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg max-h-[85vh] overflow-y-auto scrollbar-thin"
           >
             {loading && !task ? (
               <div className="flex justify-center items-center h-48">
@@ -713,7 +783,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
                       <Award className="h-4 w-4 mr-1 text-blue-500" />
                       Subtasks
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-thin pr-2">
                       {task.subTasks.map((subTask, idx) => {
                         const isDone = subTask.status === 'completed';
                         return (
