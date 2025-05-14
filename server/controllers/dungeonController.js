@@ -709,8 +709,13 @@ export const interactWithShopEvent = async (req, res) => {
       }
 
       stats.gold -= shopItem.price;
-
       await stats.save();
+
+      await UserInventory.updateOne(
+        { userId: userId, item: shopItem.item },
+        { $inc: { quantity: 1 } },
+        { upsert: true }
+      );
 
       return res.json({
         success: true,

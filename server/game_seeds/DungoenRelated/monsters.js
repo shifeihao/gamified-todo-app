@@ -138,7 +138,7 @@ const monsters = [
   {
     name: "False Prophet",
     slug: "false-prophet",
-    icon: "false-prophet.png",
+    icon: "false-prophet",
     type: "boss",
     description:
       "A shapeless voice that mimics truth. It thrives when you hesitate.",
@@ -151,44 +151,43 @@ const monsters = [
 
     // ⬇️ 属性根据第10层怪物提升约25~30%
     stats: {
-      hp: 240,
-      attack: 24,
-      defense: 18,
-      magicPower: 32,
-      magicResist: 22,
-      critRate: 0.12,
-      evasion: 0.1,
-      speed: 14,
+      hp: 770,
+      attack: 75,
+      defense: 45,
+      magicPower: 86,
+      magicResist: 66,
+      critRate: 0.23,
+      evasion: 0.2,
+      speed: 32,
     },
 
-    // BOSS掉落
-    expDrop: 120,
-    goldDrop: 200,
+    expDrop: 350,
+    goldDrop: 400,
     spawnRate: 1,
     itemDrops: [
       {
         item: getRandomItem('weapon', 0),
-        rate: 50 // 50%概率掉落武器（BOSS特殊）
+        rate: 50 
       },
       {
         item: getRandomItem('armor', 1),
-        rate: 40 // 40%概率掉落护甲（BOSS特殊）
+        rate: 40 
       },
       {
         item: getRandomItem('consumable', 2),
-        rate: 60 // 60%概率掉落消耗品（BOSS特殊）
+        rate: 60 
       }
     ],
     taskCardDrops: [
       {
-        rate: 80 // BOSS有较高卡片掉落率（80%）
+        rate: 80 
       }
     ],
 
     skills: ["Invert Faith", "Echo of Doubt", "Veil of Truth"],
   },
 
-  // 中级怪物 (Lv 11–20)
+  
   {
     name: "Dread Hound",
     slug: "dread-hound",
@@ -678,7 +677,6 @@ const monsters = [
       evasion: 1.2,
       speed: 1.0,
     },
-    // 添加掉落数据
     expDrop: 180,
     goldDrop: 130,
     itemDrops: [
@@ -740,11 +738,10 @@ for (const m of monsters) {
     ? await getSkillIds(m.skills)
     : sharedSkills.slice(0, 2);
 
-  // 确保每个怪物都有掉落数据
   const monsterData = {
     name: m.name,
     slug: m.slug,
-    icon: m.icon || `${m.slug}.png`,
+    icon: m.icon || `${m.slug}`,
     type: isBoss ? "boss" : "normal",
     description: m.description,
     level: m.level,
