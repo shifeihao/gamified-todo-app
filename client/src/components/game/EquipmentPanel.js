@@ -1,4 +1,3 @@
-// 🛡️ Pixel-style Equipment Panel with stats effects
 // File: components/game/EquipmentPanel.js
 
 import React from "react";
@@ -53,8 +52,27 @@ export const getItemEffects = (item) => {
   };
 };
 
+export function computeTotalStats(slots) {
+  const total = {
+    attack: 0, defense: 0, magicPower: 0,
+    speed: 0, hp: 0, critRate: 0, evasion: 0
+  };
+
+  Object.values(slots || {}).forEach(slot => {
+    if (!slot || !slot.item) return;
+    const { item } = slot;
+    const eff = getItemEffects(item);
+    Object.entries(eff).forEach(([k,v]) => {
+      if (typeof total[k] === 'number') total[k] += v;
+    });
+  });
+
+  return total;
+}
+
 export default function EquipmentPanel({ equipment, onRightClick }) {
   const { slots } = equipment || {};
+  const totalStats = computeTotalStats(slots);
 
   return (
     <div style={{
@@ -82,6 +100,7 @@ export default function EquipmentPanel({ equipment, onRightClick }) {
           const userInventoryItem = slots?.[slot];
           const item = userInventoryItem?.item;
           const effects = getItemEffects(item);
+          
           
           return (
             <div
@@ -179,51 +198,26 @@ export default function EquipmentPanel({ equipment, onRightClick }) {
       
       {/* Equipment Summary */}
       <div style={{
-        marginTop: "20px",
-        backgroundColor: "#f5f5f5",
-        border: "2px solid #7e4ab8",
-        borderRadius: "8px",
-        padding: "15px"
-      }}>
-        <h4 style={{ 
-          margin: "0 0 10px 0",
-          color: "#2c1810",
-          fontSize: "14px"
+          marginTop: "20px",
+          backgroundColor: "#f5f5f5",
+          border: "2px solid #7e4ab8",
+          borderRadius: "8px",
+          padding: "15px"
         }}>
-          📊 Equipment Summary
-        </h4>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-          gap: "10px",
-          fontSize: "12px"
-        }}>
-          {(() => {
-            // Calculate total stats from all equipped items
-            const totalStats = {
-              attack: 0,
-              defense: 0,
-              magicPower: 0,
-              speed: 0,
-              hp: 0,
-              critRate: 0,
-              evasion: 0
-            };
-            
-            Object.values(slots || {}).forEach(userInventoryItem => {
-              if (userInventoryItem?.item) {
-                const effects = getItemEffects(userInventoryItem.item);
-                if (effects) {
-                  Object.entries(effects).forEach(([stat, value]) => {
-                    if (totalStats.hasOwnProperty(stat)) {
-                      totalStats[stat] += value;
-                    }
-                  });
-                }
-              }
-            });
-            
-            return Object.entries(totalStats)
+          <h4 style={{
+            margin: "0 0 10px 0",
+            color: "#2c1810",
+            fontSize: "14px"
+          }}>
+            📊 Equipment Summary
+          </h4>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+            gap: "10px",
+            fontSize: "12px"
+          }}>
+            {Object.entries(totalStats)
               .filter(([stat, value]) => value > 0)
               .map(([stat, value]) => (
                 <div key={stat} style={{
@@ -238,20 +232,20 @@ export default function EquipmentPanel({ equipment, onRightClick }) {
                   </div>
                   <div>+{value}</div>
                 </div>
-              ));
-          })()}
+              ))
+            }
+          </div>
+          {Object.values(slots || {}).every(slot => !slot?.item) && (
+            <p style={{
+              textAlign: "center",
+              color: "#666",
+              fontStyle: "italic",
+              margin: "10px 0"
+            }}>
+              No equipment equipped
+            </p>
+          )}
         </div>
-        {Object.values(slots || {}).every(slot => !slot?.item) && (
-          <p style={{ 
-            textAlign: "center",
-            color: "#666",
-            fontStyle: "italic",
-            margin: "10px 0"
-          }}>
-            No equipment equipped
-          </p>
-        )}
-      </div>
     </div>
   );
 }

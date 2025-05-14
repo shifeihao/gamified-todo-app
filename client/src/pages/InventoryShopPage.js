@@ -17,7 +17,7 @@ import { useToast } from "../contexts/ToastContext";
 
 const categories = ["All", "Weapons", "Armor", "Consumables", "Materials"];
 
-export default function InventoryShopPage() {
+export default function InventoryShopPage({ onEquipmentChange }) {
   const [inventory, setInventory] = useState([]);
   const [shop, setShop] = useState([]);
   const [equipment, setEquipment] = useState(null);
@@ -87,6 +87,7 @@ export default function InventoryShopPage() {
     try {
       await equipItem(inventoryItemId, token);
       fetchData();
+      onEquipmentChange?.();
       showSuccess("Equipment equipped successfully");
     } catch (err) {
       console.error("❌ Equipment failed:", err);
@@ -277,6 +278,7 @@ export default function InventoryShopPage() {
                 await unequipItem(slot, token);
                 showSuccess(`Unequipped ${item.item?.name || "item"}`);
                 fetchData();
+                onEquipmentChange?.();
               } catch (err) {
                 console.error("❌ Unequip failed", err);
                 showError("Unequip failed: " + err.message);

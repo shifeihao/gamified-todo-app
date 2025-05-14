@@ -1,9 +1,12 @@
 // 重新设计的 GameLayout.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useMemo} from 'react';
 import DungeonTest from './DungeonTest';
 import InventoryShopPage from './InventoryShopPage';
 import axios from 'axios';
 import { getUserStats, getAvailableClasses, selectClass } from '../services/characterService';
+import { computeTotalStats } from '../components/game/EquipmentPanel';
+import {getUserEquipment} from "../services/inventoryShopService";
+
 
 const PAGES = {
   DUNGEON: 'dungeon',
@@ -19,6 +22,8 @@ const GameLayout = () => {
   const [isSelecting, setIsSelecting] = useState(false);
   const [classes, setClasses] = useState([]);
   const [error, setError] = useState(null);
+  const [equipment, setEquipment] = useState(null);
+
   
   // 获取令牌
   const token = userInfo?.token || null;
@@ -30,6 +35,13 @@ const GameLayout = () => {
       setUserInfo(parsed);
     }
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    getUserEquipment(token).then(data => setEquipment(data));
+  }, [token]);
+
+  
   
   // 初始化用户数据
   useEffect(() => {
@@ -112,6 +124,33 @@ const GameLayout = () => {
       console.error('刷新金币失败:', err);
     }
   };
+
+  const fetchEquipment = async () => {
+    if (!token) return;
+    try {
+    const equipData = await getUserEquipment(token);
+    setEquipment(equipData);
+  } catch (err) {
+      console.error('拉取装备失败', err);
+    }
+  };
+
+  const bonusStats = useMemo(() => {
+    return equipment ?computeTotalStats(equipment?.slots): { hp:0, attack:0, defense:0, magicPower:0, speed:0,critRate:0,evasion:0 }
+  }, [equipment]);
+
+  const effectiveBaseStats = useMemo(() => {
+    const base = userStats?.baseStats || {}
+    return Object.fromEntries(
+      Object.entries(base).map(([key, val]) => [
+        key,
+        val + (bonusStats[key] || 0)
+      ])
+    )
+  }, [userStats?.baseStats, bonusStats])
+
+
+
 
   // 显示加载中
   if (loading && !userStats) {
@@ -369,23 +408,27 @@ const GameLayout = () => {
             <div className="character-stats">
               <div className="stat-item">
                 <span className="stat-label">HP</span>
-                <span className="stat-value">{userStats.baseStats?.hp || 100}</span>
+                <span className="stat-value">{(userStats.baseStats?.hp || 100)+ (bonusStats.hp || 0)}</span>
               </div>
               <div className="stat-item">
                 <span className="stat-label">攻击</span>
-                <span className="stat-value">{userStats.baseStats?.attack || 10}</span>
+                <span className="stat-value">{(userStats.baseStats?.attack || 10)+ (bonusStats.attack || 0)}</span>
               </div>
               <div className="stat-item">
                 <span className="stat-label">防御</span>
-                <span className="stat-value">{userStats.baseStats?.defense || 5}</span>
+                <span className="stat-value">{(userStats.baseStats?.defense || 5)+ (bonusStats.defense || 0)}</span>
               </div>
               <div className="stat-item">
                 <span className="stat-label">魔法</span>
-                <span className="stat-value">{userStats.baseStats?.magicPower || 0}</span>
+                <span className="stat-value">{(userStats.baseStats?.magicPower || 0) + (bonusStats.magicPower || 0)}</span>
               </div>
               <div className="stat-item">
                 <span className="stat-label">速度</span>
-                <span className="stat-value">{userStats.baseStats?.speed || 0}</span>
+                <span className="stat-value">{(userStats.baseStats?.speed || 0)+(bonusStats.speed || 0)}</span>
+              </div>
+               <div className="stat-item">
+                <span className="stat-label">CritRate</span>
+                <span className="stat-value">{(userStats.baseStats?.critRate || 0)+(bonusStats.speed || 0)}</span>
               </div>
             </div>
             
@@ -404,13 +447,16 @@ const GameLayout = () => {
         <div className="content-wrapper">
           {currentPage === PAGES.DUNGEON && (
             <DungeonTest 
-              userStats={userStats}
+              userStats={{
+                ...userStats,
+                baseStats: effectiveBaseStats
+              }}
               onGoldUpdate={refreshGold}
               gold={gold}
             />
           )}
           {currentPage === PAGES.INVENTORY && (
-            <InventoryShopPage />
+            <InventoryShopPage onEquipmentChange={fetchEquipment} />
           )}
         </div>
       </main>
