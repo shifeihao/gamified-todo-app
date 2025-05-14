@@ -34,6 +34,7 @@ import {
 } from "../../services/taskService";
 
 import { useApiAction } from "../../components/hooks";
+import { showTaskCompletedToast, showLongTaskCompletedToast } from "../../components/modal/TaskCompletedToast";
 
 const TasksPage = () => {
   const { user } = useContext(AuthContext);
@@ -202,20 +203,6 @@ const TasksPage = () => {
     setTimeout(() => setSuccessMessage(""), 3000);
   };
 
-  // 显示任务完成通知
-  const showTaskCompletedToast = (title, expGained, goldGained, isSubtask = false) => {
-    toast.success(
-      <div className="flex flex-col space-y-1">
-        <span className="font-semibold text-sm">{isSubtask ? "Subtask completed!" : "Quest Completed!"}</span>
-        <div className="flex items-center">
-          <span className="text-yellow-500 mr-1">🏅</span>
-          <span className="text-xs">Earned <span className="font-bold text-yellow-600">{expGained} XP</span> and <span className="font-bold text-amber-500">{goldGained} Gold</span></span>
-        </div>
-      </div>,
-      { duration: 5000, position: 'top-center' }
-    );
-  };
-
   // -----------------------------
   // 1. 删除任务
   // -----------------------------
@@ -281,17 +268,8 @@ const TasksPage = () => {
           const xp = reward.expGained || 0;
           const gold = reward.goldGained || 0;
           
-          // 确保经验和金币不为0，如果是0使用默认值
-          if (xp === 0 && gold === 0 && task) {
-            const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
-            const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
-            
-            console.log(`奖励值异常，使用默认值 - XP: ${defaultXp}, Gold: ${defaultGold}`);
-            showTaskCompletedToast(task.title || "任务", defaultXp, defaultGold);
-          } else {
-            console.log(`任务完成奖励: ${xp} XP, ${gold} Gold`);
-            showTaskCompletedToast(task?.title || "任务", xp, gold);
-          }
+          // 使用新的组件显示任务完成通知
+          showTaskCompletedToast(task?.title || "任务", xp, gold, false, task);
         } else {
           // 特殊处理：如果没有收到奖励信息但有任务信息
           if (task) {
@@ -300,10 +278,10 @@ const TasksPage = () => {
             const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
             
             console.log(`未收到奖励信息，使用任务自身或默认值: ${defaultXp} XP, ${defaultGold} Gold`);
-            showTaskCompletedToast(task.title || "任务", defaultXp, defaultGold);
+            showTaskCompletedToast(task.title || "任务", defaultXp, defaultGold, false, task);
           } else {
             // 完全没有任务和奖励信息的情况
-            showSuccess("Task completed successfully");
+            showSuccess("任务已完成");
             console.log("任务可能已完成，但未收到任务或奖励数据");
           }
         }
@@ -436,35 +414,8 @@ const TasksPage = () => {
         console.log("提取后的长期任务数据:", task);
         console.log("提取后的长期任务奖励数据:", reward);
         
-        // 显示奖励信息
-        if (reward) {
-          const xp = reward.expGained || 0;
-          const gold = reward.goldGained || 0;
-          
-          // 确保奖励值有效
-          if (xp === 0 && gold === 0 && task) {
-            // 使用任务自身的奖励值或默认值
-            const defaultXp = task.experienceReward || 30;
-            const defaultGold = task.goldReward || 15;
-            
-            console.log(`长期任务奖励值异常，使用默认值 - XP: ${defaultXp}, Gold: ${defaultGold}`);
-            showTaskCompletedToast(task.title || "长期任务", defaultXp, defaultGold);
-          } else {
-            console.log(`长期任务完成奖励: ${xp} XP, ${gold} Gold`);
-            showTaskCompletedToast(task?.title || "长期任务", xp, gold);
-          }
-        } else if (task) {
-          // 如果没有奖励信息但有任务信息，使用默认值
-          const defaultXp = task.experienceReward || 30;
-          const defaultGold = task.goldReward || 15;
-          
-          console.log(`长期任务无奖励信息，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
-          showTaskCompletedToast(task.title || "长期任务", defaultXp, defaultGold);
-        } else {
-          // 完全没有任务和奖励信息的情况
-          showSuccess("Long task completed successfully");
-          console.log("长期任务可能已完成，但未收到任务或奖励数据");
-        }
+        // 使用专门的长期任务完成通知组件
+        showLongTaskCompletedToast(response, task);
 
         // 触发等级更新事件
         window.dispatchEvent(new CustomEvent(TASK_COMPLETED_EVENT));
@@ -490,6 +441,22 @@ const TasksPage = () => {
     onError: (err) => {
       console.error("长期任务完成请求出错:", err);
       showError(err?.response?.data?.message || "Failed to complete the long task");
+      
+      // 获取任务数据以便显示奖励
+      const taskId = err?.config?.url?.split('/').pop();
+      if (taskId) {
+        const task = tasks.find(t => t._id === taskId) || 
+                    equippedLongTasks.find(t => t._id === taskId);
+        
+        if (task) {
+          // 即使失败也显示默认奖励值
+          const defaultXp = task.experienceReward || 30;
+          const defaultGold = task.goldReward || 15;
+          console.log(`任务完成请求失败，使用默认奖励: ${defaultXp} XP, ${defaultGold} Gold`);
+          showTaskCompletedToast(task.title || "长期任务", defaultXp, defaultGold, false, task);
+        }
+      }
+      
       // 也需要清除编辑任务状态
       setEditingTask(null);
       // 尝试重新获取任务列表

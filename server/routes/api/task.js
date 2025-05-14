@@ -15,6 +15,7 @@ import {
   
 import { protect } from '../../middleware/auth.js';
 import { handleTaskCompletion } from '../../controllers/levelController.js';
+import Task from '../../models/Task.js';
 
 // 所有任务路由都需要认证
 router.use(protect);
@@ -33,14 +34,62 @@ router.route('/:id/complete')
   .post(async (req, res) => {
     try {
       const taskId = req.params.id;
+      
+      // 先获取任务信息
+      const task = await Task.findById(taskId);
+      if (!task) {
+        return res.status(404).json({ 
+          message: "任务未找到",
+          success: false,
+          reward: { expGained: 30, goldGained: 15 }
+        });
+      }
+      
+      // 检查任务是否属于当前用户
+      if (task.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ 
+          message: "没有权限",
+          success: false,
+          reward: { expGained: 30, goldGained: 15 }
+        });
+      }
+      
+      // 执行任务完成逻辑
       const result = await handleTaskCompletion({
         user: req.user,
         body: { taskId }
       });
+      
+      // 如果任务处于已装备状态，自动卸下
+      if (task.equipped) {
+        task.equipped = false;
+        task.slotPosition = -1;
+        await task.save();
+        console.log(`长期任务完成后自动卸下: ${taskId}`);
+      }
+      
       res.json(result);
     } catch (error) {
       console.error("完成长期任务失败:", error);
-      res.status(500).json({ message: error.message || "Server error" });
+      // 获取尝试完成的任务信息，用于提供默认奖励
+      let defaultReward = { expGained: 30, goldGained: 15 };
+      try {
+        const task = await Task.findById(req.params.id);
+        if (task) {
+          defaultReward = {
+            expGained: task.experienceReward || 30,
+            goldGained: task.goldReward || 15
+          };
+        }
+      } catch (findError) {
+        console.error("尝试获取默认奖励失败:", findError);
+      }
+      
+      res.status(500).json({ 
+        message: error.message || "Server error",
+        success: false,
+        reward: defaultReward
+      });
     }
   });
 

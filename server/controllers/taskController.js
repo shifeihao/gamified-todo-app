@@ -295,7 +295,15 @@ const updateTask = async (req, res) => {
 
       // 仅设置完成时间，但不标记奖励已领取，让handleTaskCompletion处理奖励发放
       task.completedAt = task.completedAt || Date.now();
-      await task.save(); // ✅ 保存更新（包括 status 字段）
+      
+      // 任务完成后自动卸下
+      if (task.equipped) {
+        task.equipped = false;
+        task.slotPosition = -1; // 重置槽位
+        console.log(`已自动将完成的任务 ${task._id} 卸下装备`);
+      }
+      
+      await task.save(); // ✅ 保存更新（包括 status 字段和装备状态）
       
       try {
         console.log("Task ID:", task._id); // 应该是 ObjectId 类型
