@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import { io } from "socket.io-client";
 import { Routes, Route, Navigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
+import SocketManager from "./components/SocketManager.js";
 
 // components
 import HomePage from "./pages/HomePage";
@@ -34,39 +33,9 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
-  // socket connection
-  useEffect(() => {
-    const userInfo = localStorage.getItem("userInfo")
-      ? JSON.parse(localStorage.getItem("userInfo"))
-      : null;
-
-    if (!userInfo || !userInfo.token) return;
-
-    const socket = io(process.env.REACT_APP_SOCKET_URL, {
-      auth: { token: userInfo.token },
-    });
-    console.log("🔐 token:", userInfo.token);
-
-    socket.on("connect", () => {
-      console.log("✅ WebSocket connected");
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ WebSocket disconnected");
-    });
-
-    socket.on("newAchievements", (achievements) => {
-      console.log("🎉 Received new achievements:", achievements);
-      achievements.forEach((ach) => {
-        toast.success(`🎉 Achievement Unlocked: ${ach.name}`);
-      });
-    });
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
   return (
     <AuthProvider>
+      <SocketManager />
       <div className="min-h-screen bg-gray-50">
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
