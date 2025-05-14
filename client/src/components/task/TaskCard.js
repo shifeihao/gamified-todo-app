@@ -223,6 +223,7 @@ export const TaskCard = ({
                         <CheckSquare className="h-3 w-3 text-green-500 flex-shrink-0" />
                       ) : (
                         <Square
+                          data-testid="subtask-icon"
                           className="h-3 w-3 text-gray-400 flex-shrink-0 cursor-pointer hover:text-blue-500"
                           onClick={() => handleSubtaskComplete(idx)}
                         />
@@ -253,7 +254,7 @@ export const TaskCard = ({
               </div>
               <div className="flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                <span>{timeLeft || "-"}</span>
+                <span data-testid="time-left">{timeLeft || "-"}</span>
               </div>
             </div>
             {/* 操作按钮区 */}

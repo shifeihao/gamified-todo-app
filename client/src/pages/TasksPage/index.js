@@ -4,7 +4,7 @@ import { Navbar } from "../../components";
 import { CreateTaskModal } from "../../components";
 import AuthContext from "../../context/AuthContext";
 import { NewTaskCard } from '../../components/task/NewTaskCard';
-import { useToast } from '../../contexts/ToastContext';
+import { useToast } from '../../context/ToastContext';
 import toast from 'react-hot-toast';
 import { TASK_COMPLETED_EVENT, SUBTASK_COMPLETED_EVENT } from "../../components/navbar/Navbar";
 
