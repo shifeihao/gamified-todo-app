@@ -1,7 +1,7 @@
 // src/components/form/TaskForm.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Tooltip } from '../base/Tooltip';
-import { PlusCircle, Trash2, Save, XCircle, CalendarDays, Clock, Info } from 'lucide-react';
+import { PlusCircle, Trash2, Save, XCircle, CalendarDays, Clock, Info, X} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const TaskForm = ({
@@ -19,6 +19,9 @@ export const TaskForm = ({
   const [subTasks, setSubTasks] = useState([]);
   const [dueDate, setDueDate] = useState('');
   const [errors, setErrors] = useState({});
+  
+  // 创建一个引用来存储上一次的表单数据JSON
+  const prevFormDataRef = useRef(null);
 
   const getTomorrowDate = () => {
     const d = new Date();
@@ -59,18 +62,33 @@ export const TaskForm = ({
 
   // Notify parent component of form value changes
   useEffect(() => {
-    if (onChange) {
-      const formData = {
-        title: title.trim(),
-        description: description.trim(),
-        subTasks: subTasks.map(st => ({
-          title: st.title,
-          dueDate: st.dueDate ? new Date(st.dueDate).toISOString() : null
-        })),
-        dueDate,
-        status: initialData?.status || 'pending'
-      };
-      onChange(formData);
+    // 防止初始化和空值时触发更新
+    if (!onChange || !title.trim()) return;
+    
+    // 准备当前表单数据
+    const formData = {
+      title: title.trim(),
+      description: description.trim(),
+      subTasks: subTasks.map(st => ({
+        title: st.title,
+        dueDate: st.dueDate ? new Date(st.dueDate).toISOString() : null
+      })),
+      dueDate,
+      status: initialData?.status || 'pending'
+    };
+    
+    // 使用深度比较防止无限循环
+    const formDataJSON = JSON.stringify(formData);
+    
+    if (formDataJSON !== prevFormDataRef.current) {
+      prevFormDataRef.current = formDataJSON;
+      
+      // 防止频繁更新，添加防抖
+      const timeoutId = setTimeout(() => {
+        onChange(formData);
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [title, description, subTasks, dueDate, initialData?.status, onChange]);
 
@@ -81,23 +99,6 @@ export const TaskForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = e => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    const processedSubTasks = subTasks.map(st => ({
-      title: st.title,
-      dueDate: st.dueDate ? new Date(st.dueDate).toISOString() : null
-    }));
-    const formData = {
-      title: title.trim(),
-      description: description.trim(),
-      subTasks: processedSubTasks,
-      dueDate,
-      status: initialData?.status || 'pending'
-    };
-    onSubmit(formData);
-  };
-
   const addSubTask = () => {
     setSubTasks(prev => [
       ...prev,
@@ -105,7 +106,55 @@ export const TaskForm = ({
     ]);
   };
 
+  // 验证子任务 - 仅用于表单提交时
+  const validateSubTasks = () => {
+    if (taskType !== 'long') return true;
+    
+    // 检查是否有子任务
+    if (subTasks.length === 0) {
+      toast.error(
+        <div className="flex items-center">
+          <span className="font-medium">Quest Chain requires at least one step</span>
+        </div>,
+        { duration: 3000, position: 'top-center' }
+      );
+      return false;
+    }
+    
+    // 检查每个子任务
+    for (let i = 0; i < subTasks.length; i++) {
+      const subTask = subTasks[i];
+      
+      // 检查标题
+      if (!subTask.title || subTask.title.trim() === '') {
+        toast.error(
+          <div className="flex items-center">
+            
+            <span className="font-medium">Step {i+1} requires a title</span>
+          </div>,
+          { duration: 3000, position: 'top-center' }
+        );
+        return false;
+      }
+      
+      // 检查截止日期
+      if (!subTask.dueDate) {
+        toast.error(
+          <div className="flex items-center">
+            
+            <span className="font-medium">Step {i+1} requires a deadline</span>
+          </div>,
+          { duration: 3000, position: 'top-center' }
+        );
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const updateSubTask = (index, field, value) => {
+    // 不再进行即时验证，仅更新状态
     setSubTasks(prev =>
       prev.map((st, i) => (i === index ? { ...st, [field]: value } : st))
     );
@@ -116,6 +165,38 @@ export const TaskForm = ({
   };
 
   const isButtonDisabled = loading || disableSubmit;
+
+  // 修改日期渲染和更新逻辑
+  const renderDueDate = () => {
+    if (taskType === 'short') {
+      return getTomorrowDate();
+    }
+    return dueDate;
+  };
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    
+    // 验证主表单
+    if (!validateForm()) return;
+    
+    // 验证子任务
+    if (!validateSubTasks()) return;
+    
+    const processedSubTasks = subTasks.map(st => ({
+      title: st.title,
+      dueDate: st.dueDate ? new Date(st.dueDate).toISOString() : null
+    }));
+    
+    const formData = {
+      title: title.trim(),
+      description: description.trim(),
+      subTasks: processedSubTasks,
+      dueDate,
+      status: initialData?.status || 'pending'
+    };
+    onSubmit(formData);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -155,10 +236,15 @@ export const TaskForm = ({
         <input
           id="dueDate"
           type="date"
-          value={taskType === 'short' ? getTomorrowDate() : dueDate}
-          onChange={e => setDueDate(e.target.value)}
+          value={renderDueDate()}
+          onChange={e => {
+            if (taskType !== 'short') {
+              setDueDate(e.target.value);
+            }
+          }}
           className="w-full px-3 py-2 border rounded-md shadow-sm border-gray-300 focus:ring-blue-500 focus:border-blue-500"
           disabled={taskType === 'short'}
+          min={getTomorrowDate()}
         />
         {taskType === 'short' && (
           <div className="flex items-center mt-2 text-gray-600 text-sm">
@@ -204,8 +290,13 @@ export const TaskForm = ({
                     <input
                       type="date"
                       value={st.dueDate?.split('T')[0] || ''}
-                      onChange={e => updateSubTask(i, 'dueDate', e.target.value)}
+                      onChange={e => {
+                        const newValue = e.target.value;
+                        updateSubTask(i, 'dueDate', newValue);
+                      }}
                       className="text-sm px-2 py-1 border rounded-md shadow-sm border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      min={getTomorrowDate()}
+                      max={dueDate || undefined}
                     />
                   </div>
                 </div>

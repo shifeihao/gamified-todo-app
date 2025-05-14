@@ -1,5 +1,5 @@
 // src/components/modal/CreateTaskModal.js
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { Modal } from '../base/Modal';
 import { TaskForm } from '../form/TaskForm';
 import { CardSelector } from '../base/CardSelector';
@@ -8,7 +8,7 @@ import axios from 'axios';
 import AuthContext from '../../context/AuthContext';
 import { 
   HelpCircle, Loader2, Clock, Calendar, Check, 
-  CreditCard, ArrowLeft, ArrowRight, X 
+  CreditCard, ArrowLeft, ArrowRight, X, AlertCircle 
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -71,6 +71,9 @@ export const CreateTaskModal = ({
   const [blankCards, setBlankCards] = useState([]);
   const [rewardCards, setRewardCards] = useState([]);
 
+  // 添加缓存上一次表单数据的ref
+  const prevFormValuesRef = useRef(null);
+  
   // 添加默认类型的输出，帮助调试
   useEffect(() => {
     if (!initializedRef.current) {
@@ -162,6 +165,11 @@ export const CreateTaskModal = ({
       setDueDate(now.toISOString().slice(0, 16));
     } else if (initialData?.dueDate) {
       setDueDate(new Date(initialData.dueDate).toISOString().slice(0, 16));
+    } else if (taskType === 'long') {
+      // 为长期任务设置默认截止日期为一周后
+      const now = new Date();
+      now.setDate(now.getDate() + 7);
+      setDueDate(now.toISOString().slice(0, 10)); // 只保留日期部分
     } else {
       setDueDate('');
     }
@@ -338,29 +346,111 @@ export const CreateTaskModal = ({
     onClose();
   };
 
-  const handleTaskFormChange = (values) => {
-    setFormValues(values);
+  // Render missing cards warning at the top of step 2
+  const renderMissingCardsWarning = () => {
+    if (hasAnyCardForCurrentType) return null;
+    
+    return (
+      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm rounded-md">
+        <div className="font-medium mb-1">Warning: No Cards Available</div>
+        <p>You don't have any {taskType === 'short' ? 'Daily Quest' : 'Quest Chain'} cards available. 
+        Please obtain cards first to create this task.</p>
+      </div>
+    );
   };
+  
+  // 优化包装TaskForm的方式，避免不必要的重渲染
+  const handleFormChange = useCallback((formValues) => {
+    if (!formValues) return;
+    
+    // 比较当前和上一次表单数据
+    const formValuesJSON = JSON.stringify(formValues);
+    if (formValuesJSON === prevFormValuesRef.current) {
+      return; // 如果值未变，不更新状态
+    }
+    
+    // 更新缓存和状态
+    prevFormValuesRef.current = formValuesJSON;
+    setFormValues(formValues);
+  }, []);
 
   const handleSubmitForm = async (formFields) => {
+    // 先检查表单字段是否有效
+    if (!formFields.title || formFields.title.trim() === '') {
+      toast.error(
+        <div className="flex items-center">
+          <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+          <span className="font-medium">Task title is required</span>
+        </div>,
+        { duration: 3000, position: 'top-center' }
+      );
+      return;
+    }
+    
+    // 验证子任务信息 - 如果是长期任务
+    if (taskType === 'long') {
+      // 确保有截止日期
+      if (!formFields.dueDate) {
+        toast.error(
+          <div className="flex items-center">
+            <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+            <span className="font-medium">Quest Chain requires a deadline</span>
+          </div>,
+          { duration: 3000, position: 'top-center' }
+        );
+        return;
+      }
+      
+      // 检查子任务
+      if (!formFields.subTasks || formFields.subTasks.length === 0) {
+        toast.error(
+          <div className="flex items-center">
+            <span className="font-medium">Quest Chain requires at least one step</span>
+          </div>,
+          { duration: 3000, position: 'top-center' }
+        );
+        return;
+      }
+    }
+    
     // Check if ANY cards are available for this task type
     const hasCurrentTypeCards = getCurrentBlankCardCount() > 0 || getCurrentRewardCardCount() > 0;
     
     if (!hasCurrentTypeCards) {
-      setCardError(`You need cards for ${taskType === 'short' ? 'Daily Quests' : 'Quest Chains'} to create this task. Please obtain cards first.`);
+      toast.error(
+        <div className="flex items-center">
+          <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+          <span className="font-medium">No cards available for {taskType === 'short' ? 'Daily Quests' : 'Quest Chains'}</span>
+        </div>,
+        { duration: 3000, position: 'top-center' }
+      );
+      setCardError(`You need cards for ${taskType === 'short' ? 'Daily Quests' : 'Quest Chains'} to create this task.`);
       return;
     }
     
     // Validate the selected card based on the card type (blank or reward)
     if (useReward) {
       if (!selectedCard?._id) {
-        setCardError('Please select a reward card');
+        toast.error(
+          <div className="flex items-center">
+            <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+            <span className="font-medium">Please select a reward card</span>
+          </div>,
+          { duration: 3000, position: 'top-center' }
+        );
         return;
       }
 
       // 验证选择的奖励卡是否匹配当前任务类型
       if (selectedCard.taskDuration !== 'general' && selectedCard.taskDuration !== taskType) {
-        setCardError(`This reward card only supports ${selectedCard.taskDuration === 'short' ? 'Daily Quests' : 'Quest Chains'} but you're creating a ${taskType === 'short' ? 'Daily Quest' : 'Quest Chain'}`);
+        toast.error(
+          <div className="flex items-center">
+            <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+            <span className="font-medium">This reward card doesn't support {taskType === 'short' ? 'Daily Quests' : 'Quest Chains'}</span>
+          </div>,
+          { duration: 3000, position: 'top-center' }
+        );
+        setCardError(`This reward card only supports ${selectedCard.taskDuration === 'short' ? 'Daily Quests' : 'Quest Chains'}.`);
         // 触发重新选择卡片
         fetchInventory();
         return;
@@ -369,16 +459,35 @@ export const CreateTaskModal = ({
       if (!selectedBlankCard?._id) {
         // If no blank cards but reward cards are available, suggest switching
         if (getCurrentRewardCardCount() > 0) {
-          setCardError('No blank cards available. Please use a reward card instead.');
-          return;
+          toast.error(
+            <div className="flex items-center">
+              <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">No blank cards available. Please use a reward card instead.</span>
+            </div>,
+            { duration: 3000, position: 'top-center' }
+          );
+        } else {
+          toast.error(
+            <div className="flex items-center">
+              <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+              <span className="font-medium">No available cards</span>
+            </div>,
+            { duration: 3000, position: 'top-center' }
+          );
         }
-        setCardError('No available cards');
         return;
       }
 
       // 验证选择的空白卡是否匹配当前任务类型
       if (selectedBlankCard.taskDuration !== 'general' && selectedBlankCard.taskDuration !== taskType) {
-        setCardError(`This blank card only supports ${selectedBlankCard.taskDuration === 'short' ? 'Daily Quests' : 'Quest Chains'} but you're creating a ${taskType === 'short' ? 'Daily Quest' : 'Quest Chain'}`);
+        toast.error(
+          <div className="flex items-center">
+            <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+            <span className="font-medium">This blank card doesn't support {taskType === 'short' ? 'Daily Quests' : 'Quest Chains'}</span>
+          </div>,
+          { duration: 3000, position: 'top-center' }
+        );
+        setCardError(`This blank card only supports ${selectedBlankCard.taskDuration === 'short' ? 'Daily Quests' : 'Quest Chains'}.`);
         // 触发重新选择卡片
         fetchInventory();
         return;
@@ -389,79 +498,99 @@ export const CreateTaskModal = ({
 
     // Handle due date
     let finalDueDate = null;
-    if (taskType === 'long' && formFields.dueDate) {
-      if (formFields.dueDate.length === 10) {
-        finalDueDate = new Date(formFields.dueDate + "T00:00:00.000Z").toISOString();
-      } else {
-        finalDueDate = new Date(formFields.dueDate).toISOString();
-      }
-      
-      // 验证长期任务的子任务
-      if (formFields.subTasks && formFields.subTasks.length > 0) {
-        // 检查子任务的标题和截止时间
-        for (let i = 0; i < formFields.subTasks.length; i++) {
-          const subTask = formFields.subTasks[i];
-          
-          // 验证子任务标题
-          if (!subTask.title || subTask.title.trim() === '') {
-            toast.error(
-              <div className="flex flex-col space-y-1">
-                <span className="font-semibold text-sm">Subtask Title Required</span>
-                <div className="text-xs">
-                  All subtasks in the Quest Chain must have a title.
-                </div>
-              </div>,
-              { duration: 5000, position: 'top-center' }
-            );
-            return;
-          }
-          
-          // 验证子任务截止时间
-          if (!subTask.dueDate) {
-            toast.error(
-              <div className="flex flex-col space-y-1">
-                <span className="font-semibold text-sm">Subtask Deadline Required</span>
-                <div className="text-xs">
-                  All subtasks in the Quest Chain must have a deadline.
-                </div>
-              </div>,
-              { duration: 5000, position: 'top-center' }
-            );
-            return;
-          }
-          
-          // 验证子任务截止时间不能晚于主任务截止时间
-          const subTaskDueDate = new Date(subTask.dueDate);
+    try {
+      if (taskType === 'long' && formFields.dueDate) {
+        if (formFields.dueDate.length === 10) {
+          finalDueDate = new Date(formFields.dueDate + "T23:59:59.000Z").toISOString();
+        } else {
+          finalDueDate = new Date(formFields.dueDate).toISOString();
+        }
+        
+        // 验证长期任务的子任务
+        if (formFields.subTasks && formFields.subTasks.length > 0) {
+          // 确保所有子任务截止日期都是有效日期
           const mainTaskDueDate = new Date(finalDueDate);
           
-          if (subTaskDueDate > mainTaskDueDate) {
-            toast.error(
-              <div className="flex flex-col space-y-1">
-                <span className="font-semibold text-sm">Invalid Subtask Deadline</span>
-                <div className="text-xs">
-                  Subtask #{i+1} deadline cannot be later than the main quest deadline.
-                </div>
-              </div>,
-              { duration: 5000, position: 'top-center' }
-            );
-            return;
+          for (let i = 0; i < formFields.subTasks.length; i++) {
+            const subTask = formFields.subTasks[i];
+            
+            // 验证子任务截止时间不能晚于主任务截止时间
+            let subTaskDueDate;
+            try {
+              subTaskDueDate = new Date(subTask.dueDate);
+              
+              if (isNaN(subTaskDueDate.getTime())) {
+                toast.error(
+                  <div className="flex items-center">
+                    <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium">Step #{i+1} has an invalid date format</span>
+                  </div>,
+                  { duration: 3000, position: 'top-center' }
+                );
+                return;
+              }
+              
+              if (subTaskDueDate > mainTaskDueDate) {
+                toast.error(
+                  <div className="flex items-center">
+                    <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium">Step #{i+1} deadline cannot be later than the main quest deadline</span>
+                  </div>,
+                  { duration: 3000, position: 'top-center' }
+                );
+                return;
+              }
+            } catch (err) {
+              console.error(`Date parsing error for subtask #${i+1}:`, err);
+              toast.error(
+                <div className="flex items-center">
+                  <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+                  <span className="font-medium">Invalid date format in step #{i+1}</span>
+                </div>,
+                { duration: 3000, position: 'top-center' }
+              );
+              return;
+            }
           }
         }
+      } else if (taskType === 'short') {
+        // 短期任务使用24小时后的截止时间
+        const now = new Date();
+        now.setHours(now.getHours() + 24);
+        finalDueDate = now.toISOString();
       }
+    } catch (err) {
+      console.error("Date parsing error:", err);
+      toast.error(
+        <div className="flex items-center">
+          <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+          <span className="font-medium">Invalid date format. Please check your dates.</span>
+        </div>,
+        { duration: 3000, position: 'top-center' }
+      );
+      return;
     }
 
     // If creating/editing from a slot, verify task type matches slot type
     if (isFromSlot) {
       const slotTaskType = defaultType || 'short';
       if (taskType !== slotTaskType) {
+        toast.error(
+          <div className="flex items-center">
+            <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+            <span className="font-medium">Task type must match slot type ({slotTaskType === 'short' ? 'Daily Quest' : 'Quest Chain'})</span>
+          </div>,
+          { duration: 3000, position: 'top-center' }
+        );
         setCardError(`When adding to a ${slotTaskType === 'short' ? 'Daily Quest' : 'Quest Chain'} slot, you must create a matching task type.`);
         return;
       }
     }
 
+    // 构建任务数据
     const taskPayload = {
       ...formFields,
-      title: formFields.title,
+      title: formFields.title.trim(),
       type: taskType,
       dueDate: finalDueDate,
       fromSlot: isFromSlot,
@@ -471,11 +600,23 @@ export const CreateTaskModal = ({
       cardUsed: useReward ? selectedCard._id : selectedBlankCard._id
     };
 
+    // 移除日志，减少控制台输出
     try {
+      // 显示加载状态
+      setCardError('');
+      // 提交创建任务
       await onSubmit(taskPayload);
+      // 成功后关闭
       handleClose();
     } catch (err) {
       console.error('Failed to create task:', err);
+      toast.error(
+        <div className="flex items-center">
+          <X className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+          <span className="font-medium">Failed to create task: {err.message || 'Unknown error'}</span>
+        </div>,
+        { duration: 3000, position: 'top-center' }
+      );
       setCardError(err.message || 'Failed to create task. Please try again.');
     }
   };
@@ -739,19 +880,6 @@ export const CreateTaskModal = ({
     </div>
   );
 
-  // Add missing cards warning at the top of step 2
-  const renderMissingCardsWarning = () => {
-    if (hasAnyCardForCurrentType) return null;
-    
-    return (
-      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm rounded-md">
-        <div className="font-medium mb-1">Warning: No Cards Available</div>
-        <p>You don't have any {taskType === 'short' ? 'Daily Quest' : 'Quest Chain'} cards available. 
-        Please obtain cards first to create this task.</p>
-      </div>
-    );
-  };
-
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle}>
       <div className="px-4 py-4">
@@ -806,7 +934,13 @@ export const CreateTaskModal = ({
         {/* Task Details (Step 2) */}
         {currentStep === 2 && (
           <>
-            {renderMissingCardsWarning()}
+            {hasAnyCardForCurrentType ? null : (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm rounded-md">
+                <div className="font-medium mb-1">Warning: No Cards Available</div>
+                <p>You don't have any {taskType === 'short' ? 'Daily Quest' : 'Quest Chain'} cards available. 
+                Please obtain cards first to create this task.</p>
+              </div>
+            )}
             <TaskForm
               onSubmit={handleSubmitForm}
               onCancel={handlePreviousStep}
@@ -814,9 +948,9 @@ export const CreateTaskModal = ({
               initialData={initialData}
               taskType={taskType}
               defaultDueDateTime={dueDate}
-              key={taskType + (initialData?._id || 'new')}
+              key={`${taskType}-${initialData?._id || 'new'}-${slotIndex}`}
               disableSubmit={!hasAnyCardForCurrentType || isFetchingInventory}
-              onChange={handleTaskFormChange}
+              onChange={handleFormChange}
               compact={true}
             />
           </>
