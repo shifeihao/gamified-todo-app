@@ -6,6 +6,7 @@ node_modules/
 # build outputs
 dist/
 build/
+client/build/
 out/
 coverage/
 
