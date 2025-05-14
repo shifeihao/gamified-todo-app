@@ -392,13 +392,10 @@ export const handleSubTaskCompletion = async (req) => {
 
     // 8. If all subtasks are done, mark the main task as completed without granting bonus rewards
     if (allSubTasksCompleted && task.status !== "completed") {
-      // Mark the main task status as completed
-      task.status = "completed";
-      task.completedAt = new Date();
-
+      // 不自动设置长期任务为完成状态，需要用户手动完成
       console.log(
-  "All subtasks completed. Marking long task as completed. User must manually claim the bonus reward."
-);
+        "All subtasks completed. The user must manually click the 'complete' button to finish the task and claim the bonus reward."
+      );
     }
 
     // 9. Save changes to user and task
