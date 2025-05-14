@@ -10,7 +10,6 @@ export const handleTaskCompletion = async (req) => {
   try {
     const { taskId } = req.body;
     const userId = req.user._id;
-    const { taskId } = req.body;
 
     console.log(`Processing task completion - Task ID: ${taskId}, userID: ${userId}`);
 
