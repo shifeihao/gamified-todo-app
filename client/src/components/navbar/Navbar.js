@@ -174,7 +174,7 @@ export const Navbar = () => {
           </div>
 
           {user && (
-            <div className="hidden md:block flex-1 px-8 max-w-lg">
+            <div className="hidden md:block flex-1 mx-4 min-w-[250px] max-w-xl">
               <UserLevelBar data={levelInfo} />
             </div>
           )}
@@ -266,7 +266,7 @@ export const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden">
           {user && (
-            <div className="px-4 py-2">
+            <div className="px-4 py-3">
               <UserLevelBar data={levelInfo} />
             </div>
           )}

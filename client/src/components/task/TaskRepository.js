@@ -55,11 +55,8 @@ export const TaskRepository = ({
         if (selectedCategory !== 'All' && task.category !== (selectedCategory === 'Default' ? 'Default' : selectedCategory)) {
           return false;
         }
-        if (selectedType !== 'All') {
-          const typeMap = { 'Short-term': 'short', 'Long-term': 'long' };
-          if (task.type !== typeMap[selectedType]) {
-            return false;
-          }
+        if (selectedType !== 'All' && task.type !== selectedType) {
+          return false;
         }
         return true;
       })

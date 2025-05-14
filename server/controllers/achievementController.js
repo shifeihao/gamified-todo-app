@@ -78,9 +78,10 @@ export async function triggerAchievementCheck(req, res) {
   if (!userId)
     return res.status(400).json({ message: "Please provide userId" });
   try {
-    await checkAndUnlockAchievements(userId);
+    const newlyUnlocked = await checkAndUnlockAchievements(userId);
     res.json({
-      message: `✅ Achievement detection has been performedfor userId=${userId}`,
+      message: `✅ Achievement detection has been performed for userId=${userId}`,
+      newlyUnlocked
     });
   } catch (err) {
     console.error("❌ Achievement detection failed:", err);

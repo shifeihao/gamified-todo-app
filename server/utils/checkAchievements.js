@@ -6,12 +6,12 @@ import { checkIfGodAchievementUnlocked } from "./userStatsSync.js";
 
 export async function checkAndUnlockAchievements(userId) {
   try {
-    // get UserStats
+    const newlyUnlocked = [];
     // get UserStats and check if it exists
     const stats = await UserStats.findOne({ user: userId });
     if (!stats) {
       console.log("Can not find the user's stats, so canceling checking");
-      return;
+      return newlyUnlocked;
     }
 
     // get UserAchievement
@@ -64,16 +64,25 @@ export async function checkAndUnlockAchievements(userId) {
             },
           }
         );
-        // log the reward
-        console.log("experience+", ach.reward.exp);
-        console.log("gold+", ach.reward.coins);
-        console.log("shortCardSlot+", ach.reward.task_short_slot);
-        console.log("longCardSlot+", ach.reward.task_long_slot);
+
+        // Add to newly unlocked achievements
+        newlyUnlocked.push({
+          name: ach.name,
+          description: ach.description,
+          icon: ach.icon,
+          reward: {
+            exp: ach.reward.exp || 0,
+            coins: ach.reward.coins || 0,
+            task_short_slot: ach.reward.task_short_slot || 0,
+            task_long_slot: ach.reward.task_long_slot || 0,
+          }
+        });
       }
     }
-
-    await checkIfGodAchievementUnlocked(userId);
+    console.log("🎉 newly unlocked achievements:", newlyUnlocked);
+    return newlyUnlocked;
   } catch (error) {
     console.error("❌ fail:", error);
+    return [];
   }
 }

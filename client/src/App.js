@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import { io } from "socket.io-client";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// 导入页面组件
-
+// components
 import HomePage from "./pages/HomePage";
 import TasksPage from "./pages/TasksPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -15,10 +15,10 @@ import DungeonTest from "./pages/DungeonTest";
 import TemplatePage from "./pages/TemplatePage";
 import GameLayout from "./pages/Gamelayout.js";
 
-// 导入上下文
+// context
 import { AuthProvider } from "./context/AuthContext";
 
-// 受保护的路由组件
+// styles
 const ProtectedRoute = ({ children }) => {
   // 从本地存储中获取用户信息
   const userInfo = localStorage.getItem("userInfo")
@@ -34,6 +34,37 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  // socket connection
+  useEffect(() => {
+    const userInfo = localStorage.getItem("userInfo")
+      ? JSON.parse(localStorage.getItem("userInfo"))
+      : null;
+
+    if (!userInfo || !userInfo.token) return;
+
+    const socket = io(process.env.REACT_APP_SOCKET_URL, {
+      auth: { token: userInfo.token },
+    });
+    console.log("🔐 token:", userInfo.token);
+
+    socket.on("connect", () => {
+      console.log("✅ WebSocket connected");
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ WebSocket disconnected");
+    });
+
+    socket.on("newAchievements", (achievements) => {
+      console.log("🎉 Received new achievements:", achievements);
+      achievements.forEach((ach) => {
+        toast.success(`🎉 Achievement Unlocked: ${ach.name}`);
+      });
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
   return (
     <AuthProvider>
       <div className="min-h-screen bg-gray-50">

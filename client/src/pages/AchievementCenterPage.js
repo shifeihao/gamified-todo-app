@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  fetchAchievements,
+  getAllAchievements,
   checkAchievements,
 } from "../services/achievement.js";
 import { fetchUserStat, syncUserStat } from "../services/userStat.js";
@@ -17,14 +17,14 @@ const AchievementCenterPage = () => {
   const { showError } = useToast();
 
   useEffect(() => {
-    const fetchAll = async () => {
+    const loadAchievements = async () => {
       try {
         await syncUserStat(); // Synchronize user status
         console.log("✅ Synchronize user status successfully");
         await checkAchievements(); // Check achievements
         console.log("✅ Achievement test success");
         const [achievements, stats] = await Promise.all([
-          fetchAchievements(),
+          getAllAchievements(),
           fetchUserStat(),
         ]);
         setAchievements(achievements);
@@ -34,7 +34,7 @@ const AchievementCenterPage = () => {
         showError('Failed to Retrieve Achievement Data');
       }
     };
-    fetchAll();
+    loadAchievements();
   }, []);
 
   console.log("achievements", achievements);

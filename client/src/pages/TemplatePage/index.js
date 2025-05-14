@@ -25,7 +25,7 @@ const TemplatePage = () => {
             setTemplates(data);
         } catch (error) {
             console.error('Error fetching templates:', error);
-            toast.error('Failed to Retrieve Template List');
+            toast.error(error.response?.data?.message || 'Failed to Retrieve Template List');
         } finally {
             setIsLoading(false);
         }
@@ -39,6 +39,11 @@ const TemplatePage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            if (!formData.title.trim()) {
+                toast.error('Title is required');
+                return;
+            }
+
             if (editingTemplate) {
                 await axios.put(`/api/templates/${editingTemplate._id}`, formData);
                 toast.success('Template Updated Successfully');
@@ -58,7 +63,7 @@ const TemplatePage = () => {
             fetchTemplates();
         } catch (error) {
             console.error('Error submitting template:', error);
-            toast.error(editingTemplate ? 'Failed to Update Template' : 'Failed to Create Template');
+            toast.error(error.response?.data?.message || (editingTemplate ? 'Failed to Update Template' : 'Failed to Create Template'));
         }
     };
 
@@ -84,7 +89,7 @@ const TemplatePage = () => {
                 fetchTemplates();
             } catch (error) {
                 console.error('Error deleting template:', error);
-                toast.error('Failed to Delete Template');
+                toast.error(error.response?.data?.message || 'Failed to Delete Template');
             }
         }
     };

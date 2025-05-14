@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
+import { RewardCardTile } from '../task/RewardCardTile'; // 引入RewardCardTile组件
 
 // 卡片选择组件：可显示空白卡片数或奖励卡片列表
 export const CardSelector = ({
   onSelect,
   selectedCard,
   showRewards = false,   // 是否显示奖励卡片列表
-  taskType = 'short'     // 任务类型，用于过滤奖励卡
+  taskType = 'short',     // 任务类型，用于过滤奖励卡
+  disabled = false
 }) => {
   const { user } = useContext(AuthContext);
   const [cards, setCards] = useState([]);
@@ -90,35 +92,19 @@ export const CardSelector = ({
           </div>
       )}
       {showRewards && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {rewardCards.length > 0 ? (
             rewardCards.map(card => (
-              <div
+              <RewardCardTile
                 key={card._id}
+                card={card}
+                isSelected={selectedCard?._id === card._id}
                 onClick={() => onSelect(card)}
-                className={`p-4 rounded-lg cursor-pointer border-2 ${
-                  selectedCard?._id === card._id
-                    ? 'border-blue-500'
-                    : 'border-transparent'
-                } ${getCardColor(card.type)}`}
-                data-testid={`reward-card-${card._id}`}
-              >
-                <h3 className="font-medium">{card.title}</h3>
-                {card.description && (
-                  <p className="text-sm text-gray-600">{card.description}</p>
-                )}
-                <div className="mt-1 text-xs font-medium">
-                  {card.taskDuration === 'short' ? 'Short-term Card' : card.taskDuration === 'long' ? 'Long-term Card' : 'General Card'}
-                </div>
-                {card.type === 'special' && card.bonus && (
-                  <div className="mt-2 text-xs text-purple-600">
-                    Experience Multiplier: {card.bonus.experienceMultiplier}x，Coins Multiplier: {card.bonus.goldMultiplier}x
-                  </div>
-                )}
-              </div>
+                readOnly={disabled}
+              />
             ))
           ) : (
-            <div className="col-span-3 text-gray-500 text-sm">
+            <div className="col-span-2 text-gray-500 text-sm">
               No rewards cards available
             </div>
           )}
