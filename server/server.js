@@ -1,56 +1,53 @@
 import express from "express";
+import "./events/listeners.js";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
-import mongoose from "mongoose";
+import { setupSocket } from "./socket/socketInit.js";
+import http from "http";
+import { Server } from "socket.io";
+
 import {
   scheduleDailyCardReset,
   schedulePeriodicCardCheck,
 } from "./utils/scheduler.js";
 
-// 加载环境变量
+// en.v
 dotenv.config();
 
-// 连接数据库
+// define global variables`
 connectDB();
 
-// 初始化Express应用
+// express app
 const app = express();
 
-// 中间件
-app.use(cors()); // 允许跨域请求
-app.use(express.json()); // 解析JSON请求体
-app.use(cookieParser()); // 解析 Cookie
-app.use(morgan("dev")); // HTTP请求日志
+// middleware
+app.use(cors());
+app.use(express.json());
+app.use(cookieParser());
+app.use(morgan("dev"));
 
-// 路由
+// routes
 import routes from "./routes/routes.js";
 app.use("/", routes);
 
-// app.use('/api/users', require('./routes/userRoutes'));
-// app.use('/api/tasks', require('./routes/taskRoutes'));
-// app.use('/api/cards', require('./routes/cardRoutes'));
-
-// // 基本路由
-// app.get('/', (req, res) => {
-//   res.json({ message: 'API已运行' });
-// });
-
-// 错误处理中间件
-
-// 设置端口并启动服务器
+// socket.io initialization
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" },
+});
+setupSocket(io);
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, async () => {
-  console.log(`服务器运行在端口 ${PORT}`);
-
-  // 👇 初始化定时任务
+server.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  // Initialize scheduled tasks
   try {
     scheduleDailyCardReset();
     schedulePeriodicCardCheck();
-    console.log("定时任务初始化成功");
+    console.log("Scheduled tasks initialized successfully");
   } catch (error) {
-    console.error("定时任务初始化失败:", error);
+    console.error(":Fail", error);
   }
 });

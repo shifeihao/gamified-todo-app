@@ -4,22 +4,26 @@ import User from "../models/User.js";
 import Level from "../models/Level.js";
 import Task from "../models/Task.js";
 import { calculateReward } from "../utils/TaskRewardCalculator.js";
-import { SyncTaskHistory, SyncUser } from "../utils/userStatsSync.js";
+import eventBus from "../events/eventBus.js";
 
 export const handleTaskCompletion = async (req) => {
   try {
     const { taskId } = req.body;
     const userId = req.user._id;
 
-    console.log(`Processing task completion - Task ID: ${taskId}, userID: ${userId}`);
+    console.log(
+      `Processing task completion - Task ID: ${taskId}, userID: ${userId}`
+    );
 
     const task = await Task.findById(taskId).populate("cardUsed");
     if (!task || task.user.toString() !== userId.toString()) {
-      console.error(`任务无效或不属于当前用户 - 任务ID: ${taskId}, 用户ID: ${userId}`);
+      console.error(
+        `任务无效或不属于当前用户 - 任务ID: ${taskId}, 用户ID: ${userId}`
+      );
       return {
         success: false,
         message: "Task is invalid or does not belong to the current user",
-        reward: { expGained: 0, goldGained: 0 }
+        reward: { expGained: 0, goldGained: 0 },
       };
     }
 
@@ -28,7 +32,9 @@ export const handleTaskCompletion = async (req) => {
     );
 
     if (task.rewardClaimed === true) {
-      console.log(`Task ${taskId} already completed and reward claimed; skipping`);
+      console.log(
+        `Task ${taskId} already completed and reward claimed; skipping`
+      );
       throw new Error("Task has already been completed and reward claimed");
     }
 
@@ -39,7 +45,7 @@ export const handleTaskCompletion = async (req) => {
       return {
         success: false,
         message: "User not found",
-        reward: { expGained: 0, goldGained: 0 }
+        reward: { expGained: 0, goldGained: 0 },
       };
     }
 
@@ -79,7 +85,9 @@ export const handleTaskCompletion = async (req) => {
 
       if (!task.completedAt) {
         task.completedAt = new Date();
-        console.log(`Setting task ${taskId} completedAt to ${task.completedAt}`);
+        console.log(
+          `Setting task ${taskId} completedAt to ${task.completedAt}`
+        );
       }
 
       const bonusExp = task.experienceReward || task.finalBonusExperience || 30;
@@ -104,17 +112,27 @@ export const handleTaskCompletion = async (req) => {
       task.finalBonusGold = 0;
       const baseExp = task.experienceReward || 10; // 默认短期任务经验为10
       const baseGold = task.goldReward || 5; // 默认短期任务金币为5
-      
-      console.log("Short-term task base reward - XP:", baseExp, "Gold:", baseGold);
-      
+
+      console.log(
+        "Short-term task base reward - XP:",
+        baseExp,
+        "Gold:",
+        baseGold
+      );
+
       const { experience, gold } = calculateReward(
         baseExp,
         baseGold,
         task.cardUsed?.bonus
       );
-      
-      console.log("Short-term task final reward (with multiplier) - XP:", experience, "Gold:", gold);
-      
+
+      console.log(
+        "Short-term task final reward (with multiplier) - XP:",
+        experience,
+        "Gold:",
+        gold
+      );
+
       totalExp = experience;
       totalGold = gold;
     }
@@ -133,6 +151,10 @@ export const handleTaskCompletion = async (req) => {
     console.log(
       `Updated user state - EXP: ${user.experience} (+${totalExp}), Gold: ${user.gold} (+${totalGold})`
     );
+    eventBus.emit("checkAchievements", userId);
+
+
+
 
     const newExp = user.experience;
 
@@ -175,6 +197,7 @@ export const handleTaskCompletion = async (req) => {
       cardType: task.cardUsed?.type || null,
       cardBonus: task.cardUsed?.bonus || null,
     });
+    eventBus.emit("checkAchievements", userId);
 
     return {
       success: true,
@@ -204,7 +227,7 @@ export const handleTaskCompletion = async (req) => {
     return {
       success: false,
       message: "Rewards and level update failed: " + error.message,
-      reward: { expGained: 0, goldGained: 0 }
+      reward: { expGained: 0, goldGained: 0 },
     };
   }
 };
@@ -285,13 +308,15 @@ export const handleSubTaskCompletion = async (req) => {
       task.completedAt = new Date();
 
       console.log(
-  "All subtasks completed. Marking long task as completed. User must manually claim the bonus reward."
-);
+        "All subtasks completed. Marking long task as completed. User must manually claim the bonus reward."
+      );
     }
 
     // 9. Save changes to user and task
     await user.save();
     await task.save();
+    eventBus.emit("checkAchievements", userId);
+
 
     // 10. Return result to caller
     return {
@@ -365,7 +390,9 @@ export const getUserLevelBar = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Failed to retrieve level information" });
+    return res
+      .status(500)
+      .json({ message: "Failed to retrieve level information" });
   }
 };
 
@@ -377,11 +404,16 @@ export const addExperience = async (req, res) => {
 
     const { experience } = req.body;
     if (experience <= 0)
-      return res.status(400).json({ message: "Experience value must be greater than 0"  });
+      return res
+        .status(400)
+        .json({ message: "Experience value must be greater than 0" });
 
     user.experience += experience;
     await user.save();
-    return res.json({ message: "Experience increased successfully", experience: user.experience });
+    return res.json({
+      message: "Experience increased successfully",
+      experience: user.experience,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to add experience" });
@@ -402,7 +434,9 @@ export const updateSlot = async (req, res) => {
       updateFields.longCardSlot = longCardSlot;
 
     if (Object.keys(updateFields).length === 0) {
-      return res.status(400).json({ message: "Please specify slot values to update" });
+      return res
+        .status(400)
+        .json({ message: "Please specify slot values to update" });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
