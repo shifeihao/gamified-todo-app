@@ -16,7 +16,7 @@ const connectDB = async () => {
       heartbeatFrequencyMS: 10000,
     });
 
-    console.log(`MongoDB Atlas 连接成功: ${conn.connection.host}`);
+    console.log(`MongoDB Atlas connected: ${conn.connection.host}`);
 
     // 监听连接事件
     mongoose.connection.on('disconnected', () => {
