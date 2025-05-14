@@ -260,7 +260,7 @@ export const TaskCard = ({
             {/* 操作按钮区 */}
             <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
               <div className="flex space-x-2">
-                {((task.type === 'long' && task.status !== 'completed') || 
+                {((task.type === 'long' && task.status === "in-progress") || 
                   (task.type === 'short' && task.status === "in-progress")) && (
                   <button
                     onClick={() => onComplete?.(task._id)}
@@ -331,7 +331,7 @@ export const TaskCard = ({
           {/* 操作区 */}
           <div className="flex items-center justify-between pt-2">
             <div className="flex space-x-2">
-              {((task.type === 'long' && task.status !== 'completed') || 
+              {((task.type === 'long' && task.status === "in-progress") || 
                 (task.type === 'short' && task.status === "in-progress")) && (
                 <button
                   onClick={() => onComplete?.(task._id)}

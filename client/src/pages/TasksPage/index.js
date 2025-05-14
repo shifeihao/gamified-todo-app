@@ -68,6 +68,11 @@ const TasksPage = () => {
 
   // 拉取任务与卡片库存
   const fetchTasks = async () => {
+    if (!user?.token) {
+      console.log("用户未登录，跳过获取任务");
+      return;
+    }
+
     try {
       // 优先尝试获取当前卡片库存
       let cardData = { inventory: [] };
@@ -76,106 +81,110 @@ const TasksPage = () => {
         console.log("获取到的卡片库存数据:", cardData);
       } catch (err) {
         console.error("获取卡片库存失败:", err);
-        // 不显示错误提示，继续执行其他获取
       }
       
       // 如果卡片库存为空或少于5张，尝试初始化新用户卡片
       if (!cardData.inventory || cardData.inventory.length < 5) {
         console.log("卡片库存不足，尝试获取每日卡片和补充卡片...");
         
-        // 先尝试获取每日卡片（对于新用户很重要）
         try {
           await getNewDailyCards(user.token);
           console.log("成功获取每日卡片");
         } catch (err) {
           console.log("尝试获取每日卡片失败，可能已经获取过", err);
-          // 不显示错误提示，继续执行
         }
         
-        // 如果卡片仍然不足，尝试通过login/register中的初始化逻辑获取卡片
         if (!cardData.inventory || cardData.inventory.length < 2) {
           console.log("新用户可能需要初始化卡片，尝试创建额外的空白卡片...");
           
-          // 创建空白短期卡片
           try {
             await createBlankCard(user.token);
             console.log("成功创建补充空白卡片");
           } catch (err) {
             console.log("创建空白卡片失败", err);
-            // 不显示错误提示，继续执行
           }
         }
         
-        // 重新获取卡片库存
         try {
           cardData = await getCardInventory(user.token);
           console.log("更新后的卡片库存:", cardData);
         } catch (err) {
           console.error("重新获取卡片库存失败:", err);
-          // 不阻止后续操作
         }
       }
 
-      // 获取任务和其他必要数据
-      let allTasks = [], equipped = [], shortTasks = [], longTasks = [], levelInfo = { data: {} };
-      
-      try {
-        // 尝试并行获取所有任务数据
-        [allTasks, equipped, shortTasks, longTasks, levelInfo] = await Promise.all([
-          getTasks(user.token),
-          getEquippedTasks(user.token),
-          getEquippedShortTasks(user.token),
-          getEquippedLongTasks(user.token),
-          axios.get("/api/levels/userLevelBar", {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-        ]);
-        
-        // 成功获取所有数据，清除错误状态
-        setError("");
-      } catch (err) {
-        console.error("获取任务数据部分失败:", err);
-        // 这里我们不立即显示错误，而是尝试单独获取各个数据
-        try {
-          // 尝试单独获取任务列表
-          allTasks = await getTasks(user.token);
-        } catch (getTasksErr) {
-          console.error("获取所有任务失败:", getTasksErr);
-        }
-        
-        try {
-          // 尝试单独获取已装备任务
-          shortTasks = await getEquippedShortTasks(user.token);
-          longTasks = await getEquippedLongTasks(user.token);
-        } catch (getEquippedErr) {
-          console.error("获取已装备任务失败:", getEquippedErr);
-        }
+      // 使用 Promise.allSettled 替代 Promise.all，这样即使某些请求失败也不会影响其他请求
+      const results = await Promise.allSettled([
+        getTasks(user.token),
+        getEquippedTasks(user.token),
+        getEquippedShortTasks(user.token),
+        getEquippedLongTasks(user.token),
+        axios.get("/api/levels/userLevelBar", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }),
+      ]);
+
+      // 处理每个请求的结果
+      const [tasksResult, equippedResult, shortTasksResult, longTasksResult, levelInfoResult] = results;
+
+      // 更新状态，只更新成功获取的数据
+      if (tasksResult.status === 'fulfilled' && tasksResult.value) {
+        setTasks(tasksResult.value);
       }
       
-      // 即使部分数据获取失败，我们仍然更新已获取的数据
-      if (allTasks.length > 0) setTasks(allTasks);
-      if (shortTasks.length > 0) setEquippedShortTasks(shortTasks);
-      if (longTasks.length > 0) setEquippedLongTasks(longTasks);
-      if (cardData.inventory) setCards(cardData.inventory);
-      if (levelInfo.data) setRewardInfo(levelInfo.data);
+      if (shortTasksResult.status === 'fulfilled' && shortTasksResult.value) {
+        setEquippedShortTasks(shortTasksResult.value);
+      }
+      
+      if (longTasksResult.status === 'fulfilled' && longTasksResult.value) {
+        setEquippedLongTasks(longTasksResult.value);
+      }
+      
+      if (levelInfoResult.status === 'fulfilled' && levelInfoResult.value?.data) {
+        setRewardInfo(levelInfoResult.value.data);
+      }
 
-      // 只有在所有数据都没有获取到，并且最近没有任务完成时才显示错误
-      if (allTasks.length === 0 && shortTasks.length === 0 && longTasks.length === 0 && !recentlyCompletedTask) {
+      // 更新卡片库存
+      if (cardData.inventory) {
+        setCards(cardData.inventory);
+      }
+
+      // 检查是否所有请求都失败了
+      const allFailed = results.every(result => result.status === 'rejected');
+      if (allFailed && !recentlyCompletedTask) {
         console.error("所有任务数据获取失败");
         showError("获取任务数据失败，请尝试刷新页面");
       }
+
     } catch (err) {
       console.error("获取任务数据出错:", err);
       // 只有在最近没有任务完成时才显示错误
       if (!recentlyCompletedTask) {
-        showError("获取任务数据失败");
+        showError("获取任务数据失败，请尝试刷新页面");
       }
     }
   };
 
+  // 添加自动重试机制
   useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1秒
+
+    const tryFetchTasks = async () => {
+      try {
+        await fetchTasks();
+      } catch (err) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`第 ${retryCount} 次重试获取任务数据...`);
+          setTimeout(tryFetchTasks, retryDelay);
+        }
+      }
+    };
+
     if (user?.token) {
-      fetchTasks();
+      tryFetchTasks();
     }
   }, [user]);
 
