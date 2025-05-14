@@ -3,10 +3,12 @@ import { CharacterClass } from "../models/CharacterClass.js";
 import { UserDungeonStats } from "../models/UserDungeonStats.js";
 import { Skill } from "../models/Skill.js";
 
+
+
 export const selectClass = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { classSlug } = req.body;
+    const { classSlug, gender = 'male' } = req.body; 
 
     if (!classSlug) {
       return res.status(400).json({ error: "Class slug is required" });
@@ -39,9 +41,10 @@ export const selectClass = async (req, res) => {
     // Apply base stats from class
     stats.assignedStats = { ...characterClass.baseStats };
 
-    // Save class name and slug - key modification
+    // Save class name, slug and gender
     stats.className = characterClass.name;
-    stats.classSlug = classSlug; // Save class slug
+    stats.classSlug = classSlug;
+    stats.gender = gender; 
 
     // Assign default skills
     if (
@@ -56,6 +59,7 @@ export const selectClass = async (req, res) => {
       userId,
       className: stats.className,
       classSlug: stats.classSlug,
+      gender: stats.gender,
     });
 
     await stats.save();
@@ -65,6 +69,7 @@ export const selectClass = async (req, res) => {
     console.log("Saved class info:", {
       className: savedStats.className,
       classSlug: savedStats.classSlug,
+      gender: savedStats.gender,
     });
 
     return res.json({
@@ -73,12 +78,16 @@ export const selectClass = async (req, res) => {
       class: {
         name: characterClass.name,
         slug: classSlug,
+        gender: gender, 
         description: characterClass.description,
         baseStats: characterClass.baseStats,
+        avatar: characterClass.images?.[gender]?.avatar,
+        sprite: characterClass.images?.[gender]?.sprite,
         skills: characterClass.defaultSkills.map((skill) => ({
           id: skill._id,
           name: skill.name,
           description: skill.description,
+          icon: skill.icon,
         })),
       },
     });
@@ -96,14 +105,20 @@ export const getAvailableClasses = async (req, res) => {
       id: c._id,
       name: c.name,
       slug: c.slug,
-      icon: c.icon,
+      images: c.images, 
       description: c.description,
       baseStats: c.baseStats,
       skills: c.defaultSkills.map((skill) => ({
         id: skill._id,
         name: skill.name,
         description: skill.description,
-        type: skill.type,
+        icon: skill.icon,
+        trigger: skill.trigger,
+        effect: skill.effect,
+        effectValue: skill.effectValue,
+        triggerCondition: skill.triggerCondition,
+        cooldown: skill.cooldown,
+        priority: skill.priority,
       })),
     }));
 
@@ -124,7 +139,6 @@ export const getUserStats = async (req, res) => {
     const stats = await UserDungeonStats.findOne({ user: userId })
       .populate({
         path: "Skills",
-        // Explicitly specify fields to include
         select:
           "_id name description icon trigger effect effectValue cooldown once priority triggerCondition allowedClasses",
       });
@@ -151,11 +165,22 @@ export const getUserStats = async (req, res) => {
         ? await Skill.find({ _id: { $in: stats.Skills } })
         : [];
 
+  
+    let classImages = null;
+    if (stats.classSlug) {
+      const characterClass = await CharacterClass.findOne({ slug: stats.classSlug });
+      if (characterClass && characterClass.images) {
+        classImages = characterClass.images;
+      }
+    }
+
     return res.json({
       hasClass: true,
       name: stats.className || "Unknown Class",
       classSlug: stats.classSlug,
       className: stats.className,
+      gender: stats.gender || 'male',
+      images: classImages, 
       level: stats.dungeonLevel,
       exp: stats.dungeonExp,
       unspentPoints: stats.unspentStatPoints,
@@ -267,4 +292,4 @@ export const getStatAllocation = async (req, res) => {
   }
 };
 
-// Add routes in routes/characterRoutes.js
+
