@@ -14,17 +14,17 @@ const warriorSkills = withClass(
     {
       name: "Smash",
       description: "Deliver a heavy blow...",
-      icon: "smash.png",
+      icon: "smash",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 18,
-      cooldown: 0,
-      priority: 1,
+      cooldown: 1,
+      priority: 3,
     },
     {
       name: "Battle Cry",
       description: "Boosts attack...",
-      icon: "command.png",
+      icon: "command",
       trigger: "onStartBattle",
       effect: "buffAttack",
       effectValue: 5,
@@ -34,7 +34,7 @@ const warriorSkills = withClass(
     {
       name: "Iron Defense",
       description: "Gain shield...",
-      icon: "iron-wall.png",
+      icon: "iron-wall",
       trigger: "onReceiveHit",
       effect: "gainShield",
       effectValue: 8,
@@ -43,7 +43,7 @@ const warriorSkills = withClass(
     {
       name: "Revenge Surge",
       description: "Gain attack below HP 50%",
-      icon: "bloodthirst.png",
+      icon: "bloodthirst",
       trigger: "onHpBelow",
       effect: "buffAttack",
       effectValue: 8,
@@ -53,7 +53,7 @@ const warriorSkills = withClass(
     {
       name: "Whirlwind",
       description: "Spin attack...",
-      icon: "whirlwind.png",
+      icon: "whirlwind",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 14,
@@ -63,7 +63,7 @@ const warriorSkills = withClass(
     {
       name: "Resilience",
       description: "Attack up when hit",
-      icon: "rage.png",
+      icon: "rage",
       trigger: "onReceiveHit",
       effect: "buffAttack",
       effectValue: 3,
@@ -72,7 +72,7 @@ const warriorSkills = withClass(
     {
       name: "Ultimate: Earthshatter",
       description: "Massive area damage",
-      icon: "earthshatter.png",
+      icon: "earthshatter",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 40,
@@ -82,7 +82,7 @@ const warriorSkills = withClass(
     {
       name: "Bleed Slash",
       description: "Inflict bleeding",
-      icon: "bleed-slash.png",
+      icon: "bleed-slash",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 20,
@@ -92,7 +92,7 @@ const warriorSkills = withClass(
     {
       name: "Blood Rage",
       description: "Stronger vs bleeding target",
-      icon: "blood-rage.png",
+      icon: "blood-rage",
       trigger: "onAttack",
       effect: "buffAttack",
       effectValue: 6,
@@ -108,15 +108,16 @@ const mageSkills = withClass(
     {
       name: "Fireball",
       description: "Exploding fire projectile.",
-      icon: "fireball.png",
+      icon: "fireball",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 22,
+      cooldown: 1,  
     },
     {
       name: "Ice Shield",
       description: "Protective barrier.",
-      icon: "ice-shield.png",
+      icon: "ice-shield",
       trigger: "onStartBattle",
       effect: "gainShield",
       effectValue: 12,
@@ -125,7 +126,7 @@ const mageSkills = withClass(
     {
       name: "Chain Lightning",
       description: "Hits multiple targets.",
-      icon: "chain-lightning.png",
+      icon: "chain-lightning",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 28,
@@ -134,7 +135,7 @@ const mageSkills = withClass(
     {
       name: "Meditation",
       description: "Heals when hit.",
-      icon: "meditation.png",
+      icon: "meditation",
       trigger: "onReceiveHit",
       effect: "heal",
       effectValue: 10,
@@ -143,16 +144,16 @@ const mageSkills = withClass(
     {
       name: "Arcane Boost",
       description: "Start buff.",
-      icon: "arcane-boost.png",
+      icon: "arcane-boost",
       trigger: "onStartBattle",
       effect: "buffAttack",
-      effectValue: 6,
+      effectValue: 8,
       once: true,
     },
     {
       name: "Spell Reflect",
       description: "Reflect magic.",
-      icon: "spell-reflect.png",
+      icon: "spell-reflect",
       trigger: "onReceiveHit",
       effect: "dealDamage",
       effectValue: 15,
@@ -161,7 +162,7 @@ const mageSkills = withClass(
     {
       name: "Ultimate: Meteor Storm",
       description: "Devastating AOE.",
-      icon: "meteor-storm.png",
+      icon: "meteor-storm",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 45,
@@ -171,7 +172,7 @@ const mageSkills = withClass(
     {
       name: "Frost Bind",
       description: "Slows enemy.",
-      icon: "frost-bind.png",
+      icon: "frost-bind",
       trigger: "onAttack",
       effect: "debuffEnemy",
       effectValue: -4,
@@ -181,7 +182,7 @@ const mageSkills = withClass(
     {
       name: "Arcane Drain",
       description: "Lower magic resist.",
-      icon: "arcane-drain.png",
+      icon: "arcane-drain",
       trigger: "onAttack",
       effect: "debuffEnemy",
       effectValue: -3,
@@ -197,7 +198,7 @@ const rogueSkills = withClass(
     {
       name: "Backstab",
       description: "Critical from behind.",
-      icon: "backstab.png",
+      icon: "backstab",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 26,
@@ -206,7 +207,7 @@ const rogueSkills = withClass(
     {
       name: "Shadow Step",
       description: "Evade incoming.",
-      icon: "shadow-step.png",
+      icon: "shadow-step",
       trigger: "onReceiveHit",
       effect: "buffAttack",
       effectValue: 3,
@@ -215,7 +216,7 @@ const rogueSkills = withClass(
     {
       name: "Double Hit",
       description: "Follow-up strike.",
-      icon: "double-hit.png",
+      icon: "double-hit",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 12,
@@ -225,7 +226,7 @@ const rogueSkills = withClass(
     {
       name: "Quickstep",
       description: "Speed buff.",
-      icon: "quick.png",
+      icon: "quick",
       trigger: "onStartBattle",
       effect: "buffAttack",
       effectValue: 2,
@@ -234,7 +235,7 @@ const rogueSkills = withClass(
     {
       name: "Poison Blade",
       description: "Poisonous strike.",
-      icon: "poison-blade.png",
+      icon: "poison-blade",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 18,
@@ -243,7 +244,7 @@ const rogueSkills = withClass(
     {
       name: "Ultimate: Phantom Strike",
       description: "Lethal combo.",
-      icon: "phantom-strike.png",
+      icon: "phantom-strike",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 38,
@@ -253,7 +254,7 @@ const rogueSkills = withClass(
     {
       name: "Poison Needle",
       description: "Inflicts poison.",
-      icon: "poison-needle.png",
+      icon: "poison-needle",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 15,
@@ -264,7 +265,7 @@ const rogueSkills = withClass(
     {
       name: "Venom Burst",
       description: "Extra damage if poisoned.",
-      icon: "venom-burst.png",
+      icon: "venom-burst",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 25,
@@ -280,15 +281,16 @@ const archerSkills = withClass(
     {
       name: "Precise Shot",
       description: "Single target damage.",
-      icon: "precise-shot.png",
+      icon: "precise-shot",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 20,
+      cooldown: 1,
     },
     {
       name: "Rapid Fire",
       description: "Two quick shots.",
-      icon: "rapid-fire.png",
+      icon: "rapid-fire",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 15,
@@ -297,7 +299,7 @@ const archerSkills = withClass(
     {
       name: "Charged Shot",
       description: "Strong arrow.",
-      icon: "charged-shot.png",
+      icon: "charged-shot",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 30,
@@ -306,7 +308,7 @@ const archerSkills = withClass(
     {
       name: "Eagle Eye",
       description: "Boost crit rate.",
-      icon: "eagle-eye.png",
+      icon: "eagle-eye",
       trigger: "onStartBattle",
       effect: "buffAttack",
       effectValue: 4,
@@ -315,7 +317,7 @@ const archerSkills = withClass(
     {
       name: "Roll",
       description: "Dodge to reduce damage.",
-      icon: "roll.png",
+      icon: "roll",
       trigger: "onReceiveHit",
       effect: "gainShield",
       effectValue: 6,
@@ -324,17 +326,18 @@ const archerSkills = withClass(
     {
       name: "Ultimate: Arrow Rain",
       description: "Volley on all enemies.",
-      icon: "arrow-rain.png",
+      icon: "arrow-rain",
       trigger: "onAttack",
       effect: "dealDamage",
       effectValue: 35,
       cooldown: 5,
       priority: 10,
+      cooldown: 3,
     },
     {
       name: "Piercing Shot",
       description: "Break defense.",
-      icon: "piercing-shot.png",
+      icon: "piercing-shot",
       trigger: "onAttack",
       effect: "debuffEnemy",
       effectValue: -3,
@@ -344,7 +347,7 @@ const archerSkills = withClass(
     {
       name: "Expose Weakness",
       description: "Defense debuff.",
-      icon: "expose-weakness.png",
+      icon: "expose-weakness",
       trigger: "onAttack",
       effect: "debuffEnemy",
       effectValue: -5,
@@ -360,7 +363,7 @@ const bossSkills = [
   {
     name: "Invert Faith",
     description: "If the player has any buffs, turns them into debuffs.",
-    icon: "invert-faith.png",
+    icon: "invert-faith",
     trigger: "onAttack",
     triggerCondition: { ifPlayerBuffed: true },
     effect: "debuffEnemy",
@@ -371,7 +374,7 @@ const bossSkills = [
   {
     name: "Echo of Doubt",
     description: "Inflicts confusion, causing the player to hurt themselves.",
-    icon: "echo-of-doubt.png",
+    icon: "echo-of-doubt",
     trigger: "onAttack",
     effect: "dealDamage",
     triggerCondition: { applyStatus: "confusion" },
@@ -383,7 +386,7 @@ const bossSkills = [
     name: "Veil of Truth",
     description:
       "Starts battle with high magic resistance and partial invincibility.",
-    icon: "veil-of-truth.png",
+    icon: "veil-of-truth",
     trigger: "onStartBattle",
     effect: "buffAttack",
     effectValue: 6,
@@ -396,7 +399,7 @@ const neutralSkills = [
   {
     name: "Shadow Bind",
     description: "Entangles the target, reducing speed drastically.",
-    icon: "shadow-bind.png",
+    icon: "shadow-bind",
     trigger: "onAttack",
     effect: "debuffEnemy",
     effectValue: -6,
@@ -407,7 +410,7 @@ const neutralSkills = [
   {
     name: "Mind Break",
     description: "Reduces enemy's magic resist by sheer willpower.",
-    icon: "mind-break.png",
+    icon: "mind-break",
     trigger: "onAttack",
     effect: "debuffEnemy",
     effectValue: -5,
@@ -417,7 +420,7 @@ const neutralSkills = [
   {
     name: "Instinctive Dodge",
     description: "Grants evasion buff when HP is low.",
-    icon: "instinctive-dodge.png",
+    icon: "instinctive-dodge",
     trigger: "onHpBelow",
     effect: "buffAttack",
     effectValue: 4,

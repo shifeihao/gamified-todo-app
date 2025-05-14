@@ -1,4 +1,3 @@
-// 简化版的 DungeonTest.jsx - 前半部分
 import React, { useState, useEffect, useRef } from 'react';
 import { getShopItems, buyItem } from '../services/inventoryShopService.js';
 import {
@@ -10,7 +9,7 @@ import axios from 'axios';
 import StatAllocation from '../components/game/StatAllocation.js';
 import CombatSystem from '../components/game/CombatSystem';
 
-// 游戏状态
+// Game states
 const GAME_STATES = {
   IDLE: 'idle',
   ENTERING_DUNGEON: 'entering_dungeon',
@@ -21,108 +20,58 @@ const GAME_STATES = {
   STATS_ALLOCATION: 'stats_allocation'
 };
 
-// 设置调试标志
+// Set debug flag
 const DEBUG = true;
 
-// 商店界面组件
+// Shop interface component
 const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
   return (
-    <div style={{ 
-      padding: '20px', 
-      backgroundColor: '#3a1f6b', 
-      borderRadius: '12px', 
-      border: '2px solid #5d3494',
-      color: '#e0e0e0'
-    }}>
-      <h3 style={{ textAlign: 'center', color: '#ffffff', marginBottom: '15px' }}>
-        🛒 商人商店
+    <div className="p-5 bg-[#3a1f6b] rounded-xl border-2 border-[#5d3494] text-[#e0e0e0]">
+      <h3 className="text-center text-white mb-4 font-bold text-lg">
+        🛒 Merchant Shop
       </h3>
       
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
-        <div style={{ 
-          backgroundColor: '#ffa726', 
-          padding: '8px 12px', 
-          borderRadius: '6px',
-          display: 'flex',
-          alignItems: 'center',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-          color: '#2c1810',
-          border: '2px solid #ff8f00'
-        }}>
-          <span style={{ marginRight: '4px' }}>💰</span>
-          <span style={{ fontWeight: 'bold' }}>{gold} 金币</span>
+      <div className="flex justify-end mb-4">
+        <div className="bg-[#ffa726] p-2 rounded-md flex items-center shadow-lg text-[#2c1810] border-2 border-[#ff8f00] font-bold">
+          <span className="mr-1">💰</span>
+          <span>{gold} Gold</span>
         </div>
       </div>
       
-      <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+      <div className="max-h-[300px] overflow-y-auto">
         {!Array.isArray(items) || items.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '20px', 
-            color: '#b89be6',
-            backgroundColor: '#2c1810',
-            borderRadius: '8px',
-            border: '1px solid #5d3494'
-          }}>
-            商店中没有可用物品
+          <div className="text-center p-5 text-[#b89be6] bg-[#2c1810] rounded-lg border border-[#5d3494]">
+            No items available in shop
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
+          <div className="grid grid-cols-1 gap-4">
             {items.map(entry => (
-              <div key={entry._id || `item-${Math.random()}`} style={{
-                border: '2px solid #5d3494',
-                borderRadius: '8px',
-                padding: '15px',
-                backgroundColor: '#2c1810',
-                transition: 'all 0.2s ease'
-              }}>
-                <div style={{ display: 'flex' }}>
-                  <div style={{ 
-                    width: '50px', 
-                    height: '50px', 
-                    backgroundColor: '#4c2a85',
-                    borderRadius: '8px',
-                    marginRight: '15px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '24px',
-                    border: '2px solid #7e4ab8'
-                  }}>
+              <div key={entry._id || `item-${Math.random()}`} 
+                   className="border-2 border-[#5d3494] rounded-lg p-4 bg-[#2c1810] transition-all duration-200">
+                <div className="flex">
+                  <div className="w-12 h-12 bg-[#4c2a85] rounded-lg mr-4 flex items-center justify-center text-2xl border-2 border-[#7e4ab8]">
                     {entry.item?.icon ? '🔮' : '📦'}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '5px', color: '#ffffff' }}>
-                      {entry.item?.name || '未知物品'}
+                  <div className="flex-1">
+                    <div className="font-bold mb-1 text-white">
+                      {entry.item?.name || 'Unknown Item'}
                     </div>
-                    <div style={{ fontSize: '14px', color: '#b89be6', marginBottom: '8px' }}>
-                      {entry.item?.description || '无描述'}
+                    <div className="text-sm text-[#b89be6] mb-2">
+                      {entry.item?.description || 'No description'}
                     </div>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      marginTop: '10px'
-                    }}>
-                      <span style={{ fontWeight: 'bold', color: '#ffa726' }}>
-                        {entry.price} 金币
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="font-bold text-[#ffa726]">
+                        {entry.price} Gold
                       </span>
                       <button 
                         onClick={() => onBuyItem(entry.item?._id, entry.price)}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: gold >= entry.price ? '#4caf50' : '#666',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: gold >= entry.price ? 'pointer' : 'not-allowed',
-                          fontFamily: 'Courier New, monospace',
-                          fontWeight: 'bold',
-                          transition: 'all 0.2s ease'
-                        }}
+                        className={`px-3 py-1.5 text-white border-none rounded-md font-mono font-bold transition-all duration-200 
+                          ${gold >= entry.price 
+                            ? 'bg-[#4caf50] cursor-pointer' 
+                            : 'bg-[#666] cursor-not-allowed'}`}
                         disabled={gold < entry.price || !entry.item?._id}
                       >
-                        购买
+                        Buy
                       </button>
                     </div>
                   </div>
@@ -135,38 +84,15 @@ const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
       
       <button 
         onClick={onLeaveShop}
-        style={{
-          marginTop: '20px',
-          padding: '10px 20px',
-          backgroundColor: '#ff9800',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontSize: '16px',
-          fontFamily: 'Courier New, monospace',
-          fontWeight: 'bold',
-          display: 'block',
-          margin: '20px auto 0',
-          border: '2px solid #f57800',
-          transition: 'all 0.2s ease'
-        }}
-        onMouseOver={(e) => {
-          e.target.style.backgroundColor = '#f57800';
-          e.target.style.transform = 'translateY(-1px)';
-        }}
-        onMouseOut={(e) => {
-          e.target.style.backgroundColor = '#ff9800';
-          e.target.style.transform = 'translateY(0)';
-        }}
+        className="mt-5 px-5 py-2.5 bg-[#ff9800] text-white border-none rounded-md cursor-pointer text-base font-mono font-bold block mx-auto border-2 border-[#f57800] transition-all duration-200 hover:bg-[#f57800] hover:-translate-y-px"
       >
-        离开商店并继续
+        Leave Shop and Continue
       </button>
     </div>
   );
 };
 
-// 主组件 - 简化版
+// Main component - Simplified
 const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
   const [gameState, setGameState] = useState(GAME_STATES.IDLE);
   const [logs, setLogs] = useState([]);
@@ -184,6 +110,13 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       critRate: userStats?.baseStats?.critRate || 5,
       evasion: userStats?.baseStats?.evasion || 0
     });
+  const [accumulatedDrops, setAccumulatedDrops] = useState({
+      gold: 0,
+      exp: 0,
+      items: [],
+      cards: []
+    });
+    
   useEffect(() => {
   if (userStats?.baseStats) {
     setPlayerStats({
@@ -198,7 +131,7 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
   }
 }, [userStats]);
   
-  // 引用变量
+  // Reference variables
   const logsEndRef = useRef(null);
   const prevStateRef = useRef(null);
   const transitionInProgressRef = useRef(false);
@@ -206,35 +139,35 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
   const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null;
   const token = userInfo?.token || null;
 
-  // 滚动到日志底部
+  // Scroll to bottom of logs
   useEffect(() => {
     if (logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [logs]);
   
-  // 状态监控
+  // State monitoring
   useEffect(() => {
-    if (DEBUG) console.log(`游戏状态变化: ${gameState}`);
+    if (DEBUG) console.log(`Game state change: ${gameState}`);
     
-    // 从商店状态转出时的特殊处理
+    // Special handling when transitioning out of shop state
     if (gameState === GAME_STATES.EXPLORING && prevStateRef.current === GAME_STATES.SHOP) {
-      if (DEBUG) console.log('检测到从商店状态转出');
+      if (DEBUG) console.log('Detected transition out of shop state');
       
-      // 检查是否有怪物等待战斗但状态未正确转换
+      // Check if there are monsters waiting for combat but state didn't transition correctly
       if (monsters && monsters.length > 0) {
-        if (DEBUG) console.log('有怪物等待战斗，但状态未正确转换，强制转换到战斗状态');
+        if (DEBUG) console.log('Monsters waiting for combat but state not correctly transitioned, forcing combat state');
         setTimeout(() => {
           setGameState(GAME_STATES.COMBAT);
         }, 300);
       }
     }
     
-    // 记录前一个状态
+    // Record previous state
     prevStateRef.current = gameState;
   }, [gameState, monsters]);
 
-  // 初始化玩家属性
+  // Initialize player stats
   useEffect(() => {
     if (userStats?.baseStats) {
       setPlayerStats({
@@ -249,12 +182,12 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
     }
   }, [userStats]);
 
-  // 加载商店物品
+  // Load shop items
   const loadShopItems = async () => {
     try {
-      console.log("加载商店物品...");
+      console.log("Loading shop items...");
       const items = await getShopItems(token);
-      console.log("商店物品加载完成:", items);
+      console.log("Shop items loaded:", items);
       
       if (items) {
         setShopItems(Array.isArray(items) ? items : []);
@@ -262,21 +195,21 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         setShopItems([]);
       }
     } catch (err) {
-      console.error('加载商店物品失败:', err);
+      console.error('Failed to load shop items:', err);
       setShopItems([]);
     }
   };
 
-  // 购买商店物品
+  // Buy shop item
   const handleBuyItem = async (itemId, price) => {
     try {
-      // 检查金币是否足够
+      // Check if gold is sufficient
       const res = await axios.get('/api/users/profile', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       if (res.data.gold < price) {
-        alert('金币不足！');
+        alert('Insufficient gold!');
         return;
       }
       
@@ -286,36 +219,43 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         { headers: { Authorization: `Bearer ${token}` }}
       );
       
-      // 更新日志
-      setLogs(prev => [...prev, `💰 购买了 ${shopItems.find(i => i.item._id === itemId)?.item.name || '一件物品'}`]);
+      // Update logs
+      setLogs(prev => [...prev, `💰 Purchased ${shopItems.find(i => i.item._id === itemId)?.item.name || 'an item'}`]);
       
-      // 通知父组件更新金币
+      // Notify parent component to update gold
       if (onGoldUpdate) {
         onGoldUpdate();
       }
     } catch (err) {
-      alert(`购买失败: ${err.message}`);
+      alert(`Purchase failed: ${err.message}`);
     }
   };
 
-  // 战斗结束处理
+  // Handle combat end
   const handleCombatEnd = async (result) => {
-    console.log("战斗结束:", result);
+    console.log("Combat ended:", result);
     
     if (result.result === 'victory') {
-      // 基本胜利日志
-      setLogs(prev => [...prev, '🎯 战斗胜利！']);
+      // Basic victory log
+      setLogs(prev => [...prev, '🎯 Combat Victory!']);
       
-      // 如果有掉落结果，显示掉落信息
+      // If there are drop results, show drop information
       if (result.drops) {
         const { gold, exp, items, cards } = result.drops;
+
+        setAccumulatedDrops(prev => ({
+          gold: prev.gold + (gold || 0),
+          exp: prev.exp + (exp || 0),
+          items: [...prev.items, ...(items || [])],
+          cards: [...prev.cards, ...(cards || [])]
+        }));
         
-        // 通知父组件更新金币
+        // Notify parent component to update gold
         if (gold > 0 && onGoldUpdate) {
           onGoldUpdate();
         }
         
-        setLogs(prev => [...prev, '✨ 战利品已添加到库存中']);
+        setLogs(prev => [...prev, '✨ Loot has been added to inventory']);
       }
       
       setPlayerStats(prev => ({
@@ -324,7 +264,7 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       }));
       
       try {
-        // 更新战斗后状态
+        // Update post-combat state
         const updateResponse = await axios.post(
           '/api/dungeon/update-after-combat',
           { 
@@ -334,79 +274,81 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
           { headers: { Authorization: `Bearer ${token}` }}
         );
         
-        console.log('战斗后状态更新:', updateResponse.data);
+        console.log('Post-combat state update:', updateResponse.data);
         
-        // 处理等级提升等其他更新
+        // Handle level up and other updates
         if (updateResponse.data.logs && Array.isArray(updateResponse.data.logs)) {
           setLogs(prev => [...prev, ...updateResponse.data.logs]);
         }
         
         if (updateResponse.data.expGained) {
-          setLogs(prev => [...prev, `✨ 获得 ${updateResponse.data.expGained} 点经验`]);
+          setLogs(prev => [...prev, `✨ Gained ${updateResponse.data.expGained} experience`]);
         }
 
         if (updateResponse.data.levelUp) {
           setLogs(prev => [
             ...prev, 
-            `🌟 升级了！从 ${updateResponse.data.prevLevel || '?'} 级到 ${updateResponse.data.currentLevel || updateResponse.data.newLevel || '?'} 级`
+            `🌟 Level up! From ${updateResponse.data.prevLevel || '?'} to ${updateResponse.data.currentLevel || updateResponse.data.newLevel || '?'}`
           ]);
           
           if (updateResponse.data.statPointsGained > 0) {
             setLogs(prev => [
               ...prev,
-              `💪 获得了 ${updateResponse.data.statPointsGained} 点属性点`
+              `💪 Gained ${updateResponse.data.statPointsGained} stat points`
             ]);
           }
         }
         
-        // 更新楼层
+        // Update floor
         if (updateResponse.data.nextFloor) {
-          console.log(`更新楼层: ${currentFloor} -> ${updateResponse.data.nextFloor}`);
+          console.log(`Update floor: ${currentFloor} -> ${updateResponse.data.nextFloor}`);
           setCurrentFloor(updateResponse.data.nextFloor);
-          setLogs(prev => [...prev, `🚪 你进入了第 ${updateResponse.data.nextFloor} 层`]);
+          setLogs(prev => [...prev, `🚪 You entered floor ${updateResponse.data.nextFloor}`]);
         }
         
-        // 继续探索
+        // Continue exploration
         setTimeout(() => {
           continueExploration();
         }, 1000);
       } catch (err) {
-        console.error('更新战斗结果出错:', err);
+        console.error('Error updating combat result:', err);
         setTimeout(() => {
           continueExploration();
         }, 1000);
       }
     } else if (result.result === 'settlement') {
-      // HP为0时的处理
-      setLogs(prev => [...prev, '💀 你被击败了，自动结算...']);
+      // Handle when HP is 0
+      setLogs(prev => [...prev, '💀 You were defeated, auto settling...']);
       
       try {
         const summary = await summarizeExploration(token);
         setSummary(summary);
         setGameState(GAME_STATES.VICTORY);
       } catch (err) {
-        console.error('获取结算信息失败:', err);
+        console.error('Failed to get settlement info:', err);
       }
     }
   };
-  // 离开商店
+  // Simplified DungeonTest.jsx - Part 2 complete (Using Tailwind CSS)
+
+  // Leave shop
   const handleLeaveShop = async () => {
     console.log('=== LEAVE SHOP START ===');
-    setLogs(prev => [...prev, '🚶 离开商店并继续探索...']);
+    setLogs(prev => [...prev, '🚶 Leaving shop and continuing exploration...']);
     
-    // 标记转换进行中
+    // Mark transition in progress
     setShopItems([]);
     setGameState(GAME_STATES.EXPLORING);
     
     try {
-      // 调用离开商店API
+      // Call leave shop API
       await axios.post(
         '/api/dungeon/shop-interaction', 
         { action: 'leave' }, 
         { headers: { Authorization: `Bearer ${token}` }}
       );
       
-      // 调用专门为商店后战斗设计的continue API
+      // Call continue API specifically designed for post-shop combat
       const continueResponse = await axios.post(
         '/api/dungeon/continue',
         {},
@@ -415,18 +357,18 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       
       console.log('Continue after shop response:', continueResponse.data);
       
-      // 添加这部分代码：处理返回的日志
+      // Add this code: handle returned logs
       if (continueResponse.data.logs && Array.isArray(continueResponse.data.logs)) {
         console.log('Adding logs from response:', continueResponse.data.logs);
         setLogs(prev => [...prev, ...continueResponse.data.logs]);
       }
       
-      // 更新当前楼层
+      // Update current floor
       if (continueResponse.data.currentFloor) {
         setCurrentFloor(continueResponse.data.currentFloor);
       }
       
-      // 处理返回的怪物数据
+      // Handle returned monster data
       if (continueResponse.data.monsters && 
           Array.isArray(continueResponse.data.monsters) && 
           continueResponse.data.monsters.length > 0) {
@@ -434,7 +376,7 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         console.log('Found monsters after shop, starting combat');
         setMonsters(continueResponse.data.monsters);
         
-        // 延迟确保UI更新
+        // Delay to ensure UI update
         setTimeout(() => {
           setGameState(GAME_STATES.COMBAT);
         }, 300);
@@ -444,9 +386,9 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       }
     } catch (err) {
       console.error('Leave shop error:', err);
-      setLogs(prev => [...prev, `❌ 错误: ${err.message}`]);
+      setLogs(prev => [...prev, `❌ Error: ${err.message}`]);
       
-      // 错误恢复
+      // Error recovery
       setTimeout(() => {
         setGameState(GAME_STATES.IDLE);
       }, 1000);
@@ -455,113 +397,114 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
     console.log('=== LEAVE SHOP END ===');
   };
   
-  // 战斗或商店后继续探索
+  // Continue exploration after combat or shop
   const continueExploration = async () => {
-    // 如果转换正在进行中，避免重复调用
+    // If transition is in progress, avoid duplicate calls
     if (transitionInProgressRef.current) {
-      if (DEBUG) console.log('转换正在进行中，跳过继续探索');
+      if (DEBUG) console.log('Transition in progress, skipping continue exploration');
       return;
     }
     
     try {
-      if (DEBUG) console.log('开始继续探索流程');
+      if (DEBUG) console.log('Starting continue exploration process');
       
-      // 设置状态为探索中
+      // Set state to exploring
       setGameState(GAME_STATES.EXPLORING);
       
-      // 调用API获取探索结果
+      // Call API to get exploration results
       const res = await exploreCurrentFloor(token);
     
       
-      if (DEBUG) console.log('探索响应:', res);
+      if (DEBUG) console.log('Exploration response:', res);
       
-      // 处理战斗日志
+      // Handle combat logs
       if (res.logs && Array.isArray(res.logs)) {
         setLogs(prev => [...prev, ...res.logs]);
       }
       
-      // 处理经验值
+      // Handle experience
       if (res.gainedExp) {
-        setLogs(prev => [...prev, `✨ 获得 ${res.gainedExp} 点经验`]);
+        setLogs(prev => [...prev, `✨ Gained ${res.gainedExp} experience`]);
       }
       
-      // 更新楼层
+      // Update floor
       if (res.nextFloor) {
         setCurrentFloor(res.nextFloor);
       }
       
-      // 处理怪物战斗 - 这是关键部分
+      // Handle monster combat - this is the key part
       if (res.monsters && Array.isArray(res.monsters) && res.monsters.length > 0) {
-        if (DEBUG) console.log('发现怪物，设置战斗状态');
+        if (DEBUG) console.log('Found monsters, setting combat state');
         setMonsters(res.monsters);
         
-        // 使用延迟确保状态正确更新
+        // Use delay to ensure state updates correctly
         setTimeout(() => {
-          if (DEBUG) console.log('切换到战斗UI');
+          if (DEBUG) console.log('Switching to combat UI');
           setGameState(GAME_STATES.COMBAT);
         }, 300);
         return;
       }
       
-      // 处理商店事件
+      // Handle shop events
       if (res.pause && res.eventType === 'shop') {
-        if (DEBUG) console.log('发现商店事件');
+        if (DEBUG) console.log('Found shop event');
         await loadShopItems();
         
-        // 使用延迟确保状态正确更新
+        // Use delay to ensure state updates correctly
         setTimeout(() => {
-          if (DEBUG) console.log('切换到商店UI');
+          if (DEBUG) console.log('Switching to shop UI');
           setGameState(GAME_STATES.SHOP);
         }, 300);
         return;
       }
       
-      // 处理结算
+      // Handle settlement
       if (res.result === 'completed') {
-        setLogs(prev => [...prev, '🎉 探索完成！']);
+        setLogs(prev => [...prev, '🎉 Exploration completed!']);
         try {
           const summary = await summarizeExploration(token);
           setSummary(summary);
           setGameState(GAME_STATES.VICTORY);
         } catch (error) {
-          console.error('获取结算信息失败:', error);
+          console.error('Failed to get settlement info:', error);
         }
       } 
-      // 处理被击败
+      // Handle defeat
       else if (res.result === 'defeat') {
-        setLogs(prev => [...prev, '💀 你被击败了，自动结算...']);
+        setLogs(prev => [...prev, '💀 You were defeated, auto settling...']);
         try {
           const summary = await summarizeExploration(token);
           setSummary(summary);
           setGameState(GAME_STATES.VICTORY);
         } catch (error) {
-          console.error('获取结算信息失败:', error);
+          console.error('Failed to get settlement info:', error);
         }
       } 
-      // 处理继续探索
+      // Handle continue exploration
       else if (res.result === 'continue') {
-        // 递归调用自身继续探索
+        // Recursively call itself to continue exploration
         setTimeout(() => {
           continueExploration();
         }, 500);
       }
     } catch (err) {
-      console.error('探索过程中出错:', err);
-      setLogs(prev => [...prev, `❌ 错误: ${err.message}`]);
+      console.error('Error during exploration:', err);
+      setLogs(prev => [...prev, `❌ Error: ${err.message}`]);
     }
   };
 
-  // 开始探索
+  // Start exploration
   const startExploration = async () => {
     setLogs([]);
     setSummary(null);
+    setAccumulatedDrops({ gold: 0, exp: 0, items: [], cards: [] });
     setGameState(GAME_STATES.ENTERING_DUNGEON);
 
     try {
       const enter = await enterDungeon(token);
-      console.log('进入地下城响应:', enter);
+      console.log('Enter dungeon response:', enter);
       
-      // 设置初始层数
+      // Set initial floor
       let initialFloor = 1;
       if (enter.exploration) {
         initialFloor = enter.exploration.floorIndex || 1;
@@ -580,102 +523,64 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         });
       }
       
-      // 添加进入日志包含层数信息
+      // Add entry log with floor information
       setLogs([
-        `✅ 进入: ${enter.dungeon.name}`,
-        `🏁 从第 ${initialFloor} 层开始探索`
+        `✅ Entered: ${enter.dungeon.name}`,
+        `🏁 Starting exploration from floor ${initialFloor}`
       ]);
       
-      // 开始探索
+      // Start exploration
       setGameState(GAME_STATES.EXPLORING);
       continueExploration();
     } catch (err) {
-      console.error('开始探索时出错:', err);
-      setLogs([`❌ 错误: ${err.message}`]);
+      console.error('Error starting exploration:', err);
+      setLogs([`❌ Error: ${err.message}`]);
       setGameState(GAME_STATES.IDLE);
     }
   };
 
   if (error) {
     return (
-      <div style={{ 
-        padding: '20px', 
-        textAlign: 'center', 
-        backgroundColor: '#2c1810', 
-        borderRadius: '12px' 
-      }}>
-        <h2 style={{ color: '#e74c3c' }}>错误</h2>
-        <p style={{ color: '#e0e0e0' }}>{error}</p>
+      <div className="p-5 text-center bg-[#2c1810] rounded-xl">
+        <h2 className="text-[#e74c3c] text-xl font-bold">Error</h2>
+        <p className="text-[#e0e0e0] my-3">{error}</p>
         <button 
           onClick={() => window.location.reload()}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#3498db',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            marginTop: '10px',
-            fontFamily: 'Courier New, monospace'
-          }}
+          className="px-5 py-2.5 bg-[#3498db] text-white border-none rounded-md cursor-pointer mt-2 font-mono"
         >
-          重试
+          Retry
         </button>
       </div>
     );
   }
 
-  // 主游戏界面
+  // Main game interface
   return (
-    <div style={{ 
-      padding: '20px', 
-      fontFamily: 'Courier New, monospace',
-      color: '#e0e0e0'
-    }}>
-      {/* 冒险日志 */}
-      <div style={{
-        border: '2px solid #5d3494',
-        borderRadius: '12px',
-        padding: '15px',
-        marginBottom: '20px',
-        backgroundColor: '#3a1f6b',
-        maxHeight: '200px',
-        overflowY: 'auto'
-      }}>
-        <h3 style={{ 
-          margin: '0 0 10px 0', 
-          borderBottom: '1px solid #5d3494', 
-          paddingBottom: '8px',
-          color: '#ffffff'
-        }}>
-          📜 冒险日志 - 第 {currentFloor} 层
+    <div className="p-5 font-mono text-[#e0e0e0]">
+      {/* Adventure log */}
+      <div className="border-2 border-[#5d3494] rounded-xl p-4 mb-5 bg-[#3a1f6b] max-h-[200px] overflow-y-auto">
+        <h3 className="m-0 mb-2 border-b border-[#5d3494] pb-2 text-white font-bold">
+          📜 Adventure Log - Floor {currentFloor}
         </h3>
         
         {logs.length === 0 ? (
-          <p style={{ color: '#b89be6', fontStyle: 'italic', textAlign: 'center' }}>
-            你的冒险等待开始。启程后记录你的探索经历。
+          <p className="text-[#b89be6] italic text-center">
+            Your adventure awaits. Records of your exploration will appear here once you begin.
           </p>
         ) : (
           logs.map((log, index) => (
             <div 
               key={index}
-              style={{
-                padding: '6px 0',
-                borderBottom: index < logs.length - 1 ? '1px solid #5d3494' : 'none',
-                display: 'flex',
-                alignItems: 'flex-start',
-                fontSize: '14px',
-                color: '#e0e0e0'
-              }}
+              className="py-1.5 border-b last:border-b-0 border-[#5d3494] flex items-start text-sm"
             >
-              {log.includes('进入:') && <span style={{ marginRight: '8px' }}>✅</span>}
-              {log.includes('暂停') && <span style={{ marginRight: '8px' }}>⏸️</span>}
-              {log.includes('完成') && <span style={{ marginRight: '8px' }}>🎉</span>}
-              {log.includes('击败') && <span style={{ marginRight: '8px' }}>💀</span>}
-              {log.includes('错误') && <span style={{ marginRight: '8px' }}>❌</span>}
-              {!log.includes('进入:') && !log.includes('暂停') && !log.includes('完成') && 
-               !log.includes('击败') && !log.includes('错误') && (
-                <span style={{ marginRight: '8px' }}>🔸</span>
+              {log.includes('Entered:') && <span className="mr-2">✅</span>}
+              {log.includes('Paused') && <span className="mr-2">⏸️</span>}
+              {log.includes('Completed') && <span className="mr-2">🎉</span>}
+              {log.includes('defeated') && <span className="mr-2">💀</span>}
+              {log.includes('Error') && <span className="mr-2">❌</span>}
+              {!log.includes('Entered:') && !log.includes('Paused') && !log.includes('Completed') && 
+               !log.includes('defeated') && !log.includes('Error') && (
+                <span className="mr-2">🔸</span>
               )}
               <span>{log}</span>
             </div>
@@ -684,76 +589,43 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         <div ref={logsEndRef} />
       </div>
       
-      {/* 游戏状态展示 */}
+      {/* Game state display */}
       {gameState === GAME_STATES.IDLE && (
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <div className="text-center mb-5">
           <button 
             onClick={startExploration}
-            style={{
-              padding: '12px 25px',
-              backgroundColor: '#4caf50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontFamily: 'Courier New, monospace',
-              fontWeight: 'bold',
-              border: '2px solid #388e3c',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#388e3c';
-              e.target.style.transform = 'translateY(-1px)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = '#4caf50';
-              e.target.style.transform = 'translateY(0)';
-            }}
+            className="px-6 py-3 bg-[#4caf50] text-white border-none rounded-lg cursor-pointer text-base font-mono font-bold border-2 border-[#388e3c] transition-all duration-200 hover:bg-[#388e3c] hover:-translate-y-px"
           >
-            开始探索
+            Start Exploration
           </button>
-          <p style={{ fontSize: '14px', color: '#b89be6', marginTop: '10px' }}>
-            进入地下城，面对怪物，寻找宝藏，测试你的技能。
+          <p className="text-sm text-[#b89be6] mt-2">
+            Enter the dungeon, face monsters, find treasures, and test your skills.
           </p>
         </div>
       )}
       
       {gameState === GAME_STATES.ENTERING_DUNGEON && (
-        <div style={{ 
-          textAlign: 'center', 
-          marginBottom: '20px',
-          padding: '20px',
-          backgroundColor: '#3a1f6b',
-          borderRadius: '12px',
-          border: '2px solid #5d3494'
-        }}>
-          <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-          <div style={{ color: '#e0e0e0' }}>正在进入地下城...</div>
+        <div className="text-center mb-5 p-5 bg-[#3a1f6b] rounded-xl border-2 border-[#5d3494]">
+          <div className="text-2xl mb-2">⏳</div>
+          <div className="text-[#e0e0e0]">Entering dungeon...</div>
         </div>
       )}
       
       {gameState === GAME_STATES.EXPLORING && (
-        <div style={{ 
-          textAlign: 'center', 
-          marginBottom: '20px',
-          padding: '20px',
-          backgroundColor: '#3a1f6b',
-          borderRadius: '12px',
-          border: '2px solid #5d3494'
-        }}>
-          <div style={{ fontSize: '24px', marginBottom: '10px' }}>🔍</div>
-          <div style={{ color: '#e0e0e0' }}>正在探索第 {currentFloor} 层...</div>
+        <div className="text-center mb-5 p-5 bg-[#3a1f6b] rounded-xl border-2 border-[#5d3494]">
+          <div className="text-2xl mb-2">🔍</div>
+          <div className="text-[#e0e0e0]">Exploring floor {currentFloor}...</div>
         </div>
       )}
       
       {gameState === GAME_STATES.COMBAT && (
         <CombatSystem
           monsters={monsters}
-          playerStats={playerStats}
+          playerStats={userStats.baseStats}  
           playerClass={userStats?.classSlug || "warrior"}
           playerClassName={userStats?.name}
           skills={userStats?.skills || []} 
+          userInfo={userStats}
           userToken={token} 
           onCombatEnd={handleCombatEnd}
         />
@@ -775,123 +647,127 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       )}
       
       {userStats?.hasClass && userStats.unspentPoints > 0 && (
-        <div style={{ 
-          position: 'fixed', 
-          bottom: '20px', 
-          right: '20px', 
-          zIndex: 1000 
-        }}>
+        <div className="fixed bottom-5 right-5 z-50">
           <button 
             onClick={() => setGameState(GAME_STATES.STATS_ALLOCATION)}
-            style={{
-              backgroundColor: '#ff9800',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '60px',
-              height: '60px',
-              fontSize: '24px',
-              boxShadow: '0 3px 5px rgba(0,0,0,0.3)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '2px solid #f57800'
-            }}
+            className="bg-[#ff9800] text-white border-none rounded-full w-15 h-15 text-2xl shadow-lg cursor-pointer flex items-center justify-center border-2 border-[#f57800] relative"
           >
             💪
           </button>
-          <div style={{
-            position: 'absolute',
-            top: '-10px',
-            right: '-10px',
-            backgroundColor: '#e53935',
-            color: 'white',
-            borderRadius: '50%',
-            width: '25px',
-            height: '25px',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold'
-          }}>
+          <div className="absolute -top-2 -right-2 bg-[#e53935] text-white rounded-full w-6 h-6 text-sm flex items-center justify-center font-bold">
             {userStats.unspentPoints}
           </div>
         </div>
       )}
       
       {gameState === GAME_STATES.VICTORY && summary && (
-        <div style={{ 
-          marginBottom: '20px',
-          padding: '25px',
-          backgroundColor: '#3a1f6b',
-          borderRadius: '12px',
-          border: '2px solid #4caf50'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '36px', marginBottom: '10px' }}>🏆</div>
-            <h3 style={{ color: '#ffffff', marginBottom: '15px' }}>探索结算！</h3>
+        <div className="mb-5 p-6 bg-[#3a1f6b] rounded-xl border-2 border-[#4caf50]">
+          <div className="text-center">
+            <div className="text-4xl mb-2">🏆</div>
+            <h3 className="text-white mb-4 text-xl font-bold">Exploration Settlement!</h3>
           </div>
           
-          <div style={{ 
-            backgroundColor: '#2c1810', 
-            padding: '15px',
-            borderRadius: '8px',
-            color: '#e0e0e0'
-          }}>
-            <div style={{ marginBottom: '10px' }}>
-              <span style={{ fontWeight: 'bold' }}>获得经验：</span> {summary.gainedExp}
+          {/* Basic settlement information */}
+          <div className="bg-[#2c1810] p-4 rounded-lg text-[#e0e0e0] mb-5">
+            <div className="mb-2">
+              <span className="font-bold">Base Experience:</span> {summary.gainedExp}
             </div>
-            <div style={{ marginBottom: '10px' }}>
-              <span style={{ fontWeight: 'bold' }}>新等级：</span> {summary.newLevel}
+            <div className="mb-2">
+              <span className="font-bold">New Level:</span> {summary.newLevel}
             </div>
-            <div style={{ marginBottom: '10px' }}>
-              <span style={{ fontWeight: 'bold' }}>可用属性点：</span> {summary.unspentStatPoints || 0}
-             </div>
+            <div className="mb-2">
+              <span className="font-bold">Available Stat Points:</span> {summary.unspentStatPoints || 0}
+            </div>
             
             {summary.levelUp && (
-              <div style={{ 
-                color: '#4caf50', 
-                fontWeight: 'bold',
-                backgroundColor: '#1b5e20',
-                padding: '10px',
-                borderRadius: '6px',
-                marginTop: '10px'
-              }}>
-                🎉 升级了！ +{summary.statPointsGained || 0} 属性点
+              <div className="text-[#4caf50] font-bold bg-[#1b5e20] p-2 rounded-md mt-2">
+                🎉 Leveled up! +{summary.statPointsGained || 0} stat points
+              </div>
+            )}
+          </div>
+
+          {/* Exploration rewards summary */}
+          <div className="bg-[#2c1810] p-4 rounded-lg mb-5">
+            <h4 className="text-[#ffa726] mb-4 text-center text-lg font-bold">
+              🎁 Exploration Rewards Summary
+            </h4>
+            
+            {/* Gold and experience summary */}
+            {(accumulatedDrops.gold > 0 || accumulatedDrops.exp > 0) && (
+              <div className="flex justify-center gap-5 mb-4">
+                {accumulatedDrops.gold > 0 && (
+                  <div className="bg-[#ffa726] text-[#2c1810] px-4 py-2 rounded-lg font-bold flex items-center gap-1">
+                    <span>💰</span>
+                    +{accumulatedDrops.gold} Gold
+                  </div>
+                )}
+                {accumulatedDrops.exp > 0 && (
+                  <div className="bg-[#81c784] text-[#2c1810] px-4 py-2 rounded-lg font-bold flex items-center gap-1">
+                    <span>✨</span>
+                    +{accumulatedDrops.exp} Extra Experience
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Items obtained */}
+            {accumulatedDrops.items.length > 0 && (
+              <div className="mb-4">
+                <h5 className="text-white mb-2">Items Obtained:</h5>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2">
+                  {accumulatedDrops.items.map((item, index) => (
+                    <div key={index} className="bg-[#4caf50] text-white p-2 rounded-md text-center text-sm font-bold">
+                      🎁 {item.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Quest cards obtained */}
+            {accumulatedDrops.cards.length > 0 && (
+              <div>
+                <h5 className="text-white mb-2">Quest Cards Obtained:</h5>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2 justify-center">
+                  {accumulatedDrops.cards.map((card, index) => (
+                    <div key={index} className="bg-[#9c27b0] text-white p-2 rounded-md text-center">
+                      <div className="text-xl mb-1">🃏</div>
+                      <div className="text-sm font-bold">
+                        {card.title}
+                      </div>
+                      {card.bonus && (
+                        <div className="text-xs mt-1">
+                          {card.bonus.experienceMultiplier > 1 && 
+                            `EXP +${Math.round((card.bonus.experienceMultiplier - 1) * 100)}%`}
+                          {card.bonus.goldMultiplier > 1 && 
+                            ` Gold +${Math.round((card.bonus.goldMultiplier - 1) * 100)}%`}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* If no drops */}
+            {accumulatedDrops.gold === 0 && accumulatedDrops.exp === 0 && 
+            accumulatedDrops.items.length === 0 && accumulatedDrops.cards.length === 0 && (
+              <div className="text-center text-[#b89be6] italic">
+                No additional rewards obtained from this exploration
               </div>
             )}
           </div>
           
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <div className="text-center mt-5">
             <button 
               onClick={() => {
                 setGameState(GAME_STATES.IDLE);
                 setLogs([]);
+                setAccumulatedDrops({ gold: 0, exp: 0, items: [], cards: [] }); // Clear accumulated drops
               }}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#4caf50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontFamily: 'Courier New, monospace',
-                fontWeight: 'bold',
-                border: '2px solid #388e3c',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseOver={(e) => {
-                e.target.style.backgroundColor = '#388e3c';
-                e.target.style.transform = 'translateY(-1px)';
-              }}
-              onMouseOut={(e) => {
-                e.target.style.backgroundColor = '#4caf50';
-                e.target.style.transform = 'translateY(0)';
-              }}
+              className="px-5 py-2.5 bg-[#4caf50] text-white border-none rounded-md cursor-pointer font-mono font-bold border-2 border-[#388e3c] transition-all duration-200 hover:bg-[#388e3c] hover:-translate-y-px"
             >
-              返回首页
+              Return to Home
             </button>
           </div>
         </div>

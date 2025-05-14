@@ -3,7 +3,16 @@ import mongoose from "mongoose";
 const classSchema = new mongoose.Schema({
   name: { type: String, required: true }, // 如 "Mage"
   slug: { type: String, unique: true }, // 如 "mage"
-  icon: String,
+   images: {
+    male: {
+      avatar: String,    
+      sprite: String,    
+    },
+    female: {
+      avatar: String,
+      sprite: String,
+    }
+  },
   description: String,
 
   baseStats: {
