@@ -29,10 +29,10 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 1G
+          memory: 4G
         reservations:
           cpus: '0.5'
-          memory: 512M
+          memory: 2G
     logging:
       driver: "json-file"
       options:
@@ -40,10 +40,9 @@ services:
         max-file: "3"
     security_opt:
       - no-new-privileges:true
-    read_only: true
+    read_only: false
     tmpfs:
       - /tmp
-      - /app/server/logs
     networks:
       - app_net
 
