@@ -633,7 +633,7 @@ const TasksPage = () => {
   // 8. 提交表单（新建或更新）
   const handleSubmit = (formData) => {
     console.log("[TasksPage] handleSubmit 收到数据：", formData);
-    if (editingTask) {
+    if (editingTask && editingTask._id) {
       doUpdateTask(editingTask._id, formData, user.token);
     } else {
       doCreateTask(formData, user.token);
@@ -723,7 +723,13 @@ const TasksPage = () => {
                 equippedTasks={equippedShortTasks}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
-                onEdit={setEditingTask}
+                onEdit={(task) => {
+                  setEditingTask(task);
+                  setShowForm(true);
+                  if (task.type) {
+                    setCreateSlotType(task.type);
+                  }
+                }}
                 onUnequip={handleUnequip}
                 onDrop={(tid, idx) => handleDropToSlot(tid, idx, "short")}
                 onCreateTask={(idx) => handleCreateFromSlot(idx, "short")}
@@ -735,7 +741,13 @@ const TasksPage = () => {
                 equippedTasks={equippedLongTasks}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
-                onEdit={setEditingTask}
+                onEdit={(task) => {
+                  setEditingTask(task);
+                  setShowForm(true);
+                  if (task.type) {
+                    setCreateSlotType(task.type);
+                  }
+                }}
                 onDrop={(tid, idx) => handleDropToSlot(tid, idx, "long")}
                 onCreateTask={(idx) => handleCreateFromSlot(idx, "long")}
               />
@@ -749,7 +761,13 @@ const TasksPage = () => {
               cards={cards}
               onComplete={handleComplete}
               onDelete={handleDelete}
-              onEdit={setEditingTask}
+              onEdit={(task) => {
+                setEditingTask(task);
+                setShowForm(true);
+                if (task.type) {
+                  setCreateSlotType(task.type);
+                }
+              }}
               onEquip={handleEquip}
               onExpand={setIsExpanded}
               isExpanded={isExpanded}

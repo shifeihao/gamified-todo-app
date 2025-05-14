@@ -4,11 +4,14 @@ import { getShopItems, buyItem } from '../services/inventoryShopService.js';
 import {
   enterDungeon,
   exploreCurrentFloor,
-  summarizeExploration
+  summarizeExploration,
+  updateCombatResult
 } from '../services/dungeonTestService.js';
 import axios from 'axios';
 import StatAllocation from '../components/game/StatAllocation.js';
 import CombatSystem from '../components/game/CombatSystem';
+import { toast } from 'react-hot-toast';
+import AchievementUnlockNotification from '../components/achievement/AchievementUnlockNotification';
 
 // 游戏状态
 const GAME_STATES = {
@@ -140,7 +143,6 @@ const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
           padding: '10px 20px',
           backgroundColor: '#ff9800',
           color: 'white',
-          border: 'none',
           borderRadius: '6px',
           cursor: 'pointer',
           fontSize: '16px',
@@ -280,7 +282,7 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         return;
       }
       
-      await axios.post(
+      const purchaseResponse = await axios.post(
         '/api/shop/buy', 
         { itemId }, 
         { headers: { Authorization: `Bearer ${token}` }}
@@ -288,6 +290,22 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       
       // 更新日志
       setLogs(prev => [...prev, `💰 购买了 ${shopItems.find(i => i.item._id === itemId)?.item.name || '一件物品'}`]);
+      
+      // 显示成就解锁提醒
+      if (purchaseResponse.data.newlyUnlockedAchievements?.length > 0) {
+        purchaseResponse.data.newlyUnlockedAchievements.forEach(achievement => {
+          toast.success(
+            <AchievementUnlockNotification achievement={achievement} />,
+            {
+              duration: 5000,
+              position: "top-right",
+              style: {
+                minWidth: '320px'
+              }
+            }
+          );
+        });
+      }
       
       // 通知父组件更新金币
       if (onGoldUpdate) {
@@ -324,15 +342,10 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       }));
       
       try {
-        // 更新战斗后状态
-        const updateResponse = await axios.post(
-          '/api/dungeon/update-after-combat',
-          { 
-            result: 'victory', 
-            remainingHp: result.remainingHp 
-          },
-          { headers: { Authorization: `Bearer ${token}` }}
-        );
+        const updateResponse = await updateCombatResult(token, {
+          survived: result.result === 'victory',
+          remainingHp: result.remainingHp
+        });
         
         console.log('战斗后状态更新:', updateResponse.data);
         
@@ -357,6 +370,22 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
               `💪 获得了 ${updateResponse.data.statPointsGained} 点属性点`
             ]);
           }
+        }
+        
+        // 显示成就解锁提醒
+        if (updateResponse.data.newlyUnlockedAchievements?.length > 0) {
+          updateResponse.data.newlyUnlockedAchievements.forEach(achievement => {
+            toast.success(
+              <AchievementUnlockNotification achievement={achievement} />,
+              {
+                duration: 5000,
+                position: "top-right",
+                style: {
+                  minWidth: '320px'
+                }
+              }
+            );
+          });
         }
         
         // 更新楼层
@@ -442,6 +471,27 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         console.log('No monsters after shop, continuing exploration');
         continueExploration();
       }
+
+      const summary = await summarizeExploration(token);
+      setSummary(summary);
+
+      // 显示成就解锁提醒
+      if (summary.newlyUnlockedAchievements?.length > 0) {
+        summary.newlyUnlockedAchievements.forEach(achievement => {
+          toast.success(
+            <AchievementUnlockNotification achievement={achievement} />,
+            {
+              duration: 5000,
+              position: "top-right",
+              style: {
+                minWidth: '320px'
+              }
+            }
+          );
+        });
+      }
+
+      setGameState(GAME_STATES.VICTORY);
     } catch (err) {
       console.error('Leave shop error:', err);
       setLogs(prev => [...prev, `❌ 错误: ${err.message}`]);
@@ -545,6 +595,22 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
           continueExploration();
         }, 500);
       }
+
+      // 显示成就解锁提醒
+      if (res.newlyUnlockedAchievements?.length > 0) {
+        res.newlyUnlockedAchievements.forEach(achievement => {
+          toast.success(
+            <AchievementUnlockNotification achievement={achievement} />,
+            {
+              duration: 5000,
+              position: "top-right",
+              style: {
+                minWidth: '320px'
+              }
+            }
+          );
+        });
+      }
     } catch (err) {
       console.error('探索过程中出错:', err);
       setLogs(prev => [...prev, `❌ 错误: ${err.message}`]);
@@ -585,6 +651,22 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         `✅ 进入: ${enter.dungeon.name}`,
         `🏁 从第 ${initialFloor} 层开始探索`
       ]);
+
+      // 显示成就解锁提醒
+      if (enter.newlyUnlockedAchievements?.length > 0) {
+        enter.newlyUnlockedAchievements.forEach(achievement => {
+          toast.success(
+            <AchievementUnlockNotification achievement={achievement} />,
+            {
+              duration: 5000,
+              position: "top-right",
+              style: {
+                minWidth: '320px'
+              }
+            }
+          );
+        });
+      }
       
       // 开始探索
       setGameState(GAME_STATES.EXPLORING);
@@ -693,7 +775,6 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
               padding: '12px 25px',
               backgroundColor: '#4caf50',
               color: 'white',
-              border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',
               fontSize: '16px',
@@ -786,7 +867,6 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
             style={{
               backgroundColor: '#ff9800',
               color: 'white',
-              border: 'none',
               borderRadius: '50%',
               width: '60px',
               height: '60px',
@@ -874,7 +954,6 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
                 padding: '10px 20px',
                 backgroundColor: '#4caf50',
                 color: 'white',
-                border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontFamily: 'Courier New, monospace',

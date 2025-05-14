@@ -20,6 +20,8 @@ import {
 import axios from 'axios';
 import AuthContext from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { checkAchievements } from "../../services/achievement";
+import AchievementUnlockNotification from "../achievement/AchievementUnlockNotification";
 
 // Unified status colors
 const statusColor = {
@@ -300,6 +302,23 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
         setTimeout(() => {
           onClose();
         }, 1000);
+
+        // Check for new achievements
+        const newlyUnlocked = await checkAchievements();
+        
+        // Show achievement notifications
+        newlyUnlocked.forEach(achievement => {
+          toast.success(
+            <AchievementUnlockNotification achievement={achievement} />,
+            {
+              duration: 5000,
+              position: "top-right",
+              style: {
+                minWidth: '320px'
+              }
+            }
+          );
+        });
       } catch (parseError) {
         // 处理解析响应中可能出现的错误
         console.error("解析任务完成响应时出错:", parseError);
@@ -373,6 +392,24 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
       }
       
       toast.success('Task deleted');
+
+      // Check for new achievements
+      const newlyUnlocked = await checkAchievements();
+      
+      // Show achievement notifications
+      newlyUnlocked.forEach(achievement => {
+        toast.success(
+          <AchievementUnlockNotification achievement={achievement} />,
+          {
+            duration: 5000,
+            position: "top-right",
+            style: {
+              minWidth: '320px'
+            }
+          }
+        );
+      });
+
       onClose();
     } catch (err) {
       console.error('Failed to delete task:', err);
