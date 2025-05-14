@@ -1,9 +1,9 @@
 // services/dropService.js
-import { ShopItem } from '../models/ShopItem.js';
-import Card from '../models/Card.js';
-import User from '../models/User.js';
-import { UserInventory } from '../models/Inventory.js';
-import mongoose from 'mongoose';
+import { ShopItem } from "../models/ShopItem.js";
+import Card from "../models/Card.js";
+import User from "../models/User.js";
+import { UserInventory } from "../models/Inventory.js";
+import mongoose from "mongoose";
 
 // 预定义的任务卡片模板
 const TASK_CARD_TEMPLATES = {
@@ -17,8 +17,8 @@ const TASK_CARD_TEMPLATES = {
       bonus: {
         experienceMultiplier: 1.1,
         goldMultiplier: 1.1,
-        specialEffect: ""
-      }
+        specialEffect: "",
+      },
     },
     {
       title: "怪物掉落卡",
@@ -28,11 +28,11 @@ const TASK_CARD_TEMPLATES = {
       bonus: {
         experienceMultiplier: 1.2,
         goldMultiplier: 1.0,
-        specialEffect: "quick_exp"
-      }
-    }
+        specialEffect: "quick_exp",
+      },
+    },
   ],
-  
+
   // 精英怪物掉落的卡片
   elite: [
     {
@@ -43,8 +43,8 @@ const TASK_CARD_TEMPLATES = {
       bonus: {
         experienceMultiplier: 1.3,
         goldMultiplier: 1.2,
-        specialEffect: "combat_skill"
-      }
+        specialEffect: "combat_skill",
+      },
     },
     {
       title: "稀有掉落卡",
@@ -54,11 +54,11 @@ const TASK_CARD_TEMPLATES = {
       bonus: {
         experienceMultiplier: 1.2,
         goldMultiplier: 1.3,
-        specialEffect: "rare_materials"
-      }
-    }
+        specialEffect: "rare_materials",
+      },
+    },
   ],
-  
+
   // BOSS掉落的卡片
   boss: [
     {
@@ -69,8 +69,8 @@ const TASK_CARD_TEMPLATES = {
       bonus: {
         experienceMultiplier: 1.5,
         goldMultiplier: 1.5,
-        specialEffect: "boss_blessing"
-      }
+        specialEffect: "boss_blessing",
+      },
     },
     {
       title: "传说掉落卡",
@@ -80,10 +80,10 @@ const TASK_CARD_TEMPLATES = {
       bonus: {
         experienceMultiplier: 1.4,
         goldMultiplier: 1.4,
-        specialEffect: "legendary_power"
-      }
-    }
-  ]
+        specialEffect: "legendary_power",
+      },
+    },
+  ],
 };
 
 /**
@@ -97,71 +97,87 @@ export const calculateAndProcessDrops = async (monsters, player) => {
     items: [],
     cards: [],
     gold: 0,
-    exp: 0
+    exp: 0,
   };
-  
+
   const session = await mongoose.startSession();
-  
+
   try {
     session.startTransaction();
-    
+
     for (const monster of monsters) {
       // 累加基础奖励
       dropResults.gold += monster.goldDrop || 0;
       dropResults.exp += monster.expDrop || 0;
-      
+
       // 确定怪物类型
-      const monsterType = monster.type === 'boss' ? 'boss' : 
-                         (monster.tags && monster.tags.includes('elite') ? 'elite' : 'common');
-      
+      const monsterType =
+        monster.type === "boss"
+          ? "boss"
+          : monster.tags && monster.tags.includes("elite")
+          ? "elite"
+          : "common";
+
       // 处理物品掉落
       if (monster.itemDrops && Array.isArray(monster.itemDrops)) {
         for (const itemDrop of monster.itemDrops) {
           if (Math.random() * 100 < (itemDrop.rate || 0)) {
             const success = await addItemToUserInventory(
-              player.userId, 
-              itemDrop.item, 
-              1, 
+              player.userId,
+              itemDrop.item,
+              1,
               session
             );
-            
+
             if (success) {
               // 获取物品信息用于返回结果
-              const item = await ShopItem.findById(itemDrop.item).session(session);
+              const item = await ShopItem.findById(itemDrop.item).session(
+                session
+              );
               if (item) {
                 dropResults.items.push({
                   _id: item._id,
                   name: item.name,
                   itemType: item.itemType,
-                  rarity: item.rarity
+                  rarity: item.rarity,
                 });
               }
             }
           }
         }
       }
-      
+
       // 处理任务卡片掉落
       if (monster.taskCardDrops && Array.isArray(monster.taskCardDrops)) {
         for (const cardDrop of monster.taskCardDrops) {
           if (Math.random() * 100 < (cardDrop.rate || 0)) {
-            const card = await createTaskCard(player.userId, monsterType, monster.name, session);
+            const card = await createTaskCard(
+              player.userId,
+              monsterType,
+              monster.name,
+              session
+            );
             if (card) {
               dropResults.cards.push(card);
             }
           }
         }
       }
-      
+
       // BOSS保证掉落一张卡片
-      if (monster.type === 'boss' && dropResults.cards.length === 0) {
-        const card = await createTaskCard(player.userId, 'boss', monster.name, session);
+      if (monster.type === "boss" && dropResults.cards.length === 0) {
+        const card = await createTaskCard(
+          player.userId,
+          "boss",
+          monster.name,
+          session
+        );
         if (card) {
           dropResults.cards.push(card);
         }
       }
     }
-    
+
     // 更新玩家的金币和经验
     if (dropResults.gold > 0 || dropResults.exp > 0) {
       await User.findByIdAndUpdate(
@@ -169,19 +185,18 @@ export const calculateAndProcessDrops = async (monsters, player) => {
         {
           $inc: {
             gold: dropResults.gold,
-            experience: dropResults.exp
-          }
+            experience: dropResults.exp,
+          },
         },
         { session }
       );
     }
-    
+
     await session.commitTransaction();
     return dropResults;
-    
   } catch (error) {
     await session.abortTransaction();
-    console.error('Drop processing error:', error);
+    console.error("Drop processing error:", error);
     throw error;
   } finally {
     session.endSession();
@@ -204,17 +219,17 @@ const addItemToUserInventory = async (userId, itemId, quantity, session) => {
       console.error(`Item not found: ${itemId}`);
       return false;
     }
-    
+
     // 更新或创建用户背包条目
     await UserInventory.updateOne(
       { userId, item: itemId },
       { $inc: { quantity } },
       { upsert: true, session }
     );
-    
+
     return true;
   } catch (error) {
-    console.error('Error adding item to inventory:', error);
+    console.error("Error adding item to inventory:", error);
     return false;
   }
 };
@@ -229,9 +244,10 @@ const addItemToUserInventory = async (userId, itemId, quantity, session) => {
  */
 const createTaskCard = async (userId, monsterType, monsterName, session) => {
   try {
-    const templates = TASK_CARD_TEMPLATES[monsterType] || TASK_CARD_TEMPLATES.common;
+    const templates =
+      TASK_CARD_TEMPLATES[monsterType] || TASK_CARD_TEMPLATES.common;
     const template = templates[Math.floor(Math.random() * templates.length)];
-    
+
     // 构建卡片数据
     const cardData = {
       user: userId,
@@ -245,34 +261,33 @@ const createTaskCard = async (userId, monsterType, monsterName, session) => {
         specialEffect: template.bonus.specialEffect,
       },
       reusable: false,
-      issuedAt: new Date()
+      issuedAt: new Date(),
     };
-    
+
     // 创建卡片
     const [card] = await Card.create([cardData], { session });
-    
+
     // 添加到用户卡片库存（注意：是 cardInventory 而不是 inventory）
     await User.findByIdAndUpdate(
       userId,
       { $push: { cardInventory: card._id } },
       { session }
     );
-    
+
     return {
       _id: card._id,
       title: card.title,
       description: card.description,
       type: card.type,
       taskDuration: card.taskDuration,
-      bonus: card.bonus
+      bonus: card.bonus,
     };
-    
   } catch (error) {
-    console.error('Error creating task card:', error);
+    console.error("Error creating task card:", error);
     return null;
   }
 };
 
 export default {
-  calculateAndProcessDrops
+  calculateAndProcessDrops,
 };

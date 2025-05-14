@@ -2,7 +2,6 @@ import UserStats from "../models/UserStats.js";
 import Achievement from "../models/Achievement.js";
 import UserAchievement from "../models/UserAchievement.js";
 import User from "../models/User.js";
-import { checkIfGodAchievementUnlocked } from "./userStatsSync.js";
 
 export async function checkAndUnlockAchievements(userId) {
   try {

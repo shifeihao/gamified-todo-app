@@ -1,7 +1,5 @@
 // routes/api/achievement.js
 import express from "express";
-import Achievement from "../../models/Achievement.js";
-import UserAchievement from "../../models/UserAchievement.js";
 import { protect } from "../../middleware/auth.js";
 import {
   getAllAchievements,
