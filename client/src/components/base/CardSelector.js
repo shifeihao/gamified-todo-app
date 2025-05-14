@@ -46,8 +46,8 @@ export const CardSelector = ({
         }
         
       } catch (error) {
-        console.error('CardSelector - 获取卡片失败:', error);
-        // 错误处理：确保设置了默认值
+        console.error('CardSelector - Failed to obtain card:', error);
+        // Error handling: make sure default value is set
         setCards([]);
         setDailyCards(0);
       } finally {
@@ -68,7 +68,7 @@ export const CardSelector = ({
     }
   };
 
-  // 过滤奖励卡：special 且 duration 匹配或通用
+  // Filter reward cards: special and duration matches or universal
   const getRewardCards = () => {
     return cards.filter(card => 
       card.type === 'special' && 
@@ -85,7 +85,7 @@ export const CardSelector = ({
 
   return (
     <div className="mb-4" data-testid="card-selector">
-      {/* 仅在未开启奖励卡模式时显示空白卡数量 */}
+      {/* Display the number of blank cards only when the reward card mode is not turned on */}
       {!showRewards && (
           <div className="text-sm font-medium mb-2">
             Blank cards available: {dailyCards}

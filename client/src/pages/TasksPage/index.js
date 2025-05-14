@@ -21,7 +21,7 @@ import {
 } from "../../services/cardService";
 import axios from "axios";
 
-// 仅用于读数据，不纳入 useApiAction
+// Only used to read data, not included useApiAction
 import {
   getTasks,
   getEquippedTasks,
@@ -29,7 +29,7 @@ import {
   getEquippedLongTasks,
 } from "../../services/taskService";
 
-// 下面这些带 Service 后缀的函数，交给 useApiAction 管理 loading / error / 回调
+// The following functions with the Service suffix are handed over to useApiAction to manage loading / error / callback
 import {
   createTask as createTaskService,
   updateTask as updateTaskService,
@@ -52,78 +52,78 @@ const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
   const [equippedTasks, setEquippedTasks] = useState([]);
-  const [equippedShortTasks, setEquippedShortTasks] = useState([]); // short任务槽
-  const [equippedLongTasks, setEquippedLongTasks] = useState([]); // 长期任务槽
+  const [equippedShortTasks, setEquippedShortTasks] = useState([]); // short task slot
+  const [equippedLongTasks, setEquippedLongTasks] = useState([]); // Long-term task slot
   const [rewardInfo, setRewardInfo] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [createSlotIndex, setCreateSlotIndex] = useState(-1);
-  const [createSlotType, setCreateSlotType] = useState("short"); // 默认创建任务类型
+  const [createSlotType, setCreateSlotType] = useState("short"); // Default creation task type
 
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // 当前激活的 tab: 'daily' | 'repository' | 'timetable'
+  // Currently active tab: 'daily' | 'repository' | 'timetable'
   const [activeTab, setActiveTab] = useState("daily");
 
-  // 添加一个状态，用于记录最近是否有任务完成
+  // Add a status to record whether the task has been completed recently
   const [recentlyCompletedTask, setRecentlyCompletedTask] = useState(false);
 
-  // 标记任务最近完成，并在5秒后重置
+  // Marks the task as recently completed and resets after 5 seconds
   const markTaskAsRecentlyCompleted = () => {
     setRecentlyCompletedTask(true);
     setTimeout(() => setRecentlyCompletedTask(false), 5000);
   };
 
-  // 拉取任务与卡片库存
+  // Pull tasks and card inventory
   const fetchTasks = async () => {
     if (!user?.token) {
-      console.log("用户未登录，跳过获取任务");
+      console.log("The user is not logged in, skip the acquisition task");
       return;
     }
 
     try {
-      // 优先尝试获取当前卡片库存
+      // First try to get the current card inventory
       let cardData = { inventory: [] };
       try {
         cardData = await getCardInventory(user.token);
-        console.log("获取到的卡片库存数据:", cardData);
+        console.log("Obtained card inventory data:", cardData);
       } catch (err) {
-        console.error("获取卡片库存失败:", err);
+        console.error("Failed to obtain card inventory:", err);
       }
 
-      // 如果卡片库存为空或少于5张，尝试初始化新用户卡片
+      // If the card inventory is empty or has less than 5 cards, try to initialize a new user card
       if (!cardData.inventory || cardData.inventory.length < 5) {
-        console.log("卡片库存不足，尝试获取每日卡片和补充卡片...");
+        console.log("Low card stock, try to get daily cards and replenishment cards...");
 
         try {
           await getNewDailyCards(user.token);
-          console.log("成功获取每日卡片");
+          console.log("Successfully obtained the daily card");
         } catch (err) {
-          console.log("尝试获取每日卡片失败，可能已经获取过", err);
+          console.log("An attempt to obtain a daily card failed. You may have already obtained it.", err);
         }
 
         if (!cardData.inventory || cardData.inventory.length < 2) {
-          console.log("新用户可能需要初始化卡片，尝试创建额外的空白卡片...");
+          console.log("New users may need to initialize the card, try creating additional blank cards...");
 
           try {
             await createBlankCard(user.token);
-            console.log("成功创建补充空白卡片");
+            console.log("Supplemental blank card created successfully");
           } catch (err) {
-            console.log("创建空白卡片失败", err);
+            console.log("Failed to create blank card", err);
           }
         }
 
         try {
           cardData = await getCardInventory(user.token);
-          console.log("更新后的卡片库存:", cardData);
+          console.log("Updated card inventory:", cardData);
         } catch (err) {
-          console.error("重新获取卡片库存失败:", err);
+          console.error("Failed to retrieve card inventory:", err);
         }
       }
 
-      // 使用 Promise.allSettled 替代 Promise.all，这样即使某些请求失败也不会影响其他请求
+      // Use Promise.allSettled instead of Promise.all so that even if some requests fail, it will not affect other requests.
       const results = await Promise.allSettled([
         getTasks(user.token),
         getEquippedTasks(user.token),
@@ -134,7 +134,7 @@ const TasksPage = () => {
         }),
       ]);
 
-      // 处理每个请求的结果
+      // Process the results of each request
       const [
         tasksResult,
         equippedResult,
@@ -143,7 +143,7 @@ const TasksPage = () => {
         levelInfoResult,
       ] = results;
 
-      // 更新状态，只更新成功获取的数据
+      // Update status, only update successfully acquired data
       if (tasksResult.status === "fulfilled" && tasksResult.value) {
         setTasks(tasksResult.value);
       }
@@ -163,27 +163,27 @@ const TasksPage = () => {
         setRewardInfo(levelInfoResult.value.data);
       }
 
-      // 更新卡片库存
+      // Update Card Inventory
       if (cardData.inventory) {
         setCards(cardData.inventory);
       }
 
-      // 检查是否所有请求都失败了
+      // Check if all requests failed
       const allFailed = results.every((result) => result.status === "rejected");
       if (allFailed && !recentlyCompletedTask) {
-        console.error("所有任务数据获取失败");
-        showError("获取任务数据失败，请尝试刷新页面");
+        console.error("Failed to obtain all task data");
+        showError("Failed to obtain task data, please try refreshing the page");
       }
     } catch (err) {
-      console.error("获取任务数据出错:", err);
-      // 只有在最近没有任务完成时才显示错误
+      console.error("Error in getting task data:", err);
+      // Show error only if no task has been completed recently
       if (!recentlyCompletedTask) {
-        showError("获取任务数据失败，请尝试刷新页面");
+        showError("Failed to obtain task data, please try refreshing the page");
       }
     }
   };
 
-  // 添加自动重试机制
+  // Add automatic retry mechanism
   useEffect(() => {
     let retryCount = 0;
     const maxRetries = 3;
@@ -195,7 +195,7 @@ const TasksPage = () => {
       } catch (err) {
         if (retryCount < maxRetries) {
           retryCount++;
-          console.log(`第 ${retryCount} 次重试获取任务数据...`);
+          console.log(`Retry to get task data for ${retryCount} times...`);
           setTimeout(tryFetchTasks, retryDelay);
         }
       }
@@ -206,9 +206,9 @@ const TasksPage = () => {
     }
   }, [user]);
 
-  // 监听任务和子任务完成事件，刷新任务数据
+  // Monitor task and subtask completion events and refresh task data
   useEffect(() => {
-    // 创建事件处理函数
+    // Creating an event handler
     const handleTaskOrSubtaskCompleted = () => {
       fetchTasks();
     };

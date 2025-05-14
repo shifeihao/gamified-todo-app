@@ -2,15 +2,15 @@ import { useState } from 'react';
 
 /**
  * useApiAction
- * 抽象单次 API 操作流程：
- * - 自动管理 loading & error 状态
- * - 执行后触发刷新和提示
+ * Abstract single API operation process：
+ * - Automatically manage loading & error states
+ * - Trigger refresh and prompt after execution
  *
- * @param {Function} actionFn - 具体的 API 调用函数 (args) => Promise
+ * @param {Function} actionFn - Specific API call function (args) => Promise
  * @param {Object} options
- * @param {Function} [options.onSuccess] - 成功后的回调 (例如显示提示)
- * @param {Function} [options.onError] - 失败后的回调 (接收错误信息)
- * @param {Function} [options.refresh] - 操作完成后刷新列表的函数
+ * @param {Function} [options.onSuccess] - Callback after success (for example, display a prompt)
+ * @param {Function} [options.onError] - Callback after failure (receive error information)
+ * @param {Function} [options.refresh] - Function to refresh the list after the operation is completed
  * @returns {{execute: ((function(...[*]): Promise<*|undefined>)|*), loading: boolean, error: string}}
  */
 export function useApiAction(actionFn, { onSuccess, onError, refresh } = {}) {
@@ -22,9 +22,9 @@ export function useApiAction(actionFn, { onSuccess, onError, refresh } = {}) {
     setError('');
     try {
       const result = await actionFn(...params);
-      const input = params[0]; //  拿到第一个参数作为 input 数据
-      // 成功提示 & 刷新
-      if (onSuccess) onSuccess(result, input); //  透传 input
+      const input = params[0]; //  Get the first parameter as input data
+// Success prompt & refresh
+      if (onSuccess) onSuccess(result, input); //  Transparent input
       if (refresh) await refresh();
       return result;
     } catch (err) {

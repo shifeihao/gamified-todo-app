@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Modal = ({ isOpen, onClose, children, title, size = 'md' }) => {
-  // 按ESC键关闭模态框
+  // Press the ESC key to close the modal box
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') {
@@ -14,7 +14,7 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }) => {
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
-  // 防止点击内容区域时关闭模态框
+  // Prevent the modal from closing when clicking on the content area
   const handleContentClick = (e) => {
     e.stopPropagation();
   };
@@ -48,7 +48,7 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }) => {
             onClick={handleContentClick}
             className={`w-full ${sizeClasses[size] || sizeClasses.md} bg-white rounded-2xl shadow-xl overflow-hidden`}
           >
-            {/* 模态框头部 */}
+            {/* Modal header */}
             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
               <button
@@ -61,7 +61,7 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }) => {
               </button>
             </div>
 
-            {/* 模态框内容 */}
+            {/* Modal header */}
             <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
               {children}
             </div>

@@ -186,115 +186,115 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
     setLoading(true);
     
     try {
-      // 如果是长期任务，使用专门的API完成
+      // If it is a long-term task, use a dedicated API to complete it
       if (task.type === 'long') {
-        // 导入长期任务专用的服务
+        // Importing dedicated services for long-term tasks
         const { completeLongTask } = await import('../../services/taskService');
         const response = await completeLongTask(taskId, user.token);
 
-        console.log("长期任务完成响应:", response);
+        console.log("Long-term task completion response:", response);
 
         try {
-          // 从响应中提取任务和奖励数据
+          // Extract the task and reward data from the response
           const updatedTask = response.task;
           const reward = response.reward;
 
-          console.log("解析后的长期任务数据:", updatedTask);
-          console.log("解析后的长期任务奖励数据:", reward);
+          console.log("Parsed long-term mission data:", updatedTask);
+          console.log("Parsed long-term task reward data:", reward);
 
-          // 更新本地任务状态
+          // Update local task status
           if (updatedTask) {
             setTask(updatedTask);
             if (onTaskUpdated) {
               onTaskUpdated(updatedTask);
             }
           } else {
-            // 如果没有获得更新的任务数据，也把当前任务标记为完成
+            // If no updated task data is obtained, the current task is also marked as completed
             const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
             setTask(localUpdatedTask);
             if (onTaskUpdated) {
               onTaskUpdated(localUpdatedTask);
             }
-            console.log("未获得更新任务数据，使用本地更新状态");
+            console.log("No update task data was obtained, using local update status");
           }
 
-          // 使用专门的长期任务完成通知组件
+          // Use a dedicated long-term task completion notification component
           const { showLongTaskCompletedToast } = await import('./TaskCompletedToast');
           showLongTaskCompletedToast(response, updatedTask || task);
 
-          // 触发任务完成事件
+          // Triggering a task completion event
           window.dispatchEvent(new CustomEvent('taskCompleted'));
 
-          // 任务完成后延迟关闭详情模态框
+            // Delay closing the details modal after the task is completed
           setTimeout(() => {
             onClose();
           }, 1000);
         } catch (parseError) {
-          // 处理解析响应中可能出现的错误
-          console.error("解析长期任务完成响应时出错:", parseError);
+          // Handle possible errors in parsing responses
+          console.error("Error parsing long task completion response:", parseError);
 
-          // 即使解析出错，仍然显示任务完成信息
+          // Even if parsing errors occur, task completion information is still displayed
           toast.success("Quest Complete!");
 
-          // 更新本地任务状态
+          // Update local task status
           const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
           setTask(localUpdatedTask);
           if (onTaskUpdated) {
             onTaskUpdated(localUpdatedTask);
           }
 
-          // 触发任务完成事件
+          // Triggering a task completion event
           window.dispatchEvent(new CustomEvent('taskCompleted'));
 
-          // 延迟关闭模态框
+          // Delay closing modal
           setTimeout(() => onClose(), 1000);
         }
       } else {
-        // 普通任务完成逻辑
+        // Normal task completion logic
         const response = await axios.put(
           `/api/tasks/${taskId}`,
           { status: 'completed' },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
         
-        console.log("普通任务完成响应:", response);
+        console.log("Normal task completion response:", response);
         
         try {
-          // 从响应中提取任务和奖励数据，考虑多种可能的结构
+          // Extract task and reward data from the response, considering multiple possible structures
           let updatedTask = null;
           let reward = null;
           
-          // 尝试从不同位置获取数据
+          // Try getting data from different locations
           if (response?.data?.task) updatedTask = response.data.task;
           else if (response?.task) updatedTask = response.task;
           
           if (response?.data?.reward) reward = response.data.reward;
           else if (response?.reward) reward = response.reward;
           
-          console.log("解析后的普通任务数据:", updatedTask);
-          console.log("解析后的普通任务奖励数据:", reward);
+          console.log("Parsed common task data:", updatedTask);
+          console.log("Parsed reward data for common tasks:", reward);
           
-          // 更新本地任务状态(如果获得了有效的更新数据)
+          // Update local task status (if valid update data is obtained)
           if (updatedTask) {
             setTask(updatedTask);
             if (onTaskUpdated) {
               onTaskUpdated(updatedTask);
             }
           } else {
-            // 即使没有获得更新的任务数据，也把当前任务标记为完成
+            // Mark the current task as completed even if no updated task data is obtained
             const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
             setTask(localUpdatedTask);
             if (onTaskUpdated) {
               onTaskUpdated(localUpdatedTask);
             }
-            console.log("未获得更新任务数据，使用本地更新状态");
+            console.log("No update task data was obtained, using local update status");
           }
           
-          // 显示奖励信息
+          // Show reward information
           if (reward) {
             const { expGained, goldGained, leveledUp, newLevel } = reward;
             
-            // 确保奖励值有效
+            // Make sure the reward value is valid
             if (expGained > 0 || goldGained > 0) {
               toast.success(
                 <div className="flex flex-col space-y-1">
@@ -316,12 +316,12 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
                 { duration: 5000, position: 'top-center' }
               );
             } else {
-              // 奖励值为0，使用任务自身或默认值
+              // The reward value is 0, use the task itself or the default value
               const currentTask = updatedTask || task;
               const defaultXp = currentTask.experienceReward || (currentTask.type === 'long' ? 30 : 10);
               const defaultGold = currentTask.goldReward || (currentTask.type === 'long' ? 15 : 5);
               
-              console.log(`任务完成但奖励值为0，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
+              console.log(`The task is completed but the reward value is 0, use the default value: ${defaultXp} XP, ${defaultGold} Gold`);
               
               toast.success(
                 <div className="flex flex-col space-y-1">
@@ -338,12 +338,12 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
               );
             }
           } else {
-            // 没有奖励数据，使用任务自身或默认值
+            // No reward data, use the task itself or default value
             const currentTask = updatedTask || task;
             const defaultXp = currentTask.experienceReward || (currentTask.type === 'long' ? 30 : 10);
             const defaultGold = currentTask.goldReward || (currentTask.type === 'long' ? 15 : 5);
             
-            console.log(`任务完成但无奖励数据，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
+              console.log(`The task is completed but there is no reward data, use the default value: ${defaultXp} XP, ${defaultGold} Gold`);
             
             toast.success(
               <div className="flex flex-col space-y-1">
@@ -360,10 +360,10 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             );
           }
           
-          // 触发任务完成事件
+          // Triggering a task completion event
           window.dispatchEvent(new CustomEvent('taskCompleted'));
           
-          // 任务完成后延迟关闭详情模态框
+          // Delay closing the details modal after the task is completed
           setTimeout(() => {
             onClose();
           }, 1000);
@@ -385,23 +385,23 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             );
           });
         } catch (parseError) {
-          // 处理解析响应中可能出现的错误
-          console.error("解析任务完成响应时出错:", parseError);
+          // Handle possible errors in parsing responses
+          console.error("Error parsing task completion response:", parseError);
           
-          // 即使解析出错，仍然显示任务完成信息
+          // Even if parsing errors occur, task completion information is still displayed
           toast.success("Quest completed successfully!");
           
-          // 更新本地任务状态
+          // Update local task status
           const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
           setTask(localUpdatedTask);
           if (onTaskUpdated) {
             onTaskUpdated(localUpdatedTask);
           }
           
-          // 触发任务完成事件
+          // Triggering a task completion event
           window.dispatchEvent(new CustomEvent('taskCompleted'));
           
-          // 延迟关闭模态框
+          // Delay closing modal
           setTimeout(() => onClose(), 1000);
         }
       }
@@ -410,9 +410,9 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
       const errorMessage = err.response?.data?.message || 'Failed to complete task';
       toast.error(errorMessage);
       
-      // 如果是网络错误或其他非服务器拒绝的错误，尝试本地更新任务状态
+      // If it is a network error or other non-server rejection error, try to update the task status locally
       if (!err.response || err.response.status >= 500) {
-        console.log("尝试本地任务状态更新(服务器错误情况)");
+        console.log("Attempt to update local task status (server error condition)");
         try {
           const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
           setTask(localUpdatedTask);
@@ -430,10 +430,10 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             { duration: 5000, position: 'top-center' }
           );
           
-          // 稍后关闭模态框
+          // Close the modal later
           setTimeout(() => onClose(), 2000);
         } catch (localError) {
-          console.error("本地任务状态更新失败:", localError);
+          console.error("Local task status update failed:", localError);
         }
       }
     } finally {
@@ -836,12 +836,3 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
   );
 };
 
-// TaskDetailModal改进说明：
-// 1. 增加了任务进度显示卡片，清晰展示任务完成百分比 
-// 2. 添加了卡片详情展示，显示使用的卡片及其加成效果
-// 3. 增加了奖励信息区域，展示基础及额外奖励
-// 4. 添加了时间信息区域，显示任务时间轴包括创建、装备、完成时间
-// 5. 增加了任务完成按钮，直接在详情页完成任务
-// 6. 改进了子任务显示，添加了截止日期和完成时间
-// 7. 优化了整体布局和视觉设计，使用卡片布局和分区展示信息
-// 8. 加强了游戏化体验，显示详细奖励和完成效果

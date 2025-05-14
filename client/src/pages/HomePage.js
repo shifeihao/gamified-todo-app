@@ -19,8 +19,8 @@ const HomePage = () => {
       icon: SparklesIcon,
     },
     {
-      name: "Progress Tracking",
-      description: "Visualize your achievement growth trajectory",
+      name: "Maze exploration",
+      description: "Navigate mazes to unlock new rewards",
       icon: ChartBarIcon,
     },
     {

@@ -13,18 +13,18 @@ const DailyTaskPanel = ({
   onCreateTask,
   user,
 }) => {
-  // 只展示短期任务
+  // Show only short-term tasks
   const shortTasks = equippedTasks.filter((t) => t.type === "short");
 
   return (
         <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-4 border-2 border-purple-300 backdrop-blur-sm">
-            {/* 固定高度的标题区域 */}
+            {/* Fixed height title area */}
             <div className="flex items-center justify-between h-14">
                 <h2 className="text-xl font-bold text-purple-900 flex items-center">
                     <Zap className="h-6 w-6 mr-2" />
                     Quick Quests
                 </h2>
-                {/* 空的div，保持与另一个面板相同的结构 */}
+                {/* Empty div, keeping the same structure as the other panel */}
                 <div className="flex space-x-2">
                 </div>
             </div>

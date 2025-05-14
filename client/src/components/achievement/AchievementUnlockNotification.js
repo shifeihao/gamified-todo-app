@@ -15,7 +15,7 @@ const AchievementUnlockNotification = ({ achievement }) => {
         )}
       </div>
       <div className="flex-1">
-        <h3 className="text-lg font-semibold text-gray-900">成就解锁!</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Achievement Unlocked !</h3>
         <p className="text-yellow-600 font-medium">{achievement.name}</p>
         <p className="text-sm text-gray-600">{achievement.description}</p>
         {(achievement.reward.exp > 0 || 
@@ -23,19 +23,19 @@ const AchievementUnlockNotification = ({ achievement }) => {
           achievement.reward.task_short_slot > 0 || 
           achievement.reward.task_long_slot > 0) && (
           <div className="mt-2 text-sm">
-            <p className="text-gray-700 font-medium">获得奖励:</p>
+            <p className="text-gray-700 font-medium">Reward Earned:</p>
             <div className="flex space-x-3 text-gray-600">
               {achievement.reward.exp > 0 && (
-                <span>经验 +{achievement.reward.exp}</span>
+                <span>Exp +{achievement.reward.exp}</span>
               )}
               {achievement.reward.coins > 0 && (
-                <span>金币 +{achievement.reward.coins}</span>
+                <span>Coin +{achievement.reward.coins}</span>
               )}
               {achievement.reward.task_short_slot > 0 && (
-                <span>短期任务槽 +{achievement.reward.task_short_slot}</span>
+                <span>Short-term Slot +{achievement.reward.task_short_slot}</span>
               )}
               {achievement.reward.task_long_slot > 0 && (
-                <span>长期任务槽 +{achievement.reward.task_long_slot}</span>
+                <span>Long-term Slot +{achievement.reward.task_long_slot}</span>
               )}
             </div>
           </div>

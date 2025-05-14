@@ -25,27 +25,27 @@ export const CreateTaskModal = ({
   const { user } = useContext(AuthContext);
   const isFromSlot = slotIndex >= 0;
   
-  // 添加refs来防止无限循环更新
+    // Add refs to prevent infinite update loop
   const initializedRef = useRef(false);
   const taskTypeInitializedRef = useRef(false);
   const dueDateInitializedRef = useRef(false);
   
   // Properly calculate initial task type
   const getInitialTaskType = () => {
-    // 编辑现有任务时，使用其类型
+    // When editing an existing task, use its type
     if (initialData?.type) {
-      console.log(`编辑现有任务，使用类型: ${initialData.type}`);
+      console.log(`Edit an existing task, using the type: ${initialData.type}`);
       return initialData.type;
     }
     
-    // 从槽位创建任务时，使用槽位类型
+    // When creating a task from a slot, use the slot type
     if (isFromSlot) {
-      console.log(`从槽位创建任务，使用类型: ${defaultType}`); 
+      console.log(`Create a task from a slot, using type: ${defaultType}`);
       return defaultType;
     }
     
-    // 默认情况
-    console.log(`使用默认类型: ${defaultType}`);
+    // Default to the provided default type
+    console.log(`Use default type: ${defaultType}`);
     return defaultType;
   };
 
@@ -71,13 +71,13 @@ export const CreateTaskModal = ({
   const [blankCards, setBlankCards] = useState([]);
   const [rewardCards, setRewardCards] = useState([]);
 
-  // 添加缓存上一次表单数据的ref
+  // Add a ref to cache the last form data
   const prevFormValuesRef = useRef(null);
   
-  // 添加默认类型的输出，帮助调试
+  // Added default type output to help debugging
   useEffect(() => {
     if (!initializedRef.current) {
-      console.log("CreateTaskModal初始化参数:", {
+      console.log("CreateTaskModal  Initialization parameters:", {
         isFromSlot,
         slotIndex,
         defaultType,
@@ -89,17 +89,17 @@ export const CreateTaskModal = ({
 
   // Effect to initialize task type and handle card selection when task type changes
   useEffect(() => {
-    // 防止重复执行
+    // Preventing duplicate execution
     if (taskTypeInitializedRef.current) {
       return;
     }
     
-    // 严格控制任务类型 - 从槽创建任务时始终使用槽位类型
+    // Strictly control task types - always use the slot type when creating tasks from slots
     if (isFromSlot && taskType !== defaultType) {
-      console.log(`从槽创建任务，强制使用类型: ${defaultType}`);
+      console.log(`Create a task from a slot, enforcing the type: ${defaultType}`);
       setTaskType(defaultType);
       taskTypeInitializedRef.current = true;
-      return; // 提前返回，避免重置卡片选择
+      return; // Return early to avoid resetting card selection
     }
     
     // 编辑现有任务时总是使用任务原类型
@@ -107,13 +107,13 @@ export const CreateTaskModal = ({
       console.log(`编辑现有任务，强制使用类型: ${initialData.type}`);
       setTaskType(initialData.type);
       taskTypeInitializedRef.current = true;
-      return; // 提前返回，避免重置卡片选择
+      return; // Return early to avoid resetting card selection
     }
     
     taskTypeInitializedRef.current = true;
   }, [initialData, defaultType, isFromSlot, taskType]);
 
-  // 分离出自动切换奖励卡模式的逻辑，并使用useState的函数形式更新，避免连锁反应
+  // Separate the logic of automatically switching reward card mode and update it in a functional form using useState to avoid chain reactions
   useEffect(() => {
     // Automatically switch to reward cards if blank cards are not available
     const hasShortBlankCards = shortBlankCards > 0;
@@ -126,7 +126,7 @@ export const CreateTaskModal = ({
     
     // If blank cards are not available but reward cards are, switch to reward mode
     if (!hasCurrentTypeBlank && hasCurrentTypeReward && !useReward) {
-      console.log("没有空白卡片但有奖励卡片，切换到奖励卡模式");
+      console.log("There are no blank cards but there are reward cards, switch to reward card mode");
       setUseReward(true);
     }
   }, [shortBlankCards, longBlankCards, shortRewardCount, longRewardCount, taskType, useReward]);
@@ -140,10 +140,10 @@ export const CreateTaskModal = ({
     // 当任务类型改变时立即重新获取库存
     // 这会触发依赖于taskType的fetchInventory()
     if (isOpen && user && taskType) {
-      console.log(`任务类型变更为: ${taskType}，重新获取匹配的卡片`);
+      console.log(`Task type changed to: ${taskType}, retrieve the matching cards`);
       setIsFetchingInventory(true);
       const timer = setTimeout(() => {
-        fetchInventory(); // 使用setTimeout避免可能的状态更新冲突
+        fetchInventory(); // Use setTimeout to avoid possible state update conflicts
       }, 50);
       
       return () => clearTimeout(timer);
@@ -166,7 +166,7 @@ export const CreateTaskModal = ({
     } else if (initialData?.dueDate) {
       setDueDate(new Date(initialData.dueDate).toISOString().slice(0, 16));
     } else if (taskType === 'long') {
-      // 为长期任务设置默认截止日期为一周后
+      // Set a default due date of one week for long-term tasks
       const now = new Date();
       now.setDate(now.getDate() + 7);
       setDueDate(now.toISOString().slice(0, 10)); // 只保留日期部分
@@ -181,29 +181,29 @@ export const CreateTaskModal = ({
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(1);
-      // 如果不是编辑模式，需要重置表单状态
+      // If it is not in edit mode, you need to reset the form state
       if (!initialData) {
         resetFormState();
       }
     } else {
-      // 重置所有ref，以便下次打开模态窗口时能正确初始化
+      // Reset all refs so that they can be initialized correctly the next time the modal window is opened
       initializedRef.current = false;
       taskTypeInitializedRef.current = false;
       dueDateInitializedRef.current = false;
     }
   }, [isOpen, initialData]);
   
-  // 检查并修改任务类型选择逻辑，防止无限循环
+  // Check and modify the task type selection logic to prevent infinite loops
   const didSetDefaultType = useRef(false);
   useEffect(() => {
-    // 只在初始加载时设置defaultType，而不是每次渲染
+    // Only set defaultType on initial load, not every render
     if (defaultType && !didSetDefaultType.current) {
       setTaskType(defaultType);
       didSetDefaultType.current = true;
     }
   }, [defaultType]);
 
-  // 确保组件卸载时重置标记
+  // Make sure to reset the flag when the component unmounts
   useEffect(() => {
     return () => {
       didSetDefaultType.current = false;
@@ -213,7 +213,7 @@ export const CreateTaskModal = ({
     };
   }, []);
 
-  // 添加单独的fetchInventory函数，供手动调用
+  // Add a separate fetchInventory function for manual calling
   const fetchInventory = async () => {
     if (!user || !isOpen) return;
     setIsFetchingInventory(true);
@@ -255,9 +255,9 @@ export const CreateTaskModal = ({
       setShortRewardCount(shortRewards.length);
       setLongRewardCount(longRewards.length);
       
-      console.log(`当前任务类型: ${taskType}`);
-      console.log(`空白卡数量 - 短期: ${shortBlanks.length}, 长期: ${longBlanks.length}`);
-      console.log(`奖励卡数量 - 短期: ${shortRewards.length}, 长期: ${longRewards.length}`);
+      console.log(`Current task type: ${taskType}`);
+      console.log(`Blank Card Quantity - Short Term: ${shortBlanks.length}, Long Term: ${longBlanks.length}`);
+      console.log(`Number of Reward Cards - Short Term: ${shortRewards.length}, Long Term: ${longRewards.length}`);
       
       // Get cards for current task type
       const currentTypeBlankCards = taskType === 'short' ? shortBlanks : longBlanks;
@@ -284,30 +284,30 @@ export const CreateTaskModal = ({
       // 1. If previous selection is still valid, keep it
       if (prevSelectedCardStillValid || prevBlankCardStillValid) {
         // Keep current selection
-        console.log("保持当前卡片选择");
+        console.log("Keep current card selection");
       }
       // 2. If no blank cards but reward cards available, auto-switch to reward card mode
       else if (!hasBlankCards && hasRewardCards) {
-        console.log("没有空白卡片，自动切换到奖励卡片模式");
+        console.log("No blank cards, automatically switch to reward card mode");
         setUseReward(true);
         setSelectedCard(currentTypeRewardCards[0]);
         setSelectedBlankCard(null);
       } 
       // 3. If blank cards available and not in reward mode, select blank card
       else if (hasBlankCards && !useReward) {
-        console.log("选择匹配任务类型的空白卡片");
+        console.log("Select a blank card that matches the task type");
         setSelectedBlankCard(currentTypeBlankCards[0]);
         setSelectedCard(null);
       }
       // 4. If reward cards available and in reward mode, select reward card
       else if (hasRewardCards && useReward) {
-        console.log("选择匹配任务类型的奖励卡片");
+        console.log("Select a reward card that matches the mission type");
         setSelectedCard(currentTypeRewardCards[0]);
         setSelectedBlankCard(null);
       }
       // 5. If no cards available, clear all selections
       else {
-        console.log("没有可用卡片，清除所有选择");
+        console.log("No cards available, clear all selections");
         setSelectedBlankCard(null);
         setSelectedCard(null);
       }
@@ -328,15 +328,15 @@ export const CreateTaskModal = ({
   }, [isOpen, user, useReward]);
 
   const resetFormState = () => {
-    // 完全重置所有状态
+    // Completely reset all states
     setTaskType(getInitialTaskType());
-    setUseReward(false); // 始终重置为false，避免使用上一次的状态
+    setUseReward(false); // Always reset to false to avoid using the last state
     setSelectedCard(null);
     setSelectedBlankCard(null);
     setCardError('');
     setCurrentStep(1);
     setFormValues(null);
-    // 确保清除表单值
+    // Make sure to clear the form values
     if (document.getElementById('title')) document.getElementById('title').value = '';
     if (document.getElementById('description')) document.getElementById('description').value = '';
   };
@@ -359,23 +359,23 @@ export const CreateTaskModal = ({
     );
   };
   
-  // 优化包装TaskForm的方式，避免不必要的重渲染
+  // Optimize the way of packaging TaskForm to avoid unnecessary re-rendering
   const handleFormChange = useCallback((formValues) => {
     if (!formValues) return;
     
-    // 比较当前和上一次表单数据
+    // Compare current and previous form data
     const formValuesJSON = JSON.stringify(formValues);
     if (formValuesJSON === prevFormValuesRef.current) {
-      return; // 如果值未变，不更新状态
+      return; // If the value has not changed, do not update the state
     }
     
-    // 更新缓存和状态
+    // Update cache and state
     prevFormValuesRef.current = formValuesJSON;
     setFormValues(formValues);
   }, []);
 
   const handleSubmitForm = async (formFields) => {
-    // 先检查表单字段是否有效
+    // First check if the form fields are valid
     if (!formFields.title || formFields.title.trim() === '') {
       toast.error(
         <div className="flex items-center">
@@ -387,9 +387,9 @@ export const CreateTaskModal = ({
       return;
     }
     
-    // 验证子任务信息 - 如果是长期任务
+    // Verify subtask information - if it is a long-term task
     if (taskType === 'long') {
-      // 确保有截止日期
+      // Make sure there is a deadline
       if (!formFields.dueDate) {
         toast.error(
           <div className="flex items-center">
@@ -401,7 +401,7 @@ export const CreateTaskModal = ({
         return;
       }
       
-      // 检查子任务
+      // Check subtasks
       if (!formFields.subTasks || formFields.subTasks.length === 0) {
         toast.error(
           <div className="flex items-center">
@@ -441,7 +441,7 @@ export const CreateTaskModal = ({
         return;
       }
 
-      // 验证选择的奖励卡是否匹配当前任务类型
+      // Verify that the selected reward card matches the current task type
       if (selectedCard.taskDuration !== 'general' && selectedCard.taskDuration !== taskType) {
         toast.error(
           <div className="flex items-center">
@@ -451,7 +451,7 @@ export const CreateTaskModal = ({
           { duration: 3000, position: 'top-center' }
         );
         setCardError(`This reward card only supports ${selectedCard.taskDuration === 'short' ? 'Daily Quests' : 'Quest Chains'}.`);
-        // 触发重新选择卡片
+        // Trigger reselection of card
         fetchInventory();
         return;
       }
@@ -478,7 +478,7 @@ export const CreateTaskModal = ({
         return;
       }
 
-      // 验证选择的空白卡是否匹配当前任务类型
+      // Verify that the selected blank card matches the current task type
       if (selectedBlankCard.taskDuration !== 'general' && selectedBlankCard.taskDuration !== taskType) {
         toast.error(
           <div className="flex items-center">
@@ -488,7 +488,7 @@ export const CreateTaskModal = ({
           { duration: 3000, position: 'top-center' }
         );
         setCardError(`This blank card only supports ${selectedBlankCard.taskDuration === 'short' ? 'Daily Quests' : 'Quest Chains'}.`);
-        // 触发重新选择卡片
+        // Trigger reselection of card
         fetchInventory();
         return;
       }
@@ -506,15 +506,15 @@ export const CreateTaskModal = ({
           finalDueDate = new Date(formFields.dueDate).toISOString();
         }
         
-        // 验证长期任务的子任务
+        // Verify subtasks of long-term tasks
         if (formFields.subTasks && formFields.subTasks.length > 0) {
-          // 确保所有子任务截止日期都是有效日期
+          // Make sure all subtask deadlines are valid dates
           const mainTaskDueDate = new Date(finalDueDate);
           
           for (let i = 0; i < formFields.subTasks.length; i++) {
             const subTask = formFields.subTasks[i];
             
-            // 验证子任务截止时间不能晚于主任务截止时间
+            // Verify that the subtask deadline cannot be later than the main task deadline
             let subTaskDueDate;
             try {
               subTaskDueDate = new Date(subTask.dueDate);
@@ -554,7 +554,7 @@ export const CreateTaskModal = ({
           }
         }
       } else if (taskType === 'short') {
-        // 短期任务使用24小时后的截止时间
+        // Short-term tasks use a deadline of 24 hours later
         const now = new Date();
         now.setHours(now.getHours() + 24);
         finalDueDate = now.toISOString();
@@ -587,7 +587,7 @@ export const CreateTaskModal = ({
       }
     }
 
-    // 构建任务数据
+    // Building task data
     const taskPayload = {
       ...formFields,
       title: formFields.title.trim(),
@@ -600,13 +600,13 @@ export const CreateTaskModal = ({
       cardUsed: useReward ? selectedCard._id : selectedBlankCard._id
     };
 
-    // 移除日志，减少控制台输出
+    // Remove logs and reduce console output
     try {
-      // 显示加载状态
+      // Display loading status
       setCardError('');
-      // 提交创建任务
+      // Submit Create Task
       await onSubmit(taskPayload);
-      // 成功后关闭
+      // Close after success
       handleClose();
     } catch (err) {
       console.error('Failed to create task:', err);
@@ -676,7 +676,7 @@ export const CreateTaskModal = ({
   // Render task type selector
   const renderTaskTypeSelector = () => (
     <div className="flex flex-col mb-6">
-      {/* 移除槽位任务类型锁定提示文字 */}
+      {/* Removed the slot task type lock prompt text */}
       
       <div className="flex flex-wrap gap-3">
         <div 
@@ -696,7 +696,7 @@ export const CreateTaskModal = ({
                   className="bg-purple-200 text-purple-700 text-xs h-5 w-5 flex items-center justify-center rounded-full font-bold relative group"
                 >
                   !
-                  {/* 悬浮提示 */}
+                  {/* Floating Tips */}
                   <div className="absolute hidden group-hover:block w-52 bg-white border border-gray-200 shadow-lg text-gray-700 text-xs rounded-md p-2 -right-6 top-6 z-10">
                     <span className="font-medium">Fixed Task Type</span>
                     <p className="mt-1">This slot({slotIndex+1})only support Daily Quest type</p>
@@ -735,7 +735,7 @@ export const CreateTaskModal = ({
                   title="This task type is fixed for the selected slot"
                 >
                   !
-                  {/* 悬浮提示 */}
+                  {/* Floating Tips */}
                   <div className="absolute hidden group-hover:block w-52 bg-white border border-gray-200 shadow-lg text-gray-700 text-xs rounded-md p-2 -right-6 top-6 z-10">
                     <span className="font-medium">Fixed Task Type</span>
                     <p className="mt-1">This slot({slotIndex+1})only support Quest Chain type</p>
