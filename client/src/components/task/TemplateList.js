@@ -6,7 +6,7 @@ export const TemplateList = ({ templates = [], onSelect, onDelete, onEdit }) => 
     return (
         <div className="space-y-4">
             {templates.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">暂无模板</p>
+                <p className="text-gray-500 text-center py-4">Currently No Template</p>
             ) : (
                 templates.map(template => (
                     <motion.div

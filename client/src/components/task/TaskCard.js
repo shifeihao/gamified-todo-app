@@ -126,7 +126,7 @@ export const TaskCard = ({
 
       // 更新任务数据
       if (onEdit && updatedTask) {
-        onEdit(updatedTask);
+        onEdit({...updatedTask, isFromSubtaskComplete: true});
       }
 
       // 触发子任务完成事件，更新等级条
@@ -260,7 +260,8 @@ export const TaskCard = ({
             {/* 操作按钮区 */}
             <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
               <div className="flex space-x-2">
-                {(task.status === "in-progress" || task.status === "pending") && (
+                {((task.type === 'long' && task.status === "in-progress") || 
+                  (task.type === 'short' && task.status === "in-progress")) && (
                   <button
                     onClick={() => onComplete?.(task._id)}
                     className={`rounded p-1 ${
@@ -330,7 +331,8 @@ export const TaskCard = ({
           {/* 操作区 */}
           <div className="flex items-center justify-between pt-2">
             <div className="flex space-x-2">
-              {task.status === "in-progress" && (
+              {((task.type === 'long' && task.status === "in-progress") || 
+                (task.type === 'short' && task.status === "in-progress")) && (
                 <button
                   onClick={() => onComplete?.(task._id)}
                   className={`rounded p-1 ${

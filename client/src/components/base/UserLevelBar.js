@@ -26,6 +26,7 @@ const UserLevelBar = ({ data }) => {
 
   const {
     level,
+    experience,
     expProgress,
     nextLevelExp,
     progressRate,
@@ -33,16 +34,16 @@ const UserLevelBar = ({ data }) => {
     gold = 0, // 默认值为0
   } = data;
 
-  // 计算当前等级内的经验值进度
-  const currentLevelExp = expProgress;
-  const nextLevelTotalExp = nextLevelExp;
+  // 获取正确的经验值进度信息
+  const currentLevelExp = expProgress || 0;
+  const totalExpNeeded = nextLevelExp - (experience - currentLevelExp);
 
   return (
-    <div className="flex items-center space-x-4">
+    <div className="flex items-center space-x-2">
       {/* 等级显示 */}
-      <div className="flex items-center space-x-2 flex-1">
-        <span className="text-xs font-medium whitespace-nowrap">Lv.{level}</span>
-        <div className="flex-1">
+      <div className="flex items-center space-x-1 flex-1 min-w-0">
+        <span className="text-sm font-medium whitespace-nowrap">Lv.{level}</span>
+        <div className="flex-1 min-w-[50px]">
           <div className="w-full bg-[#0080d0]/30 h-2 rounded-full overflow-hidden">
             <div
               className="bg-yellow-300 h-full transition-all duration-500 ease-out"
@@ -50,8 +51,8 @@ const UserLevelBar = ({ data }) => {
             />
           </div>
         </div>
-        <span className="text-xs font-medium whitespace-nowrap">
-          {currentLevelExp}/{nextLevelTotalExp}
+        <span className="text-xs font-medium whitespace-nowrap truncate">
+          {currentLevelExp}/{totalExpNeeded}
         </span>
         {leveledUp && (
           <span className="text-yellow-300 text-xs font-bold animate-bounce">
@@ -61,7 +62,7 @@ const UserLevelBar = ({ data }) => {
       </div>
 
       {/* 金币显示 */}
-      <div className="flex items-center space-x-1 bg-yellow-100 px-3 py-1 rounded-full">
+      <div className="flex items-center space-x-1 bg-yellow-100 px-2 py-1 rounded-full">
         <span className="text-yellow-600 text-sm">🪙</span>
         <span className="text-yellow-700 font-medium">{gold}</span>
       </div>

@@ -55,11 +55,17 @@ export const handleTaskCompletion = async (req) => {
 
     let totalExp = 0;
     let totalGold = 0;
+    let pendingSubTasks = [];
+    let pendingSubTasksExp = 0;
+    let pendingSubTasksGold = 0;
+    let finalExp = 0;
+    let finalGold = 0;
 
     if (task.type === "long") {
       const completedSubTasks = task.subTasks.filter(
         (st) => st.status === "completed"
       );
+      pendingSubTasks = task.subTasks.filter((st) => st.status !== "completed");
 
       console.log("Long-term task completion - Task ID:", task._id);
       console.log("Long-term task completion - Task title:", task.title);
@@ -77,6 +83,38 @@ export const handleTaskCompletion = async (req) => {
         "Long-term task completion - Completed subtasks:",
         completedSubTasks.length
       );
+      console.log(
+        "Long-term task completion - Pending subtasks:",
+        pendingSubTasks.length
+      );
+
+      // 计算未完成子任务的奖励
+      pendingSubTasksExp = 0;
+      pendingSubTasksGold = 0;
+
+      // 将所有未完成的子任务标记为已完成并计算奖励
+      for (const subTask of pendingSubTasks) {
+        subTask.status = "completed";
+        subTask.completedAt = new Date();
+
+        // 计算子任务奖励
+        const subTaskExp = subTask.experience || 10;
+        const subTaskGold = subTask.gold || 5;
+
+        // 应用卡片加成
+        const { experience, gold } = calculateReward(
+          subTaskExp,
+          subTaskGold,
+          task.cardUsed?.bonus
+        );
+
+        pendingSubTasksExp += experience;
+        pendingSubTasksGold += gold;
+
+        console.log(
+          `自动完成子任务: ${subTask.title}, 获得 ${experience} XP, ${gold} Gold`
+        );
+      }
 
       if (task.status !== "completed") {
         task.status = "completed";
@@ -90,95 +128,141 @@ export const handleTaskCompletion = async (req) => {
         );
       }
 
+      // 计算长期任务额外奖励
       const bonusExp = task.experienceReward || task.finalBonusExperience || 30;
       const bonusGold = task.goldReward || task.finalBonusGold || 15;
 
       console.log("Long-term task bonus - XP:", bonusExp);
       console.log("Long-term task bonus - Gold:", bonusGold);
 
-      const { experience: finalExp, gold: finalGold } = calculateReward(
-        bonusExp,
-        bonusGold,
-        task.cardUsed?.bonus
-      );
+      const { experience: calculatedFinalExp, gold: calculatedFinalGold } =
+        calculateReward(bonusExp, bonusGold, task.cardUsed?.bonus);
+
+      finalExp = calculatedFinalExp;
+      finalGold = calculatedFinalGold;
 
       console.log("Long-term task bonus (with multiplier) - XP:", finalExp);
       console.log("Long-term task bonus (with multiplier) - Gold:", finalGold);
 
-      totalExp = finalExp;
-      totalGold = finalGold;
-    } else {
-      task.finalBonusExperience = 0;
-      task.finalBonusGold = 0;
-      const baseExp = task.experienceReward || 10; // 默认短期任务经验为10
-      const baseGold = task.goldReward || 5; // 默认短期任务金币为5
+      // 计算最终奖励
+      // 如果所有子任务都已经完成，只给予额外奖励；否则给予未完成子任务+额外奖励的总和
+      if (pendingSubTasks.length === 0 && completedSubTasks.length > 0) {
+        // 所有子任务都已完成，只给予额外奖励（长期任务完成奖励）
+        console.log("所有子任务已完成，只给予额外奖励");
+        totalExp = finalExp;
+        totalGold = finalGold;
+        console.log("最终奖励(仅额外奖励) - XP:", totalExp, "Gold:", totalGold);
+      } else {
+        // 总奖励 = 未完成子任务奖励 + 长期任务额外奖励
+        totalExp = pendingSubTasksExp + finalExp;
+        totalGold = pendingSubTasksGold + finalGold;
+        console.log(
+          "总计奖励 - XP:",
+          totalExp,
+          "(子任务:",
+          pendingSubTasksExp,
+          "+ 任务奖励:",
+          finalExp,
+          ")"
+        );
+        console.log(
+          "总计奖励 - Gold:",
+          totalGold,
+          "(子任务:",
+          pendingSubTasksGold,
+          "+ 任务奖励:",
+          finalGold,
+          ")"
+        );
+      }
+    } else if (task.type === "short") {
+      if (task.status !== "completed") {
+        task.status = "completed";
+        console.log(`Setting short task ${taskId} status to "completed"`);
+      }
 
-      console.log(
-        "Short-term task base reward - XP:",
-        baseExp,
-        "Gold:",
-        baseGold
-      );
+      if (!task.completedAt) {
+        task.completedAt = new Date();
+        console.log(
+          `Setting short task ${taskId} completedAt to ${task.completedAt}`
+        );
+      }
 
+      const baseExp = task.experienceReward || 10;
+      const baseGold = task.goldReward || 5;
+
+      console.log("Short task reward - XP:", baseExp);
+      console.log("Short task reward - Gold:", baseGold);
+
+      // 计算短期任务奖励（包含任何加成）
       const { experience, gold } = calculateReward(
         baseExp,
         baseGold,
         task.cardUsed?.bonus
       );
 
-      console.log(
-        "Short-term task final reward (with multiplier) - XP:",
-        experience,
-        "Gold:",
-        gold
-      );
-
       totalExp = experience;
       totalGold = gold;
+
+      console.log("Final short task reward - XP:", totalExp);
+      console.log("Final short task reward - Gold:", totalGold);
     }
+    // ... 其他任务类型 ...
 
-    task.status = "completed";
-    task.completedAt = task.completedAt || new Date();
-    task.rewardClaimed = true;
-
-    console.log(
-      `Issuing rewards to user ${userId} : ${totalExp} XP, ${totalGold} Gold`
-    );
-
+    // 更新用户经验和金币
     user.experience += totalExp;
     user.gold += totalGold;
 
+    // 更新任务标记为奖励已领取
+    task.rewardClaimed = true;
+
+    // 保存更改到数据库
+    await user.save();
+    await task.save();
+
+    // 保存任务进度
+    await SyncTaskHistory({ user, task, exp: totalExp, gold: totalGold });
+    await SyncUser(user);
+
     console.log(
-      `Updated user state - EXP: ${user.experience} (+${totalExp}), Gold: ${user.gold} (+${totalGold})`
+      `奖励已发放 - 用户: ${userId}, 获得 ${totalExp} XP, ${totalGold} Gold`
     );
-    eventBus.emit("checkAchievements", userId);
 
-
-
-
+    // 计算用户当前等级和等级进度
     const newExp = user.experience;
-
     const currentLevel = await Level.findOne({
       expRequired: { $lte: newExp },
     }).sort({ level: -1 });
-    const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
 
+    if (!currentLevel) {
+      console.log("Warning: Could not find current level for user");
+      return {
+        success: false,
+        message: "Could not find level information",
+        reward: { expGained: totalExp, goldGained: totalGold },
+      };
+    }
+
+    // 检查用户是否升级
+    const leveledUp = currentLevel.level > user.level;
+
+    if (leveledUp) {
+      user.level = currentLevel.level;
+      await user.save();
+      console.log(`用户升级! 新等级: ${currentLevel.level}`);
+    }
+
+    // 计算到下一级所需经验值
+    const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
     const nextLevelExp = nextLevel
       ? nextLevel.expRequired
-      : currentLevel.expRequired + (currentLevel.expToNext || 100);
+      : currentLevel.expRequired;
     const expProgress = newExp - currentLevel.expRequired;
     const expRemaining = nextLevelExp - newExp;
     const progressRate =
       currentLevel.expToNext > 0
         ? Math.min(expProgress / currentLevel.expToNext, 1)
         : 1;
-    const leveledUp = currentLevel.level > user.level;
-
-    user.level = currentLevel.level;
-    user.nextLevelExp = nextLevelExp;
-
-    await user.save();
-    await task.save();
 
     const TaskHistory = (await import("../models/TaskHistory.js")).default;
     const duration = task.slotEquippedAt
@@ -199,7 +283,8 @@ export const handleTaskCompletion = async (req) => {
     });
     eventBus.emit("checkAchievements", userId);
 
-    return {
+    // 准备要返回的响应数据
+    const responseData = {
       success: true,
       message: "Rewards and level updated successfully",
       task: {
@@ -209,6 +294,8 @@ export const handleTaskCompletion = async (req) => {
         status: task.status,
         completedAt: task.completedAt,
         rewardClaimed: true,
+        experienceReward: task.experienceReward,
+        goldReward: task.goldReward,
       },
       reward: {
         expGained: totalExp,
@@ -222,12 +309,42 @@ export const handleTaskCompletion = async (req) => {
         progressRate,
       },
     };
+
+    // 如果是长期任务并且有自动完成的子任务，添加相关信息到响应中
+    if (task.type === "long") {
+      const allSubTasksCompleted = pendingSubTasks.length === 0;
+      const alreadyCompletedSubTasksCount = task.subTasks.filter(
+        (st) => st.status === "completed" && st.completedAt < task.completedAt
+      ).length;
+
+      responseData.longTaskInfo = {
+        totalSubTasks: task.subTasks.length,
+        allSubTasksCompleted,
+        alreadyCompletedSubTasksCount,
+        finalBonusExperience: finalExp,
+        finalBonusGold: finalGold,
+      };
+
+      if (pendingSubTasks && pendingSubTasks.length > 0) {
+        responseData.autoCompletedSubTasks = pendingSubTasks.map((st) => ({
+          title: st.title,
+          completedAt: st.completedAt,
+        }));
+        responseData.pendingSubTasksExp = pendingSubTasksExp || 0;
+        responseData.pendingSubTasksGold = pendingSubTasksGold || 0;
+      }
+    }
+
+    return responseData;
   } catch (error) {
     console.error("❌ Rewards and level update failed:", error);
     return {
       success: false,
       message: "Rewards and level update failed: " + error.message,
-      reward: { expGained: 0, goldGained: 0 },
+      reward: {
+        expGained: task?.experienceReward || 30,
+        goldGained: task?.goldReward || 15,
+      },
     };
   }
 };
@@ -303,12 +420,9 @@ export const handleSubTaskCompletion = async (req) => {
 
     // 8. If all subtasks are done, mark the main task as completed without granting bonus rewards
     if (allSubTasksCompleted && task.status !== "completed") {
-      // Mark the main task status as completed
-      task.status = "completed";
-      task.completedAt = new Date();
-
+      // 不自动设置长期任务为完成状态，需要用户手动完成
       console.log(
-        "All subtasks completed. Marking long task as completed. User must manually claim the bonus reward."
+        "All subtasks completed. The user must manually click the 'complete' button to finish the task and claim the bonus reward."
       );
     }
 
@@ -316,7 +430,6 @@ export const handleSubTaskCompletion = async (req) => {
     await user.save();
     await task.save();
     eventBus.emit("checkAchievements", userId);
-
 
     // 10. Return result to caller
     return {
@@ -331,6 +444,8 @@ export const handleSubTaskCompletion = async (req) => {
         completedAt: task.completedAt,
         equipped: task.equipped,
         slotPosition: task.slotPosition,
+        experienceReward: task.experienceReward,
+        goldReward: task.goldReward,
       },
       subTaskReward: {
         expGained: experience,
@@ -354,7 +469,7 @@ export const handleSubTaskCompletion = async (req) => {
     };
   } catch (error) {
     console.error("❌ Subtask completion failed:", error);
-    throw new Error("Subtask completion failed: " + error.message);
+    throw error; // Re-throw to be handled by the calling route
   }
 };
 
