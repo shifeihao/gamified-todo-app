@@ -175,7 +175,7 @@ const RepositoryPanel = ({
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-amber-900 flex items-center truncate">
                     <Vault className="h-6 w-6 mr-2 flex-shrink-0" />
-                    <span className="truncate">Quest Vault</span>
+                    <span className="truncate">Task Library</span>
                 </h2>
                 <div className="flex space-x-2 flex-shrink-0">
                     {[
