@@ -3,15 +3,22 @@ import React, { useState, useEffect, useContext } from "react";
 import { Navbar } from "../../components";
 import { CreateTaskModal } from "../../components";
 import AuthContext from "../../context/AuthContext";
-import { NewTaskCard } from '../../components/task/NewTaskCard';
-import { useToast } from '../../context/ToastContext';
-import toast from 'react-hot-toast';
-import { TASK_COMPLETED_EVENT, SUBTASK_COMPLETED_EVENT } from "../../components/navbar/Navbar";
+import { NewTaskCard } from "../../components/task/NewTaskCard";
+import { useToast } from "../../context/ToastContext";
+import toast from "react-hot-toast";
+import {
+  TASK_COMPLETED_EVENT,
+  SUBTASK_COMPLETED_EVENT,
+} from "../../components/navbar/Navbar";
 
 import DailyTaskPanel from "./DailyTaskPanel";
 import TimetablePanel from "./TimetablePanel";
 import RepositoryPanel from "./RepositoryPanel";
-import { getCardInventory, getNewDailyCards, createBlankCard } from "../../services/cardService";
+import {
+  getCardInventory,
+  getNewDailyCards,
+  createBlankCard,
+} from "../../services/cardService";
 import axios from "axios";
 
 // 仅用于读数据，不纳入 useApiAction
@@ -34,7 +41,10 @@ import {
 } from "../../services/taskService";
 
 import { useApiAction } from "../../components/hooks";
-import { showTaskCompletedToast, showLongTaskCompletedToast } from "../../components/modal/TaskCompletedToast";
+import {
+  showTaskCompletedToast,
+  showLongTaskCompletedToast,
+} from "../../components/modal/TaskCompletedToast";
 
 const TasksPage = () => {
   const { user } = useContext(AuthContext);
@@ -82,21 +92,21 @@ const TasksPage = () => {
       } catch (err) {
         console.error("获取卡片库存失败:", err);
       }
-      
+
       // 如果卡片库存为空或少于5张，尝试初始化新用户卡片
       if (!cardData.inventory || cardData.inventory.length < 5) {
         console.log("卡片库存不足，尝试获取每日卡片和补充卡片...");
-        
+
         try {
           await getNewDailyCards(user.token);
           console.log("成功获取每日卡片");
         } catch (err) {
           console.log("尝试获取每日卡片失败，可能已经获取过", err);
         }
-        
+
         if (!cardData.inventory || cardData.inventory.length < 2) {
           console.log("新用户可能需要初始化卡片，尝试创建额外的空白卡片...");
-          
+
           try {
             await createBlankCard(user.token);
             console.log("成功创建补充空白卡片");
@@ -104,7 +114,7 @@ const TasksPage = () => {
             console.log("创建空白卡片失败", err);
           }
         }
-        
+
         try {
           cardData = await getCardInventory(user.token);
           console.log("更新后的卡片库存:", cardData);
@@ -125,22 +135,31 @@ const TasksPage = () => {
       ]);
 
       // 处理每个请求的结果
-      const [tasksResult, equippedResult, shortTasksResult, longTasksResult, levelInfoResult] = results;
+      const [
+        tasksResult,
+        equippedResult,
+        shortTasksResult,
+        longTasksResult,
+        levelInfoResult,
+      ] = results;
 
       // 更新状态，只更新成功获取的数据
-      if (tasksResult.status === 'fulfilled' && tasksResult.value) {
+      if (tasksResult.status === "fulfilled" && tasksResult.value) {
         setTasks(tasksResult.value);
       }
-      
-      if (shortTasksResult.status === 'fulfilled' && shortTasksResult.value) {
+
+      if (shortTasksResult.status === "fulfilled" && shortTasksResult.value) {
         setEquippedShortTasks(shortTasksResult.value);
       }
-      
-      if (longTasksResult.status === 'fulfilled' && longTasksResult.value) {
+
+      if (longTasksResult.status === "fulfilled" && longTasksResult.value) {
         setEquippedLongTasks(longTasksResult.value);
       }
-      
-      if (levelInfoResult.status === 'fulfilled' && levelInfoResult.value?.data) {
+
+      if (
+        levelInfoResult.status === "fulfilled" &&
+        levelInfoResult.value?.data
+      ) {
         setRewardInfo(levelInfoResult.value.data);
       }
 
@@ -150,12 +169,11 @@ const TasksPage = () => {
       }
 
       // 检查是否所有请求都失败了
-      const allFailed = results.every(result => result.status === 'rejected');
+      const allFailed = results.every((result) => result.status === "rejected");
       if (allFailed && !recentlyCompletedTask) {
         console.error("所有任务数据获取失败");
         showError("获取任务数据失败，请尝试刷新页面");
       }
-
     } catch (err) {
       console.error("获取任务数据出错:", err);
       // 只有在最近没有任务完成时才显示错误
@@ -196,13 +214,22 @@ const TasksPage = () => {
     };
 
     // 添加事件监听器
-    window.addEventListener(SUBTASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
+    window.addEventListener(
+      SUBTASK_COMPLETED_EVENT,
+      handleTaskOrSubtaskCompleted
+    );
     window.addEventListener(TASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
 
     // 清理函数
     return () => {
-      window.removeEventListener(SUBTASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
-      window.removeEventListener(TASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
+      window.removeEventListener(
+        SUBTASK_COMPLETED_EVENT,
+        handleTaskOrSubtaskCompleted
+      );
+      window.removeEventListener(
+        TASK_COMPLETED_EVENT,
+        handleTaskOrSubtaskCompleted
+      );
     };
   }, []);
 
@@ -245,13 +272,13 @@ const TasksPage = () => {
   } = useApiAction(completeTaskService, {
     onSuccess: async (response) => {
       console.log("任务完成响应:", response);
-      
+
       // 标记任务最近完成，避免显示数据获取失败的警告
       markTaskAsRecentlyCompleted();
-      
+
       // 清除编辑任务状态，确保不会带入到新建任务中
       setEditingTask(null);
-      
+
       try {
         // 更宽容的成功判断条件
         // 只有在明确收到错误标识并且没有有效数据时才认为是失败
@@ -260,34 +287,44 @@ const TasksPage = () => {
           console.error("任务完成明确失败:", response);
           return;
         }
-        
+
         // 从这里往下，我们尝试提取任务信息和奖励，无论响应格式如何
         let task = response?.task;
         let reward = response?.reward;
-        
+
         // 如果直接从response中获取失败，尝试其他可能的位置
         if (!task && response?.data?.task) task = response.data.task;
         if (!reward && response?.data?.reward) reward = response.data.reward;
-        
+
         console.log("提取后的任务数据:", task);
         console.log("提取后的奖励数据:", reward);
-        
+
         // 显示更详细的完成信息和奖励通知
         if (reward) {
           const xp = reward.expGained || 0;
           const gold = reward.goldGained || 0;
-          
+
           // 使用新的组件显示任务完成通知
           showTaskCompletedToast(task?.title || "任务", xp, gold, false, task);
         } else {
           // 特殊处理：如果没有收到奖励信息但有任务信息
           if (task) {
             // 使用任务自身的奖励值或默认值
-            const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
-            const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
-            
-            console.log(`未收到奖励信息，使用任务自身或默认值: ${defaultXp} XP, ${defaultGold} Gold`);
-            showTaskCompletedToast(task.title || "任务", defaultXp, defaultGold, false, task);
+            const defaultXp =
+              task.experienceReward || (task.type === "long" ? 30 : 10);
+            const defaultGold =
+              task.goldReward || (task.type === "long" ? 15 : 5);
+
+            console.log(
+              `未收到奖励信息，使用任务自身或默认值: ${defaultXp} XP, ${defaultGold} Gold`
+            );
+            showTaskCompletedToast(
+              task.title || "任务",
+              defaultXp,
+              defaultGold,
+              false,
+              task
+            );
           } else {
             // 完全没有任务和奖励信息的情况
             showSuccess("任务已完成");
@@ -310,7 +347,9 @@ const TasksPage = () => {
       } catch (error) {
         // 处理解析响应时可能出现的任何错误
         console.error("处理任务完成响应时出错:", error);
-        showSuccess("Task may have been completed, but there was an issue displaying rewards");
+        showSuccess(
+          "Task may have been completed, but there was an issue displaying rewards"
+        );
       } finally {
         // 无论如何，刷新任务列表以获取最新状态
         fetchTasks();
@@ -329,20 +368,21 @@ const TasksPage = () => {
   const handleComplete = async (id) => {
     try {
       // 找到对应的任务
-      let taskToComplete = tasks.find(t => t._id === id) || 
-                          equippedShortTasks.find(t => t._id === id) ||
-                          equippedLongTasks.find(t => t._id === id);
+      let taskToComplete =
+        tasks.find((t) => t._id === id) ||
+        equippedShortTasks.find((t) => t._id === id) ||
+        equippedLongTasks.find((t) => t._id === id);
 
       // 如果任务不存在，尝试重新获取任务列表后再查找
       if (!taskToComplete) {
         console.log(`找不到ID为 ${id} 的任务，尝试重新获取任务列表...`);
-        
+
         try {
           // 尝试直接获取单个任务
           const result = await axios.get(`/api/tasks/${id}`, {
-            headers: { Authorization: `Bearer ${user.token}` }
+            headers: { Authorization: `Bearer ${user.token}` },
           });
-          
+
           if (result.data) {
             taskToComplete = result.data;
             console.log("成功获取单个任务:", taskToComplete);
@@ -352,14 +392,15 @@ const TasksPage = () => {
           // 尝试刷新所有任务
           try {
             await fetchTasks();
-            taskToComplete = tasks.find(t => t._id === id) || 
-                            equippedShortTasks.find(t => t._id === id) ||
-                            equippedLongTasks.find(t => t._id === id);
+            taskToComplete =
+              tasks.find((t) => t._id === id) ||
+              equippedShortTasks.find((t) => t._id === id) ||
+              equippedLongTasks.find((t) => t._id === id);
           } catch (fetchErr) {
             console.error("刷新任务列表失败:", fetchErr);
           }
         }
-        
+
         if (!taskToComplete) {
           console.error(`无法找到ID为 ${id} 的任务`);
           showError("找不到要完成的任务，请刷新页面后再试");
@@ -367,19 +408,20 @@ const TasksPage = () => {
         }
       }
 
-      console.log(`准备完成任务: ${taskToComplete.title} (ID: ${id}, 类型: ${taskToComplete.type})`);
-      
+      console.log(
+        `准备完成任务: ${taskToComplete.title} (ID: ${id}, 类型: ${taskToComplete.type})`
+      );
+
       // 如果是长期任务，使用专用的完成方法
-      if (taskToComplete.type === 'long') {
+      if (taskToComplete.type === "long") {
         await doCompleteLongTask(id, user.token);
       } else {
         // 否则使用普通完成方法
         await doCompleteTask(id, user.token);
       }
-      
+
       // 任务完成后，确保我们有最新的任务列表
       setTimeout(() => fetchTasks(), 500);
-      
     } catch (err) {
       console.error("完成任务过程出错:", err);
       showError("完成任务失败，请稍后再试");
@@ -396,13 +438,13 @@ const TasksPage = () => {
   } = useApiAction(completeLongTaskService, {
     onSuccess: async (response) => {
       console.log("长期任务完成响应:", response); // 添加日志来调试
-      
+
       // 标记任务最近完成，避免显示数据获取失败的警告
       markTaskAsRecentlyCompleted();
-      
+
       // 清除编辑任务状态，确保不会带入到新建任务中
       setEditingTask(null);
-      
+
       try {
         // 更宽容的成功判断条件
         // 只有在明确收到错误标识并且没有有效数据时才认为是失败
@@ -411,18 +453,18 @@ const TasksPage = () => {
           console.error("长期任务完成明确失败:", response);
           return;
         }
-        
+
         // 从这里往下，我们尝试提取任务信息和奖励，无论响应格式如何
         let task = response?.task;
         let reward = response?.reward;
-        
+
         // 如果直接从response中获取失败，尝试其他可能的位置
         if (!task && response?.data?.task) task = response.data.task;
         if (!reward && response?.data?.reward) reward = response.data.reward;
-        
+
         console.log("提取后的长期任务数据:", task);
         console.log("提取后的长期任务奖励数据:", reward);
-        
+
         // 使用专门的长期任务完成通知组件
         showLongTaskCompletedToast(response, task);
 
@@ -441,7 +483,9 @@ const TasksPage = () => {
       } catch (error) {
         // 处理解析响应时可能出现的任何错误
         console.error("处理长期任务完成响应时出错:", error);
-        showSuccess("Long task may have been completed, but there was an issue displaying rewards");
+        showSuccess(
+          "Long task may have been completed, but there was an issue displaying rewards"
+        );
       } finally {
         // 无论如何，刷新任务列表以获取最新状态
         fetchTasks();
@@ -449,23 +493,34 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error("长期任务完成请求出错:", err);
-      showError(err?.response?.data?.message || "Failed to complete the long task");
-      
+      showError(
+        err?.response?.data?.message || "Failed to complete the long task"
+      );
+
       // 获取任务数据以便显示奖励
-      const taskId = err?.config?.url?.split('/').pop();
+      const taskId = err?.config?.url?.split("/").pop();
       if (taskId) {
-        const task = tasks.find(t => t._id === taskId) || 
-                    equippedLongTasks.find(t => t._id === taskId);
-        
+        const task =
+          tasks.find((t) => t._id === taskId) ||
+          equippedLongTasks.find((t) => t._id === taskId);
+
         if (task) {
           // 即使失败也显示默认奖励值
           const defaultXp = task.experienceReward || 30;
           const defaultGold = task.goldReward || 15;
-          console.log(`任务完成请求失败，使用默认奖励: ${defaultXp} XP, ${defaultGold} Gold`);
-          showTaskCompletedToast(task.title || "长期任务", defaultXp, defaultGold, false, task);
+          console.log(
+            `任务完成请求失败，使用默认奖励: ${defaultXp} XP, ${defaultGold} Gold`
+          );
+          showTaskCompletedToast(
+            task.title || "长期任务",
+            defaultXp,
+            defaultGold,
+            false,
+            task
+          );
         }
       }
-      
+
       // 也需要清除编辑任务状态
       setEditingTask(null);
       // 尝试重新获取任务列表
@@ -488,7 +543,7 @@ const TasksPage = () => {
         console.error("创建任务失败:", res.message);
         return;
       }
-      
+
       showSuccess("Task created");
       if (input?.fromSlot && input?.slotIndex >= 0) {
         const isLong = input.type === "long";
@@ -558,7 +613,11 @@ const TasksPage = () => {
     );
     let freeSlot = [...Array(3).keys()].find((i) => !occupied.includes(i));
     if (freeSlot == null) {
-      showError(isLong ? "The long-term task slot is full" : "The short-term task slot is full");
+      showError(
+        isLong
+          ? "The long-term task slot is full"
+          : "The short-term task slot is full"
+      );
       return;
     }
     const slotType = isLong ? "long" : "short";
@@ -568,19 +627,23 @@ const TasksPage = () => {
   // 拖放装备
   const handleDropToSlot = (taskId, slotIndex, slotType = "short") => {
     // 检查任务类型是否与槽位类型匹配
-    const task = tasks.find(t => t._id === taskId);
+    const task = tasks.find((t) => t._id === taskId);
     if (!task) {
       showError("任务不存在");
       return;
     }
-    
+
     // 检查任务类型是否与槽位类型匹配
     const expectedType = slotType === "long" ? "long" : "short";
     if (task.type !== expectedType) {
-      showError(`Only can put ${expectedType === "long" ? "long-term" : "short-term"} task into this slot`);
+      showError(
+        `Only can put ${
+          expectedType === "long" ? "long-term" : "short-term"
+        } task into this slot`
+      );
       return;
     }
-    
+
     // 类型匹配，继续装备
     doEquipTask(taskId, slotIndex, user.token, slotType);
   };
@@ -637,17 +700,22 @@ const TasksPage = () => {
     error;
 
   const [isExpanded, setIsExpanded] = useState(false);
+  console.log(" the shortslot of user is", user?.shortCardSlot);
+  console.log(" the longslot of user is", user?.longCardSlot);
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-fixed" style={{
-      // backgroundImage: "url('/rpg-background.png')",
-      backgroundColor: "rgba(191, 191, 191, 0.6)", // 暗色背景作为备用
-      // backgroundBlendMode: "overlay" // 使背景图片变暗，提高内容可读性
-    }}>
+    <div
+      className="min-h-screen bg-cover bg-center bg-fixed"
+      style={{
+        // backgroundImage: "url('/rpg-background.png')",
+        backgroundColor: "rgba(191, 191, 191, 0.6)", // 暗色背景作为备用
+        // backgroundBlendMode: "overlay" // 使背景图片变暗，提高内容可读性
+      }}
+    >
       <Navbar />
       <div className="max-w-[95%] mx-auto py-4 space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">My  Tasks</h1>
+          <h1 className="text-2xl font-bold text-white">My Tasks</h1>
 
           <button
             onClick={() => {
@@ -662,11 +730,20 @@ const TasksPage = () => {
           </button>
         </div>
 
-
-        {errorAny && <div className="text-red-400 bg-black bg-opacity-50 p-2 rounded">{errorAny}</div>}
-        {loadingAny && <div className="text-gray-200 bg-black bg-opacity-50 p-2 rounded">Loading...</div>}
+        {errorAny && (
+          <div className="text-red-400 bg-black bg-opacity-50 p-2 rounded">
+            {errorAny}
+          </div>
+        )}
+        {loadingAny && (
+          <div className="text-gray-200 bg-black bg-opacity-50 p-2 rounded">
+            Loading...
+          </div>
+        )}
         {successMessage && (
-          <div className="text-green-400 bg-black bg-opacity-50 p-2 rounded">{successMessage}</div>
+          <div className="text-green-400 bg-black bg-opacity-50 p-2 rounded">
+            {successMessage}
+          </div>
         )}
 
         {/* 添加 NewTaskCard 作为特色任务展示 */}
@@ -699,8 +776,14 @@ const TasksPage = () => {
 
         <div className="flex gap-4 relative">
           {/* 左侧：任务槽区域 */}
-          <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-1/2' : 'w-3/4'}`}>
-            <div className="grid grid-cols-2 gap-4">  {/* 改回 grid-cols-2 实现水平排列 */}
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              isExpanded ? "w-1/2" : "w-3/4"
+            }`}
+          >
+            <div className="grid grid-cols-2 gap-4">
+              {" "}
+              {/* 改回 grid-cols-2 实现水平排列 */}
               <DailyTaskPanel
                 tasks={tasks}
                 user={user}
@@ -732,7 +815,7 @@ const TasksPage = () => {
                     console.log("更新长期任务数据，不打开编辑窗口");
                     return;
                   }
-                  
+
                   // 正常编辑流程
                   setEditingTask(task);
                   setShowForm(true);
@@ -747,7 +830,11 @@ const TasksPage = () => {
           </div>
 
           {/* 右侧：可调整宽度的任务仓库 */}
-          <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-1/2' : 'w-1/4'}`}>
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              isExpanded ? "w-1/2" : "w-1/4"
+            }`}
+          >
             <RepositoryPanel
               tasks={tasks}
               cards={cards}
