@@ -87,9 +87,26 @@ export const createTask = async (taskData, token) => {
     );
     return data;
   } catch (error) {
-    throw new Error(
-        error.response?.data?.message || '创建任务失败'
+    // 捕获服务器错误并以 toast 形式显示
+    const errorMessage = error.response?.data?.message || '创建任务失败';
+    
+    // 导入 toast (确保按需导入，避免循环引用)
+    const { toast } = require('react-hot-toast');
+    
+    // 显示错误信息
+    toast.error(
+      <div className="flex flex-col space-y-1">
+        <span className="font-semibold text-sm">创建任务失败</span>
+        <div className="text-xs">{errorMessage}</div>
+      </div>,
+      { duration: 5000, position: 'top-center' }
     );
+    
+    // 返回错误对象，而不是直接抛出错误
+    return {
+      success: false,
+      message: errorMessage
+    };
   }
 };
 

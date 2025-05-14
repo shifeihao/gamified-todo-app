@@ -158,7 +158,7 @@ const TasksPage = () => {
       if (longTasks.length > 0) setEquippedLongTasks(longTasks);
       if (cardData.inventory) setCards(cardData.inventory);
       if (levelInfo.data) setRewardInfo(levelInfo.data);
-      
+
       // 只有在所有数据都没有获取到，并且最近没有任务完成时才显示错误
       if (allTasks.length === 0 && shortTasks.length === 0 && longTasks.length === 0 && !recentlyCompletedTask) {
         console.error("所有任务数据获取失败");
@@ -473,6 +473,13 @@ const TasksPage = () => {
     error: createError,
   } = useApiAction(createTaskService, {
     onSuccess: async (res, input) => {
+      // 检查返回的结果是否为错误对象
+      if (res && res.success === false) {
+        // 如果已经通过 toast 显示了错误，这里就不需要再显示错误消息
+        console.error("创建任务失败:", res.message);
+        return;
+      }
+      
       showSuccess("Task created");
       if (input?.fromSlot && input?.slotIndex >= 0) {
         const isLong = input.type === "long";
@@ -487,7 +494,8 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error(err);
-      showError("Failed to create task");
+      // 错误已经由 taskService 中处理，不需要再次显示
+      // 但我们仍然保留这个回调以防有未捕获的错误
     },
   });
 
@@ -708,7 +716,15 @@ const TasksPage = () => {
                 equippedTasks={equippedLongTasks}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
-                onEdit={(task) => {
+                onEdit={(task, forceEdit = false) => {
+                  // 当任务有isFromSubtaskComplete标记且不是强制编辑时，只更新任务而不打开编辑窗口
+                  if (!forceEdit && task.isFromSubtaskComplete) {
+                    // 只更新任务数据，不打开编辑窗口
+                    console.log("更新长期任务数据，不打开编辑窗口");
+                    return;
+                  }
+                  
+                  // 正常编辑流程
                   setEditingTask(task);
                   setShowForm(true);
                   if (task.type) {
