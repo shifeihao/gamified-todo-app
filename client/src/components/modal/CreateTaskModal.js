@@ -1,5 +1,5 @@
 // src/components/modal/CreateTaskModal.js
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Modal } from '../base/Modal';
 import { TaskForm } from '../form/TaskForm';
 import { CardSelector } from '../base/CardSelector';
@@ -24,6 +24,11 @@ export const CreateTaskModal = ({
 }) => {
   const { user } = useContext(AuthContext);
   const isFromSlot = slotIndex >= 0;
+  
+  // 添加refs来防止无限循环更新
+  const initializedRef = useRef(false);
+  const taskTypeInitializedRef = useRef(false);
+  const dueDateInitializedRef = useRef(false);
   
   // Properly calculate initial task type
   const getInitialTaskType = () => {
@@ -68,20 +73,29 @@ export const CreateTaskModal = ({
 
   // 添加默认类型的输出，帮助调试
   useEffect(() => {
-    console.log("CreateTaskModal初始化参数:", {
-      isFromSlot,
-      slotIndex,
-      defaultType,
-      initialTaskType: getInitialTaskType()
-    });
+    if (!initializedRef.current) {
+      console.log("CreateTaskModal初始化参数:", {
+        isFromSlot,
+        slotIndex,
+        defaultType,
+        initialTaskType: getInitialTaskType()
+      });
+      initializedRef.current = true;
+    }
   }, []);
 
   // Effect to initialize task type and handle card selection when task type changes
   useEffect(() => {
+    // 防止重复执行
+    if (taskTypeInitializedRef.current) {
+      return;
+    }
+    
     // 严格控制任务类型 - 从槽创建任务时始终使用槽位类型
     if (isFromSlot && taskType !== defaultType) {
       console.log(`从槽创建任务，强制使用类型: ${defaultType}`);
       setTaskType(defaultType);
+      taskTypeInitializedRef.current = true;
       return; // 提前返回，避免重置卡片选择
     }
     
@@ -89,9 +103,15 @@ export const CreateTaskModal = ({
     if (initialData?.type && taskType !== initialData.type) {
       console.log(`编辑现有任务，强制使用类型: ${initialData.type}`);
       setTaskType(initialData.type);
+      taskTypeInitializedRef.current = true;
       return; // 提前返回，避免重置卡片选择
     }
     
+    taskTypeInitializedRef.current = true;
+  }, [initialData, defaultType, isFromSlot, taskType]);
+
+  // 分离出自动切换奖励卡模式的逻辑，并使用useState的函数形式更新，避免连锁反应
+  useEffect(() => {
     // Automatically switch to reward cards if blank cards are not available
     const hasShortBlankCards = shortBlankCards > 0;
     const hasLongBlankCards = longBlankCards > 0;
@@ -102,10 +122,11 @@ export const CreateTaskModal = ({
     const hasCurrentTypeReward = taskType === 'short' ? hasShortReward : hasLongReward;
     
     // If blank cards are not available but reward cards are, switch to reward mode
-    if (!hasCurrentTypeBlank && hasCurrentTypeReward) {
+    if (!hasCurrentTypeBlank && hasCurrentTypeReward && !useReward) {
+      console.log("没有空白卡片但有奖励卡片，切换到奖励卡模式");
       setUseReward(true);
     }
-  }, [initialData, defaultType, isFromSlot, shortBlankCards, longBlankCards, shortRewardCount, longRewardCount]);
+  }, [shortBlankCards, longBlankCards, shortRewardCount, longRewardCount, taskType, useReward]);
 
   // Effect to handle card selection when task type changes
   useEffect(() => {
@@ -115,17 +136,23 @@ export const CreateTaskModal = ({
     
     // 当任务类型改变时立即重新获取库存
     // 这会触发依赖于taskType的fetchInventory()
-    if (isOpen && user) {
+    if (isOpen && user && taskType) {
       console.log(`任务类型变更为: ${taskType}，重新获取匹配的卡片`);
       setIsFetchingInventory(true);
-      setTimeout(() => {
-        fetchInventory(); // 手动触发库存获取
-      }, 10);
+      const timer = setTimeout(() => {
+        fetchInventory(); // 使用setTimeout避免可能的状态更新冲突
+      }, 50);
+      
+      return () => clearTimeout(timer);
     }
   }, [taskType]);
 
   // Effect to handle due date
   useEffect(() => {
+    if (dueDateInitializedRef.current) {
+      return;
+    }
+    
     if (defaultDueDateTime) {
       setDueDate(defaultDueDateTime);
     } else if (taskType === 'short' && !initialData?.dueDate) {
@@ -138,9 +165,11 @@ export const CreateTaskModal = ({
     } else {
       setDueDate('');
     }
+    
+    dueDateInitializedRef.current = true;
   }, [taskType, defaultDueDateTime, initialData]);
 
-  // Reset step when modal opens
+  // Reset step and refs when modal opens or closes
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(1);
@@ -148,8 +177,33 @@ export const CreateTaskModal = ({
       if (!initialData) {
         resetFormState();
       }
+    } else {
+      // 重置所有ref，以便下次打开模态窗口时能正确初始化
+      initializedRef.current = false;
+      taskTypeInitializedRef.current = false;
+      dueDateInitializedRef.current = false;
     }
   }, [isOpen, initialData]);
+  
+  // 检查并修改任务类型选择逻辑，防止无限循环
+  const didSetDefaultType = useRef(false);
+  useEffect(() => {
+    // 只在初始加载时设置defaultType，而不是每次渲染
+    if (defaultType && !didSetDefaultType.current) {
+      setTaskType(defaultType);
+      didSetDefaultType.current = true;
+    }
+  }, [defaultType]);
+
+  // 确保组件卸载时重置标记
+  useEffect(() => {
+    return () => {
+      didSetDefaultType.current = false;
+      initializedRef.current = false;
+      taskTypeInitializedRef.current = false;
+      dueDateInitializedRef.current = false;
+    };
+  }, []);
 
   // 添加单独的fetchInventory函数，供手动调用
   const fetchInventory = async () => {
@@ -480,54 +534,85 @@ export const CreateTaskModal = ({
 
   // Render task type selector
   const renderTaskTypeSelector = () => (
-    <div className="flex flex-wrap gap-3 mb-6">
-      <div 
-        className={`flex-1 min-w-[120px] p-3 border rounded-lg cursor-pointer transition-all flex flex-col ${
-          taskType === 'short' 
-            ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200' 
-            : 'border-gray-200 hover:border-purple-300'
-        }`}
-        onClick={() => setTaskType('short')}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <Clock className="w-4 h-4 text-purple-500" />
-          <span className="font-medium text-sm">Daily Quest</span>
-        </div>
-        <span className="text-xs text-gray-500 flex-grow">24h short-term task</span>
-        <div className="mt-2 text-xs">
-          <span className={shortBlankCards > 0 ? "text-green-600" : "text-red-500"}>
-            {shortBlankCards} blank
-          </span>
-          {shortRewardCount > 0 && (
-            <span className="text-blue-600 ml-2">
+    <div className="flex flex-col mb-6">
+      {/* 移除槽位任务类型锁定提示文字 */}
+      
+      <div className="flex flex-wrap gap-3">
+        <div 
+          className={`flex-1 min-w-[120px] p-3 border rounded-lg transition-all flex flex-col ${
+            taskType === 'short' 
+              ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200' 
+              : 'border-gray-200 hover:border-purple-300'
+          } ${isFromSlot ? (defaultType === 'short' ? 'cursor-default' : 'cursor-not-allowed opacity-60') : 'cursor-pointer'}`}
+          onClick={() => !isFromSlot && setTaskType('short')}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <Clock className="w-4 h-4 text-purple-500" />
+            <span className="font-medium text-sm">Daily Quest</span>
+            {isFromSlot && defaultType === 'short' && (
+              <div className="ml-auto">
+                <div 
+                  className="bg-purple-200 text-purple-700 text-xs h-5 w-5 flex items-center justify-center rounded-full font-bold relative group"
+                >
+                  !
+                  {/* 悬浮提示 */}
+                  <div className="absolute hidden group-hover:block w-52 bg-white border border-gray-200 shadow-lg text-gray-700 text-xs rounded-md p-2 -right-6 top-6 z-10">
+                    <span className="font-medium">Fixed Task Type</span>
+                    <p className="mt-1">This slot({slotIndex+1})only support Daily Quest type</p>
+                    <div className="absolute -top-1 right-7 w-2 h-2 bg-white border-t border-l border-gray-200 transform rotate-45"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <span className="text-xs text-gray-500 flex-grow">24h short-term task</span>
+          <div className="mt-2 text-xs flex gap-2">
+            <span className="text-gray-600">
+              {shortBlankCards} blank
+            </span>
+            <span className="text-blue-600">
               {shortRewardCount} reward
             </span>
-          )}
+          </div>
         </div>
-      </div>
-      
-      <div 
-        className={`flex-1 min-w-[120px] p-3 border rounded-lg cursor-pointer transition-all flex flex-col ${
-          taskType === 'long' 
-            ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200' 
-            : 'border-gray-200 hover:border-teal-300'
-        }`}
-        onClick={() => setTaskType('long')}
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <Calendar className="w-4 h-4 text-teal-500" />
-          <span className="font-medium text-sm">Quest Chain</span>
-        </div>
-        <span className="text-xs text-gray-500 flex-grow">Long-term with steps</span>
-        <div className="mt-2 text-xs">
-          <span className={longBlankCards > 0 ? "text-green-600" : "text-red-500"}>
-            {longBlankCards} blank
-          </span>
-          {longRewardCount > 0 && (
-            <span className="text-blue-600 ml-2">
+        
+        <div 
+          className={`flex-1 min-w-[120px] p-3 border rounded-lg transition-all flex flex-col ${
+            taskType === 'long' 
+              ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200' 
+              : 'border-gray-200 hover:border-teal-300'
+          } ${isFromSlot ? (defaultType === 'long' ? 'cursor-default' : 'cursor-not-allowed opacity-60') : 'cursor-pointer'}`}
+          onClick={() => !isFromSlot && setTaskType('long')}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <Calendar className="w-4 h-4 text-teal-500" />
+            <span className="font-medium text-sm">Quest Chain</span>
+            {isFromSlot && defaultType === 'long' && (
+              <div className="ml-auto">
+                <div 
+                  className="bg-teal-200 text-teal-700 text-xs h-5 w-5 flex items-center justify-center rounded-full font-bold relative group"
+                  title="This task type is fixed for the selected slot"
+                >
+                  !
+                  {/* 悬浮提示 */}
+                  <div className="absolute hidden group-hover:block w-52 bg-white border border-gray-200 shadow-lg text-gray-700 text-xs rounded-md p-2 -right-6 top-6 z-10">
+                    <span className="font-medium">Fixed Task Type</span>
+                    <p className="mt-1">This slot({slotIndex+1})only support Quest Chain type</p>
+                    <div className="absolute -top-1 right-7 w-2 h-2 bg-white border-t border-l border-gray-200 transform rotate-45"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <span className="text-xs text-gray-500 flex-grow">Long-term with steps</span>
+          <div className="mt-2 text-xs flex gap-2">
+            <span className="text-gray-600">
+              {longBlankCards} blank
+            </span>
+            <span className="text-blue-600">
               {longRewardCount} reward
             </span>
-          )}
+          </div>
         </div>
       </div>
     </div>
@@ -685,7 +770,7 @@ export const CreateTaskModal = ({
             )}
             
             {/* Task Information */}
-            {taskType === 'short' && expirationInfo && (
+            {/* {taskType === 'short' && expirationInfo && (
               <div className="p-3 bg-blue-50 border border-blue-100 rounded-md flex items-start gap-2 mb-6">
                 <Clock className="w-4 h-4 text-blue-500 mt-0.5" />
                 <div className="flex-1">
@@ -695,7 +780,7 @@ export const CreateTaskModal = ({
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
             
             {/* Card Selector */}
             {renderCardSelector()}
