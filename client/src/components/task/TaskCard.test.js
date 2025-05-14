@@ -1,9 +1,9 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { TaskCard } from './TaskCard';
-import AuthContext from '../../context/AuthContext';
-import axios from 'axios';
+const React = require('react');
+const { render, screen, fireEvent, waitFor } = require('@testing-library/react');
+require('@testing-library/jest-dom');
+const { TaskCard } = require('./TaskCard');
+const AuthContext = require('../../context/AuthContext').default;
+const axios = require('axios');
 
 // 模拟 axios
 jest.mock('axios');
@@ -45,9 +45,11 @@ const defaultProps = {
 
 const renderTaskCard = (props = {}) => {
   return render(
-    <AuthContext.Provider value={{ user: mockUser }}>
-      <TaskCard {...defaultProps} {...props} />
-    </AuthContext.Provider>
+    React.createElement(
+      AuthContext.Provider, 
+      { value: { user: mockUser } },
+      React.createElement(TaskCard, { ...defaultProps, ...props })
+    )
   );
 };
 

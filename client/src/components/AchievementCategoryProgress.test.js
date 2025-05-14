@@ -1,6 +1,7 @@
-import { render } from '@testing-library/react';
-import AchievementCategoryProgress from './AchievementCategoryProgress';
+const { render } = require('@testing-library/react');
+const React = require('react');
+const AchievementCategoryProgress = require('./achievement/AchievementCategoryProgress').default;
 
 test('should render AchievementCategoryProgress component', () => {
-  render(<AchievementCategoryProgress />);
+  render(React.createElement(AchievementCategoryProgress));
 });

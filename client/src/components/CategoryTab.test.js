@@ -1,6 +1,7 @@
-import { render } from '@testing-library/react';
-import CategoryTab from './CategoryTab';
+const { render } = require('@testing-library/react');
+const React = require('react');
+const CategoryTab = require('./CategoryTab').default;
 
-test('should render CategoryTab component', () => {
-  render(<CategoryTab />);
+test('renders CategoryTab component', () => {
+  render(React.createElement(CategoryTab));
 });

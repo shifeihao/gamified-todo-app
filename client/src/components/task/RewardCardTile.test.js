@@ -1,7 +1,7 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { RewardCardTile } from './RewardCardTile';
+const React = require('react');
+const { render, screen, fireEvent } = require('@testing-library/react');
+require('@testing-library/jest-dom');
+const { RewardCardTile } = require('./RewardCardTile');
 
 const mockCard = {
   title: '奖励卡片',
@@ -16,7 +16,7 @@ const mockCard = {
 
 describe('RewardCardTile 组件', () => {
   test('应当正确渲染基本信息', () => {
-    render(<RewardCardTile card={mockCard} />);
+    render(React.createElement(RewardCardTile, { card: mockCard }));
     
     expect(screen.getByText('奖励卡片')).toBeInTheDocument();
     expect(screen.getByText('这是一个奖励卡片的描述')).toBeInTheDocument();
@@ -24,7 +24,7 @@ describe('RewardCardTile 组件', () => {
   });
 
   test('应当显示奖励倍率', () => {
-    render(<RewardCardTile card={mockCard} />);
+    render(React.createElement(RewardCardTile, { card: mockCard }));
     
     expect(screen.getByText('2x')).toBeInTheDocument();
     expect(screen.getByText('1.5x')).toBeInTheDocument();
@@ -33,7 +33,10 @@ describe('RewardCardTile 组件', () => {
 
   test('点击时应调用onClick回调', () => {
     const handleClick = jest.fn();
-    render(<RewardCardTile card={mockCard} onClick={handleClick} />);
+    render(React.createElement(RewardCardTile, { 
+      card: mockCard, 
+      onClick: handleClick 
+    }));
     
     fireEvent.click(screen.getByText('奖励卡片'));
     expect(handleClick).toHaveBeenCalledWith(mockCard);
@@ -41,26 +44,37 @@ describe('RewardCardTile 组件', () => {
 
   test('readOnly模式下不应调用onClick', () => {
     const handleClick = jest.fn();
-    render(<RewardCardTile card={mockCard} onClick={handleClick} readOnly={true} />);
+    render(React.createElement(RewardCardTile, { 
+      card: mockCard, 
+      onClick: handleClick,
+      readOnly: true 
+    }));
     
     fireEvent.click(screen.getByText('奖励卡片'));
     expect(handleClick).not.toHaveBeenCalled();
   });
 
   test('选中状态应显示不同样式', () => {
-    const { container } = render(<RewardCardTile card={mockCard} isSelected={true} />);
+    const { container } = render(React.createElement(RewardCardTile, { 
+      card: mockCard, 
+      isSelected: true 
+    }));
     
     expect(container.firstChild).toHaveClass('border-purple-500');
     expect(container.firstChild).toHaveClass('bg-purple-200');
   });
 
   test('已使用的卡片应显示Used标记', () => {
-    render(<RewardCardTile card={{ ...mockCard, isUsed: true }} />);
+    render(React.createElement(RewardCardTile, { 
+      card: { ...mockCard, isUsed: true } 
+    }));
     expect(screen.getByText('Used')).toBeInTheDocument();
   });
 
   test('长期任务卡片应显示不同标记', () => {
-    render(<RewardCardTile card={{ ...mockCard, taskDuration: 'long' }} />);
+    render(React.createElement(RewardCardTile, { 
+      card: { ...mockCard, taskDuration: 'long' } 
+    }));
     expect(screen.getByText('Long Task')).toBeInTheDocument();
   });
 
@@ -73,7 +87,9 @@ describe('RewardCardTile 组件', () => {
       }
     };
     
-    render(<RewardCardTile card={cardWithoutSpecialBonus} />);
+    render(React.createElement(RewardCardTile, { 
+      card: cardWithoutSpecialBonus 
+    }));
     expect(screen.queryByText('特殊奖励')).not.toBeInTheDocument();
   });
 }); 

@@ -1,8 +1,8 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { TaskChain } from './TaskChain';
-import AuthContext from '../../context/AuthContext';
+const React = require('react');
+const { render, screen, fireEvent } = require('@testing-library/react');
+require('@testing-library/jest-dom');
+const { TaskChain } = require('./TaskChain');
+const AuthContext = require('../../context/AuthContext').default;
 
 // 模拟任务数据
 const mockTasks = [
@@ -37,9 +37,11 @@ const defaultProps = {
 
 const renderTaskChain = (props = {}) => {
   return render(
-    <AuthContext.Provider value={{ user: mockUser }}>
-      <TaskChain {...defaultProps} {...props} />
-    </AuthContext.Provider>
+    React.createElement(
+      AuthContext.Provider,
+      { value: { user: mockUser } },
+      React.createElement(TaskChain, { ...defaultProps, ...props })
+    )
   );
 };
 

@@ -1,10 +1,10 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { StatusBadge } from './StatusBadge';
+const React = require('react');
+const { render, screen } = require('@testing-library/react');
+const { StatusBadge } = require('./StatusBadge');
 
 describe('StatusBadge', () => {
   test('renders with default styles', () => {
-    render(<StatusBadge status="unknown" />);
+    render(React.createElement(StatusBadge, { status: 'unknown' }));
     const badge = screen.getByText('unknown');
     expect(badge).toBeInTheDocument();
     expect(badge.className).toContain('bg-gray-100');
@@ -12,7 +12,7 @@ describe('StatusBadge', () => {
   });
 
   test('renders completed status with correct styles', () => {
-    render(<StatusBadge status="completed" />);
+    render(React.createElement(StatusBadge, { status: 'completed' }));
     const badge = screen.getByText('completed');
     expect(badge).toBeInTheDocument();
     expect(badge.className).toContain('bg-green-100');
@@ -20,7 +20,7 @@ describe('StatusBadge', () => {
   });
 
   test('renders in-progress status with correct styles', () => {
-    render(<StatusBadge status="in-progress" />);
+    render(React.createElement(StatusBadge, { status: 'in-progress' }));
     const badge = screen.getByText('in-progress');
     expect(badge).toBeInTheDocument();
     expect(badge.className).toContain('bg-blue-100');
@@ -28,7 +28,7 @@ describe('StatusBadge', () => {
   });
 
   test('renders pending status with correct styles', () => {
-    render(<StatusBadge status="pending" />);
+    render(React.createElement(StatusBadge, { status: 'pending' }));
     const badge = screen.getByText('pending');
     expect(badge).toBeInTheDocument();
     expect(badge.className).toContain('bg-yellow-100');
@@ -36,7 +36,7 @@ describe('StatusBadge', () => {
   });
 
   test('renders expired status with correct styles', () => {
-    render(<StatusBadge status="expired" />);
+    render(React.createElement(StatusBadge, { status: 'expired' }));
     const badge = screen.getByText('expired');
     expect(badge).toBeInTheDocument();
     expect(badge.className).toContain('bg-red-100');
@@ -45,7 +45,7 @@ describe('StatusBadge', () => {
 
   test('applies custom className', () => {
     const customClass = 'custom-test-class';
-    render(<StatusBadge status="completed" className={customClass} />);
+    render(React.createElement(StatusBadge, { status: 'completed', className: customClass }));
     const badge = screen.getByText('completed');
     expect(badge.className).toContain(customClass);
   });

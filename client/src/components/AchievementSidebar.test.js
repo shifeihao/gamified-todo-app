@@ -1,6 +1,7 @@
-import { render } from '@testing-library/react';
-import AchievementSidebar from './AchievementSidebar';
+const { render } = require('@testing-library/react');
+const React = require('react');
+const AchievementSidebar = require('./AchievementSidebar').default;
 
-test('should render AchievementSidebar component', () => {
-  render(<AchievementSidebar />);
+test('renders AchievementSidebar component', () => {
+  render(React.createElement(AchievementSidebar));
 });

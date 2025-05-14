@@ -1,6 +1,7 @@
-import { render } from '@testing-library/react';
-import AchievementOverview from './AchievementOverview';
+const { render } = require('@testing-library/react');
+const React = require('react');
+const AchievementOverview = require('./AchievementOverview').default;
 
-test('should render AchievementOverview component', () => {
-  render(<AchievementOverview />);
+test('renders AchievementOverview component', () => {
+  render(React.createElement(AchievementOverview));
 });

@@ -72,7 +72,8 @@ describe('卡片控制器测试', () => {
       
       // 创建请求和响应对象
       const req = {
-        user: { id: testUser._id }
+        user: { id: testUser._id },
+        query: { noAutoIssue: "false" }
       };
       const res = mockResponse();
       
@@ -121,7 +122,8 @@ describe('卡片控制器测试', () => {
       
       // 创建请求和响应对象
       const req = {
-        user: { id: testUser._id }
+        user: { id: testUser._id },
+        query: { noAutoIssue: "false" }
       };
       const res = mockResponse();
       
@@ -158,7 +160,8 @@ describe('卡片控制器测试', () => {
       
       // 创建请求和响应对象
       const req = {
-        user: { id: testUser._id }
+        user: { id: testUser._id },
+        query: { noAutoIssue: "false" }
       };
       const res = mockResponse();
       
@@ -184,7 +187,8 @@ describe('卡片控制器测试', () => {
     it('应该发放每日卡片', async () => {
       // 创建请求和响应对象
       const req = {
-        user: { id: testUser._id }
+        user: { id: testUser._id },
+        query: { isNewRegistration: "false" }
       };
       const res = mockResponse();
       
@@ -219,21 +223,21 @@ describe('卡片控制器测试', () => {
       
       // 创建请求和响应对象
       const req = {
-        user: { id: testUser._id }
+        user: { id: testUser._id },
+        query: { isNewRegistration: "false" }
       };
       const res = mockResponse();
       
-      // 模拟抛出异常
-      const errorFn = jest.fn();
+      // 由于在测试中 express-async-handler 被模拟为直接返回函数，
+      // 我们需要手动捕获错误并设置响应
       try {
         await issueDailyCards(req, res);
+        // 如果没有抛出错误，测试应该失败
+        expect(true).toBe(false); // 这行不应该执行
       } catch (error) {
-        errorFn(error.message);
+        expect(error.message).toBe('今日卡片已发放');
+        expect(res.status).toHaveBeenCalledWith(400);
       }
-      
-      // 验证状态码和异常
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(errorFn).toHaveBeenCalledWith('今日卡片已发放');
     });
   });
   

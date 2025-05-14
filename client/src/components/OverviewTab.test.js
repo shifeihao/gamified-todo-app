@@ -1,6 +1,7 @@
-import { render } from '@testing-library/react';
-import OverviewTab from './OverviewTab';
+const { render } = require('@testing-library/react');
+const React = require('react');
+const OverviewTab = require('./OverviewTab').default;
 
-test('should render OverviewTab component', () => {
-  render(<OverviewTab />);
+test('renders OverviewTab component', () => {
+  render(React.createElement(OverviewTab));
 });

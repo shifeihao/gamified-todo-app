@@ -1,5 +1,6 @@
-import { render } from '@testing-library/react';
-import AchievementDetailRow from './AchievementDetailRow';
+const { render } = require('@testing-library/react');
+const React = require('react');
+const AchievementDetailRow = require('./achievement/AchievementDetailRow').default;
 
 const mockAchievement = {
   unlocked: false,
@@ -16,5 +17,8 @@ const mockUserStats = {
 };
 
 test('should render AchievementDetailRow component', () => {
-  render(<AchievementDetailRow achievement={mockAchievement} userStats={mockUserStats} />);
+  render(React.createElement(AchievementDetailRow, { 
+    achievement: mockAchievement, 
+    userStats: mockUserStats 
+  }));
 });

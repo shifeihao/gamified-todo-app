@@ -1,8 +1,8 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { TaskSlots } from './TaskSlots';
-import AuthContext from '../../context/AuthContext';
+const React = require('react');
+const { render, screen, fireEvent } = require('@testing-library/react');
+require('@testing-library/jest-dom');
+const { TaskSlots } = require('./TaskSlots');
+const AuthContext = require('../../context/AuthContext').default;
 
 // 模拟任务数据
 const mockTasks = [
@@ -40,9 +40,11 @@ const defaultProps = {
 
 const renderTaskSlots = (props = {}) => {
   return render(
-    <AuthContext.Provider value={{ user: mockUser }}>
-      <TaskSlots {...defaultProps} {...props} />
-    </AuthContext.Provider>
+    React.createElement(
+      AuthContext.Provider,
+      { value: { user: mockUser } },
+      React.createElement(TaskSlots, { ...defaultProps, ...props })
+    )
   );
 };
 

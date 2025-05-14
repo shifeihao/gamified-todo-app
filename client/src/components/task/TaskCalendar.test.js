@@ -1,7 +1,7 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { TaskCalendar } from './TaskCalendar';
+const React = require('react');
+const { render, screen, fireEvent } = require('@testing-library/react');
+require('@testing-library/jest-dom');
+const { TaskCalendar } = require('./TaskCalendar');
 
 // 模拟任务数据
 const mockTasks = [
@@ -31,11 +31,11 @@ const mockTasks = [
 // 模拟 FullCalendar 组件
 jest.mock('@fullcalendar/react', () => {
   return function DummyCalendar({ events, dayCellDidMount }) {
-    return (
-      <div data-testid="calendar">
-        <div>Calendar Mock</div>
-        <div>Events: {events.length}</div>
-      </div>
+    return React.createElement(
+      'div',
+      { 'data-testid': 'calendar' },
+      React.createElement('div', null, 'Calendar Mock'),
+      React.createElement('div', null, `Events: ${events.length}`)
     );
   };
 });
@@ -47,17 +47,17 @@ describe('TaskCalendar 组件', () => {
   });
 
   test('应当正确渲染日历组件', () => {
-    render(<TaskCalendar tasks={mockTasks} />);
+    render(React.createElement(TaskCalendar, { tasks: mockTasks }));
     expect(screen.getByTestId('calendar')).toBeInTheDocument();
   });
 
   test('应当处理任务数据并创建日历事件', () => {
-    render(<TaskCalendar tasks={mockTasks} />);
+    render(React.createElement(TaskCalendar, { tasks: mockTasks }));
     expect(screen.getByText(/Events: 2/)).toBeInTheDocument(); // 两个子任务
   });
 
   test('空任务列表应当正确渲染', () => {
-    render(<TaskCalendar tasks={[]} />);
+    render(React.createElement(TaskCalendar, { tasks: [] }));
     expect(screen.getByText(/Events: 0/)).toBeInTheDocument();
   });
 
@@ -92,7 +92,7 @@ describe('TaskCalendar 组件', () => {
       }
     ];
 
-    render(<TaskCalendar tasks={mixedTasks} />);
+    render(React.createElement(TaskCalendar, { tasks: mixedTasks }));
     expect(screen.getByText(/Events: 2/)).toBeInTheDocument(); // 仍然只有原来的两个子任务
   });
 }); 

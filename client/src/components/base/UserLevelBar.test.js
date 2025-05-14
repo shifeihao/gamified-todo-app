@@ -1,6 +1,12 @@
-import { render } from '@testing-library/react';
-import UserLevelBar from './UserLevelBar';
+const { render } = require('@testing-library/react');
+const React = require('react');
+const UserLevelBar = require('./UserLevelBar').default;
 
-test('should render UserLevelBar component', () => {
-  render(<UserLevelBar />);
+test('renders UserLevelBar component', () => {
+  const props = {
+    level: 5,
+    currentExp: 500,
+    requiredExp: 1000
+  };
+  render(React.createElement(UserLevelBar, props));
 });

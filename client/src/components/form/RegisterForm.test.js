@@ -1,9 +1,9 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { RegisterForm } from './RegisterForm';
-import { BrowserRouter } from 'react-router-dom';
-import AuthContext from '../../context/AuthContext';
+const React = require('react');
+const { render, screen, fireEvent, waitFor } = require('@testing-library/react');
+require('@testing-library/jest-dom');
+const { RegisterForm } = require('./RegisterForm');
+const { BrowserRouter } = require('react-router-dom');
+const AuthContext = require('../../context/AuthContext').default;
 
 // 模拟 useNavigate
 jest.mock('react-router-dom', () => ({
@@ -16,11 +16,11 @@ const mockRegister = jest.fn();
 
 const renderRegisterForm = (props = {}) => {
   return render(
-    <BrowserRouter>
-      <AuthContext.Provider value={{ register: mockRegister }}>
-        <RegisterForm {...props} />
-      </AuthContext.Provider>
-    </BrowserRouter>
+    React.createElement(BrowserRouter, null,
+      React.createElement(AuthContext.Provider, { value: { register: mockRegister } },
+        React.createElement(RegisterForm, props)
+      )
+    )
   );
 };
 
@@ -34,8 +34,8 @@ describe('RegisterForm 组件', () => {
     
     expect(screen.getByLabelText(/Username/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Mail/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Confirm Password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Confirm Password$/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Register/i })).toBeInTheDocument();
   });
 
@@ -44,8 +44,8 @@ describe('RegisterForm 组件', () => {
     
     const usernameInput = screen.getByLabelText(/Username/i);
     const emailInput = screen.getByLabelText(/Mail/i);
-    const passwordInput = screen.getByLabelText(/Password/i);
-    const confirmPasswordInput = screen.getByLabelText(/Confirm Password/i);
+    const passwordInput = screen.getByLabelText(/^Password$/i);
+    const confirmPasswordInput = screen.getByLabelText(/^Confirm Password$/i);
 
     fireEvent.change(usernameInput, { target: { value: 'testuser' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -61,16 +61,20 @@ describe('RegisterForm 组件', () => {
   test('密码不匹配应显示错误信息', async () => {
     renderRegisterForm();
     
-    const passwordInput = screen.getByLabelText(/Password/i);
-    const confirmPasswordInput = screen.getByLabelText(/Confirm Password/i);
+    const usernameInput = screen.getByLabelText(/Username/i);
+    const emailInput = screen.getByLabelText(/Mail/i);
+    const passwordInput = screen.getByLabelText(/^Password$/i);
+    const confirmPasswordInput = screen.getByLabelText(/^Confirm Password$/i);
 
+    fireEvent.change(usernameInput, { target: { value: 'testuser' } });
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: 'password456' } });
 
     const submitButton = screen.getByRole('button', { name: /Register/i });
     fireEvent.click(submitButton);
 
-    expect(await screen.findByText(/Passwords do not match/i)).toBeInTheDocument();
+    expect(await screen.findByText(/The passwords you entered twice do not match/i)).toBeInTheDocument();
     expect(mockRegister).not.toHaveBeenCalled();
   });
 
@@ -79,8 +83,8 @@ describe('RegisterForm 组件', () => {
     
     const usernameInput = screen.getByLabelText(/Username/i);
     const emailInput = screen.getByLabelText(/Mail/i);
-    const passwordInput = screen.getByLabelText(/Password/i);
-    const confirmPasswordInput = screen.getByLabelText(/Confirm Password/i);
+    const passwordInput = screen.getByLabelText(/^Password$/i);
+    const confirmPasswordInput = screen.getByLabelText(/^Confirm Password$/i);
 
     fireEvent.change(usernameInput, { target: { value: 'testuser' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -93,11 +97,7 @@ describe('RegisterForm 组件', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockRegister).toHaveBeenCalledWith({
-        username: 'testuser',
-        email: 'test@example.com',
-        password: 'password123'
-      });
+      expect(mockRegister).toHaveBeenCalledWith('testuser', 'test@example.com', 'password123');
     });
   });
 
@@ -106,8 +106,8 @@ describe('RegisterForm 组件', () => {
     
     const usernameInput = screen.getByLabelText(/Username/i);
     const emailInput = screen.getByLabelText(/Mail/i);
-    const passwordInput = screen.getByLabelText(/Password/i);
-    const confirmPasswordInput = screen.getByLabelText(/Confirm Password/i);
+    const passwordInput = screen.getByLabelText(/^Password$/i);
+    const confirmPasswordInput = screen.getByLabelText(/^Confirm Password$/i);
 
     fireEvent.change(usernameInput, { target: { value: 'testuser' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -128,8 +128,8 @@ describe('RegisterForm 组件', () => {
     
     const usernameInput = screen.getByLabelText(/Username/i);
     const emailInput = screen.getByLabelText(/Mail/i);
-    const passwordInput = screen.getByLabelText(/Password/i);
-    const confirmPasswordInput = screen.getByLabelText(/Confirm Password/i);
+    const passwordInput = screen.getByLabelText(/^Password$/i);
+    const confirmPasswordInput = screen.getByLabelText(/^Confirm Password$/i);
 
     fireEvent.change(usernameInput, { target: { value: 'testuser' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
@@ -143,6 +143,6 @@ describe('RegisterForm 组件', () => {
     const submitButton = screen.getByRole('button', { name: /Register/i });
     fireEvent.click(submitButton);
 
-    expect(await screen.findByText(/Loading.../i)).toBeInTheDocument();
+    expect(await screen.findByText(/Registering.../i)).toBeInTheDocument();
   });
 });

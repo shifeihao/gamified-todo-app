@@ -8,7 +8,7 @@ import AchievementSidebar from "../components/achievement/AchievementSidebar.js"
 import OverviewTab from "../components/achievement/OverviewTab.js";
 import CategoryTab from "../components/achievement/CategoryTab.js";
 import { Navbar } from "../components/navbar/Navbar.js";
-import { useToast } from "../contexts/ToastContext";
+import { useToast } from "../context/ToastContext";
 
 const AchievementCenterPage = () => {
   const [achievements, setAchievements] = useState([]);
