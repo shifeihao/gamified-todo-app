@@ -13,6 +13,7 @@ import InventoryShopPage from "./pages/InventoryShopPage";
 import AchievementCenterPage from "./pages/AchievementCenterPage.js";
 import DungeonTest from "./pages/DungeonTest";
 import TemplatePage from "./pages/TemplatePage";
+import GameLayout from "./pages/Gamelayout.js";
 
 // 导入上下文
 import { AuthProvider } from "./context/AuthContext";
@@ -43,6 +44,7 @@ function App() {
           <Route path="/inventoryShopTest" element={<InventoryShopPage />} />
           <Route path="/dungeon-test" element={<DungeonTest />} />
           <Route path="/inventory" element={<InventoryShopPage />} />
+          <Route path="/gamePanel" element={<GameLayout />} />
 
           {/* 受保护的路由 */}
           <Route
