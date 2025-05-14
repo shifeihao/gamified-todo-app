@@ -56,7 +56,7 @@ async function seedWarriorItems() {
         evasion: 0
       },
       requiredLevel: 2,
-      allowedClasses: ["warrior"] // 改为字符串数组
+      allowedClasses: ["warrior"] 
     }),
 
     new ArmorItem({
@@ -73,7 +73,7 @@ async function seedWarriorItems() {
         evasion: 1
       },
       requiredLevel: 2,
-      allowedClasses: ["warrior"] // 改为字符串数组
+      allowedClasses: ["warrior"] 
     }),
 
     new ArmorItem({
@@ -90,7 +90,7 @@ async function seedWarriorItems() {
         evasion: 0
       },
       requiredLevel: 3,
-      allowedClasses: ["warrior"] // 改为字符串数组
+      allowedClasses: ["warrior"] 
     }),
 
     new ArmorItem({
@@ -107,7 +107,7 @@ async function seedWarriorItems() {
         evasion: 1
       },
       requiredLevel: 3,
-      allowedClasses: ["warrior"] // 改为字符串数组
+      allowedClasses: ["warrior"] 
     }),
 
     new ArmorItem({
@@ -124,7 +124,7 @@ async function seedWarriorItems() {
         evasion: 2
       },
       requiredLevel: 4,
-      allowedClasses: ["warrior"] // 改为字符串数组
+      allowedClasses: ["warrior"] 
     }),
 
     new ArmorItem({
@@ -141,7 +141,7 @@ async function seedWarriorItems() {
         evasion: 0
       },
       requiredLevel: 5,
-      allowedClasses: ["warrior"] // 改为字符串数组
+      allowedClasses: ["warrior"] 
     }),
   ];
 
@@ -170,7 +170,7 @@ async function seedMageItems() {
         accuracy: 6
       },
       requiredLevel: 1,
-      allowedClasses: ["mage"] // 改为字符串数组
+      allowedClasses: ["mage"] 
     }),
 
     new ArmorItem({
@@ -187,7 +187,7 @@ async function seedMageItems() {
         evasion: 0
       },
       requiredLevel: 1,
-      allowedClasses: ["mage"] // 改为字符串数组
+      allowedClasses: ["mage"] 
     }),
 
     new ArmorItem({
@@ -204,7 +204,7 @@ async function seedMageItems() {
         evasion: 1
       },
       requiredLevel: 2,
-      allowedClasses: ["mage"] // 改为字符串数组
+      allowedClasses: ["mage"] 
     }),
 
     new ArmorItem({
@@ -221,7 +221,7 @@ async function seedMageItems() {
         evasion: 0
       },
       requiredLevel: 2,
-      allowedClasses: ["mage"] // 改为字符串数组
+      allowedClasses: ["mage"] 
     }),
 
     new ArmorItem({
@@ -238,7 +238,7 @@ async function seedMageItems() {
         evasion: 2
       },
       requiredLevel: 3,
-      allowedClasses: ["mage"] // 改为字符串数组
+      allowedClasses: ["mage"] 
     }),
 
     new ArmorItem({
@@ -255,7 +255,7 @@ async function seedMageItems() {
         evasion: 1
       },
       requiredLevel: 3,
-      allowedClasses: ["mage"] // 改为字符串数组
+      allowedClasses: ["mage"] 
     }),
 
     new ArmorItem({
@@ -272,7 +272,7 @@ async function seedMageItems() {
         evasion: 2
       },
       requiredLevel: 4,
-      allowedClasses: ["mage"] // 改为字符串数组
+      allowedClasses: ["mage"] 
     }),
 
     new ArmorItem({
@@ -289,7 +289,7 @@ async function seedMageItems() {
         evasion: 0
       },
       requiredLevel: 5,
-      allowedClasses: ["mage"] // 改为字符串数组
+      allowedClasses: ["mage"] 
     }),
   ];
 
@@ -318,7 +318,7 @@ async function seedRogueItems() {
         accuracy: 4
       },
       requiredLevel: 1,
-      allowedClasses: ["rogue"] // 改为字符串数组
+      allowedClasses: ["rogue"]
     }),
 
     new ArmorItem({
@@ -335,7 +335,7 @@ async function seedRogueItems() {
         evasion: 1
       },
       requiredLevel: 1,
-      allowedClasses: ["rogue"] // 改为字符串数组
+      allowedClasses: ["rogue"] 
     }),
 
     new ArmorItem({
@@ -352,7 +352,7 @@ async function seedRogueItems() {
         evasion: 2
       },
       requiredLevel: 2,
-      allowedClasses: ["rogue"] // 改为字符串数组
+      allowedClasses: ["rogue"] 
     }),
 
     new ArmorItem({
@@ -369,7 +369,7 @@ async function seedRogueItems() {
         evasion: 2
       },
       requiredLevel: 2,
-      allowedClasses: ["rogue"] // 改为字符串数组
+      allowedClasses: ["rogue"] 
     }),
 
     new ArmorItem({
@@ -386,7 +386,7 @@ async function seedRogueItems() {
         evasion: 4
       },
       requiredLevel: 3,
-      allowedClasses: ["rogue"] // 改为字符串数组
+      allowedClasses: ["rogue"]
     }),
 
     new ArmorItem({
@@ -403,7 +403,7 @@ async function seedRogueItems() {
         evasion: 3
       },
       requiredLevel: 3,
-      allowedClasses: ["rogue"] // 改为字符串数组
+      allowedClasses: ["rogue"] 
     }),
 
     new ArmorItem({
@@ -420,7 +420,7 @@ async function seedRogueItems() {
         evasion: 3
       },
       requiredLevel: 4,
-      allowedClasses: ["rogue"] // 改为字符串数组
+      allowedClasses: ["rogue"] 
     }),
 
     new ArmorItem({
@@ -437,7 +437,7 @@ async function seedRogueItems() {
         evasion: 1
       },
       requiredLevel: 5,
-      allowedClasses: ["rogue"] // 改为字符串数组
+      allowedClasses: ["rogue"] 
     }),
   ];
 
@@ -466,7 +466,7 @@ async function seedArcherItems() {
         accuracy: 12
       },
       requiredLevel: 1,
-      allowedClasses: ["archer"] // 改为字符串数组
+      allowedClasses: ["archer"] 
     }),
 
     new ArmorItem({
@@ -483,7 +483,7 @@ async function seedArcherItems() {
         evasion: 1
       },
       requiredLevel: 1,
-      allowedClasses: ["archer"] // 改为字符串数组
+      allowedClasses: ["archer"] 
     }),
 
     new ArmorItem({
@@ -500,7 +500,7 @@ async function seedArcherItems() {
         evasion: 1
       },
       requiredLevel: 2,
-      allowedClasses: ["archer"] // 改为字符串数组
+      allowedClasses: ["archer"] 
     }),
 
     new ArmorItem({
@@ -517,7 +517,7 @@ async function seedArcherItems() {
         evasion: 2
       },
       requiredLevel: 2,
-      allowedClasses: ["archer"] // 改为字符串数组
+      allowedClasses: ["archer"] 
     }),
 
     new ArmorItem({
@@ -534,7 +534,7 @@ async function seedArcherItems() {
         evasion: 2
       },
       requiredLevel: 3,
-      allowedClasses: ["archer"] // 改为字符串数组
+      allowedClasses: ["archer"] 
     }),
 
     new ArmorItem({
@@ -551,7 +551,7 @@ async function seedArcherItems() {
         evasion: 3
       },
       requiredLevel: 3,
-      allowedClasses: ["archer"] // 改为字符串数组
+      allowedClasses: ["archer"] 
     }),
 
     new ArmorItem({
@@ -568,7 +568,7 @@ async function seedArcherItems() {
         evasion: 2
       },
       requiredLevel: 4,
-      allowedClasses: ["archer"] // 改为字符串数组
+      allowedClasses: ["archer"] 
     }),
 
     new ArmorItem({
@@ -585,7 +585,7 @@ async function seedArcherItems() {
         evasion: 0
       },
       requiredLevel: 5,
-      allowedClasses: ["archer"] // 改为字符串数组
+      allowedClasses: ["archer"] 
     }),
   ];
 
@@ -595,7 +595,7 @@ async function seedArcherItems() {
   await mongoose.disconnect();
 }
 
-// 执行种子函数
+
 async function runAllSeeds() {
   try {
     await seedWarriorItems();
@@ -608,7 +608,7 @@ async function runAllSeeds() {
   }
 }
 
-// 如果直接运行此文件，执行种子
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   runAllSeeds();
 }

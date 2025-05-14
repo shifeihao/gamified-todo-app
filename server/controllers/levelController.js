@@ -88,20 +88,16 @@ export const handleTaskCompletion = async (req) => {
         pendingSubTasks.length
       );
 
-      // 计算未完成子任务的奖励
       pendingSubTasksExp = 0;
       pendingSubTasksGold = 0;
 
-      // 将所有未完成的子任务标记为已完成并计算奖励
       for (const subTask of pendingSubTasks) {
         subTask.status = "completed";
         subTask.completedAt = new Date();
 
-        // 计算子任务奖励
         const subTaskExp = subTask.experience || 10;
         const subTaskGold = subTask.gold || 5;
 
-        // 应用卡片加成
         const { experience, gold } = calculateReward(
           subTaskExp,
           subTaskGold,
