@@ -10,47 +10,19 @@ services:
     ports:
       - "${PORT:-5000}:5000"
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
+      - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
       - JWT_SECRET=${JWT_SECRET}
       - PORT=${PORT:-5000}
       - API_URL=${API_URL}
       - MONGOOSE_DEBUG=${MONGOOSE_DEBUG:-false}
-    volumes:
-      - app_logs:/app/server/logs
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "node", "healthcheck.js"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 4G
-        reservations:
-          cpus: '0.5'
-          memory: 2G
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    security_opt:
-      - no-new-privileges:true
-    read_only: false
-    tmpfs:
-      - /tmp
-    networks:
-      - app_net
 
 networks:
-  app_net:
-    driver: bridge
-    internal: false
-    
-volumes:
-  app_logs:
-    driver: local 
+  default:
+    driver: bridge 

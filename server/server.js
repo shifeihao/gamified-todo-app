@@ -7,6 +7,7 @@ import connectDB from "./config/db.js";
 import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 import {
   scheduleDailyCardReset,
   schedulePeriodicCardCheck,
@@ -15,6 +16,17 @@ import {
 // ES模块中获取__dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// 确保logs目录存在
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) {
+  try {
+    fs.mkdirSync(logsDir, { recursive: true });
+    console.log('日志目录已创建:', logsDir);
+  } catch (err) {
+    console.warn('无法创建日志目录:', err.message);
+  }
+}
 
 // 加载环境变量
 dotenv.config();
