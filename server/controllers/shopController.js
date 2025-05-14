@@ -55,7 +55,15 @@ export const buyItem = async (req, res) => {
   
       // 扣金币
       user.gold -= shopEntry.price;
-      await user.save();
+      
+      // 根据user对象是否有save方法选择保存方式
+      if (typeof user.save === 'function') {
+        await user.save();
+      } else {
+        // 在测试环境中，user可能只是普通对象，使用findByIdAndUpdate
+        const User = (await import('../models/User.js')).default;
+        await User.findByIdAndUpdate(user._id, { gold: user.gold });
+      }
   
       // 减库存
       shopEntry.quantity -= 1;
@@ -121,7 +129,15 @@ export const sellItem = async (req, res) => {
 
     // 1. 增加用户金币
     user.gold += sellPrice;
-    await user.save();
+    
+    // 根据user对象是否有save方法选择保存方式
+    if (typeof user.save === 'function') {
+      await user.save();
+    } else {
+      // 在测试环境中，user可能只是普通对象，使用findByIdAndUpdate
+      const User = (await import('../models/User.js')).default;
+      await User.findByIdAndUpdate(user._id, { gold: user.gold });
+    }
 
     // 2. 减少用户物品数量
     if (inventoryEntry.quantity > 1) {
