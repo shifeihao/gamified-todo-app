@@ -3,12 +3,12 @@ import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
 import { RewardCardTile } from '../task/RewardCardTile'; // 引入RewardCardTile组件
 
-// 卡片选择组件：可显示空白卡片数或奖励卡片列表
+// Card selection component: can display the number of blank cards or the list of reward cards
 export const CardSelector = ({
   onSelect,
   selectedCard,
-  showRewards = false,   // 是否显示奖励卡片列表
-  taskType = 'short',     // 任务类型，用于过滤奖励卡
+  showRewards = false,   // Whether to display the reward card list
+  taskType = 'short',     // Task type, used to filter reward cards
   disabled = false
 }) => {
   const { user } = useContext(AuthContext);
@@ -33,21 +33,21 @@ export const CardSelector = ({
           // 存储所有卡片数据
           setCards(data.inventory || []);
         } else {
-          console.warn("卡片库存数据为空");
+          console.warn("Card inventory data is empty");
           setCards([]);
         }
         
-        // 设置每日卡片数量
+        // Set daily card quantity
         if (data && data.dailyCards) {
           setDailyCards(data.dailyCards.blank || 0);
         } else {
-          console.warn("每日卡片数据为空");
+          console.warn("Daily card data is empty");
           setDailyCards(0);
         }
         
       } catch (error) {
         console.error('CardSelector - Failed to obtain card:', error);
-        // Error handling: make sure default value is set
+        // Error handling: Make sure default values are set
         setCards([]);
         setDailyCards(0);
       } finally {
@@ -68,7 +68,6 @@ export const CardSelector = ({
     }
   };
 
-  // Filter reward cards: special and duration matches or universal
   const getRewardCards = () => {
     return cards.filter(card => 
       card.type === 'special' && 
@@ -85,7 +84,7 @@ export const CardSelector = ({
 
   return (
     <div className="mb-4" data-testid="card-selector">
-      {/* Display the number of blank cards only when the reward card mode is not turned on */}
+      {/* The number of blank cards is only displayed when the bonus card mode is not turned on */}
       {!showRewards && (
           <div className="text-sm font-medium mb-2">
             Blank cards available: {dailyCards}

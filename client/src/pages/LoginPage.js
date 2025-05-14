@@ -17,7 +17,7 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 简单的表单验证
+    // Simple form validation
     if (!email || !password) {
       showError('All fields are required');
       return;
@@ -27,7 +27,7 @@ const LoginPage = () => {
       setIsLoading(true);
       setError('');
       
-      // 调用登录函数
+      // Call the login function
       await login(email, password);
       
       // 登录成功后显示提示并跳转

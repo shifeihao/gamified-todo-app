@@ -48,7 +48,7 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }) => {
             onClick={handleContentClick}
             className={`w-full ${sizeClasses[size] || sizeClasses.md} bg-white rounded-2xl shadow-xl overflow-hidden`}
           >
-            {/* Modal header */}
+            {/* Modal box head */}
             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
               <button
@@ -61,7 +61,7 @@ export const Modal = ({ isOpen, onClose, children, title, size = 'md' }) => {
               </button>
             </div>
 
-            {/* Modal header */}
+            {/* Modal box content */}
             <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
               {children}
             </div>

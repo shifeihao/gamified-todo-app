@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children }) => {
     ? JSON.parse(localStorage.getItem("userInfo"))
     : null;
 
-  // 如果用户未登录，重定向到登录页面
+  // After successful login, a prompt will be displayed and the page will be redirected.
   if (!userInfo) {
     return <Navigate to="/login" replace />;
   }
@@ -70,14 +70,14 @@ function App() {
       <div className="min-h-screen bg-gray-50">
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
-          {/* 公开路由 */}
+          {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/inventoryShopTest" element={<InventoryShopPage />} />
           <Route path="/dungeon-test" element={<DungeonTest />} />
           <Route path="/inventory" element={<InventoryShopPage />} />
           <Route path="/gamePanel" element={<GameLayout />} />
 
-          {/* 受保护的路由 */}
+          {/* Protected Routes */}
           <Route
             path="/tasks"
             element={
@@ -110,7 +110,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* 404页面 */}
+          {/* 404 Pages */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

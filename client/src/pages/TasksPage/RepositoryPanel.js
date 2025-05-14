@@ -56,7 +56,7 @@ const RepositoryPanel = ({
         }
     }, [activeTab, user?.token]);
 
-    // 处理模板选择（创建任务）
+    // Processing template selection (create task)
     const handleTemplateSelect = (template) => {
         // 使用onEdit来触发CreateTaskModal，并预填模板数据
         if (onEdit) {

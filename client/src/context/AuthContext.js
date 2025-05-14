@@ -1,17 +1,17 @@
 import React, { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
-// 创建认证上下文
+// Creating an authentication context
 const AuthContext = createContext();
 
-// 认证提供者组件
+// Authentication provider component
 export const AuthProvider = ({ children }) => {
-  // 用户状态
+  // User Status
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 在组件挂载时从本地存储中加载用户信息
+  // Load user information from local storage when the component mounts
   useEffect(() => {
     const initUser = async () => {
       const userInfo = localStorage.getItem("userInfo")

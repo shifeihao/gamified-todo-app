@@ -11,26 +11,26 @@ jest.mock('axios');
 const mockCards = [
   {
     _id: '1',
-    title: '测试卡片1',
-    description: '这是测试卡片1的描述',
+    title: 'test card 1',
+    description: 'This is the description of Test Card 1',
     taskDuration: 'short',
     bonus: { experienceMultiplier: 1.5, goldMultiplier: 1.2 }
   },
   {
     _id: '2',
-    title: '测试卡片2',
-    description: '这是测试卡片2的描述',
+    title: 'test card 2',
+    description: 'This is the description of Test Card 2',
     taskDuration: 'long',
     bonus: { experienceMultiplier: 2, goldMultiplier: 1.8 }
   }
 ];
 
-describe('CardSelector组件', () => {
+describe('CardSelectorComponent', () => {
   beforeEach(() => {
     axios.get.mockResolvedValue({ data: mockCards });
   });
 
-  test('应该正确渲染卡片选择器', async () => {
+  test('The card selector should be rendered correctly', async () => {
     render(
       React.createElement(AuthContext.Provider, { value: { user: { token: 'test-token' } } },
         React.createElement(CardSelector, { onCardSelect: jest.fn() })
@@ -38,12 +38,12 @@ describe('CardSelector组件', () => {
     );
     
     await waitFor(() => {
-      expect(screen.getByText('测试卡片1')).toBeInTheDocument();
-      expect(screen.getByText('测试卡片2')).toBeInTheDocument();
+      expect(screen.getByText('Test card 1')).toBeInTheDocument();
+      expect(screen.getByText('Test card 2')).toBeInTheDocument();
     });
   });
 
-  test('点击卡片应该调用onCardSelect', async () => {
+  test('Clicking the card should invoke onCardSelect', async () => {
     const mockOnCardSelect = jest.fn();
     
     render(
@@ -53,10 +53,10 @@ describe('CardSelector组件', () => {
     );
     
     await waitFor(() => {
-      expect(screen.getByText('测试卡片1')).toBeInTheDocument();
+      expect(screen.getByText('Test card 1')).toBeInTheDocument();
     });
     
-    fireEvent.click(screen.getByText('测试卡片1'));
+    fireEvent.click(screen.getByText('Test card 1'));
     expect(mockOnCardSelect).toHaveBeenCalledWith(mockCards[0]);
   });
 });
