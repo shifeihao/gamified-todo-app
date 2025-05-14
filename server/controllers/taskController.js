@@ -457,6 +457,10 @@ const equipTask = async (req, res) => {
     task.slotPosition = slotPosition;
     // 记录装备时间
     task.slotEquippedAt = Date.now();
+    // 如果任务状态是pending，自动更新为进行中
+    if (task.status === "pending") {
+      task.status = "in-progress";
+    }
     const updatedTask = await task.save();
     res.json(updatedTask);
   } catch (error) {

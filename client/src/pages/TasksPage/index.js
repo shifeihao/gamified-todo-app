@@ -56,6 +56,15 @@ const TasksPage = () => {
   // 当前激活的 tab: 'daily' | 'repository' | 'timetable'
   const [activeTab, setActiveTab] = useState("daily");
 
+  // 添加一个状态，用于记录最近是否有任务完成
+  const [recentlyCompletedTask, setRecentlyCompletedTask] = useState(false);
+
+  // 标记任务最近完成，并在5秒后重置
+  const markTaskAsRecentlyCompleted = () => {
+    setRecentlyCompletedTask(true);
+    setTimeout(() => setRecentlyCompletedTask(false), 5000);
+  };
+
   // 拉取任务与卡片库存
   const fetchTasks = async () => {
     try {
@@ -149,14 +158,17 @@ const TasksPage = () => {
       if (cardData.inventory) setCards(cardData.inventory);
       if (levelInfo.data) setRewardInfo(levelInfo.data);
       
-      // 只有在所有数据都没有获取到时才显示错误
-      if (allTasks.length === 0 && shortTasks.length === 0 && longTasks.length === 0) {
+      // 只有在所有数据都没有获取到，并且最近没有任务完成时才显示错误
+      if (allTasks.length === 0 && shortTasks.length === 0 && longTasks.length === 0 && !recentlyCompletedTask) {
         console.error("所有任务数据获取失败");
         showError("获取任务数据失败，请尝试刷新页面");
       }
     } catch (err) {
       console.error("获取任务数据出错:", err);
-      showError("获取任务数据失败");
+      // 只有在最近没有任务完成时才显示错误
+      if (!recentlyCompletedTask) {
+        showError("获取任务数据失败");
+      }
     }
   };
 
@@ -236,7 +248,10 @@ const TasksPage = () => {
     error: completeError,
   } = useApiAction(completeTaskService, {
     onSuccess: async (response) => {
-      console.log("任务完成响应:", response); // 添加日志来调试
+      console.log("任务完成响应:", response);
+      
+      // 标记任务最近完成，避免显示数据获取失败的警告
+      markTaskAsRecentlyCompleted();
       
       // 清除编辑任务状态，确保不会带入到新建任务中
       setEditingTask(null);
@@ -394,6 +409,9 @@ const TasksPage = () => {
   } = useApiAction(completeLongTaskService, {
     onSuccess: async (response) => {
       console.log("长期任务完成响应:", response); // 添加日志来调试
+      
+      // 标记任务最近完成，避免显示数据获取失败的警告
+      markTaskAsRecentlyCompleted();
       
       // 清除编辑任务状态，确保不会带入到新建任务中
       setEditingTask(null);

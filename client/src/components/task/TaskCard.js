@@ -192,8 +192,8 @@ export const TaskCard = ({
 
           <div className="relative w-full space-y-2 p-2">
             {/* 状态徽章 */}
-            <div className={`absolute top-2 right-2 rounded-full px-2 py-1 text-xs font-medium ${statusStyles}`}>
-              {task.status}
+            <div className={`absolute top-2 right-2 rounded-full px-2 py-1 text-xs font-medium ${task.status === "pending" ? "bg-blue-100 text-blue-800 border-blue-200" : statusStyles}`}>
+              {task.status === "pending" ? "in-progress" : task.status}
             </div>
             {/* 标题 & 描述 */}
             <div>
@@ -260,15 +260,17 @@ export const TaskCard = ({
             {/* 操作按钮区 */}
             <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
               <div className="flex space-x-2">
-                <button
-                  onClick={() => onComplete?.(task._id)}
-                  className={`rounded p-1 ${
-                    task.type==='short' ? 'text-purple-600 hover:bg-purple-100' : 'text-blue-600 hover:bg-blue-100'
-                  } transition-colors`}
-                  title="Complete Task"
-                >
-                  <CheckSquare className="h-4 w-4" />
-                </button>
+                {(task.status === "in-progress" || task.status === "pending") && (
+                  <button
+                    onClick={() => onComplete?.(task._id)}
+                    className={`rounded p-1 ${
+                      task.type==='short' ? 'text-purple-600 hover:bg-purple-100' : 'text-blue-600 hover:bg-blue-100'
+                    } transition-colors`}
+                    title="Complete Task"
+                  >
+                    <CheckSquare className="h-4 w-4" />
+                  </button>
+                )}
               </div>
               <div className="flex space-x-2">
                 <button
@@ -328,7 +330,7 @@ export const TaskCard = ({
           {/* 操作区 */}
           <div className="flex items-center justify-between pt-2">
             <div className="flex space-x-2">
-              {task.status !== "completed" && (
+              {task.status === "in-progress" && (
                 <button
                   onClick={() => onComplete?.(task._id)}
                   className={`rounded p-1 ${
