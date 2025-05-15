@@ -93,7 +93,7 @@ const CombatSystem = ({
   const [showDamage, setShowDamage] = useState(null);
   const [isFirstAttack, setIsFirstAttack] = useState(true);
   const [currentTurn, setCurrentTurn] = useState(0);
-  const maxPlayerHpRef = useRef(playerStats.hp);
+  const maxPlayerHpRef = useRef(userInfo?.baseStats?.hp || playerStats.hp);
   const [maxMonsterHp, setMaxMonsterHp] = useState(
     monsters[0]?.stats?.hp ?? 100
   );
@@ -118,6 +118,13 @@ const CombatSystem = ({
   const classConfig = CLASS_COMBAT_CONFIG[actualPlayerClass] || CLASS_COMBAT_CONFIG.warrior;
   
   // Initialize combat state
+   useEffect(() => {
+    setPlayerHp(playerStats.hp);
+    if (!maxPlayerHpRef.current) {
+      maxPlayerHpRef.current = playerStats.hp;
+    }
+  }, [playerStats.hp]);
+
   useEffect(() => {
   const hp = currentMonster?.stats?.hp ?? 100;
    setMonsterHp(hp);
@@ -275,26 +282,27 @@ const CombatSystem = ({
     return effects;
   };
    const getPlayerAvatar = () => {
-          if (userInfo?.images && userInfo?.gender) {
-            const spritePath = userInfo.images[userInfo.gender]?.sprite;
-            if (spritePath) {
-              return (
-                <img 
-                  src={`/icon/characters/${spritePath}`}
-                  alt={`${actualPlayerClass} ${userInfo.gender}`}
-                  className="w-4/5 h-4/5 object-contain"
-                  onError={(e) => {
-                    // Handle image loading failure
-                    console.log('Player avatar loading failed, using emoji fallback');
-                    e.target.style.display = 'none';
-                    e.target.parentNode.innerHTML = getEmojiAvatar();
-                  }}
-                />
-              );
-            }
+  // 优先使用 userStats，备用 userInfo
+        const userData = userInfo;
+        
+        if (userData?.images && userData?.gender) {
+          const spritePath = userData.images[userData.gender]?.sprite;
+          if (spritePath) {
+            return (
+              <img 
+                src={`/icon/characters/${spritePath}`}
+                alt={`${actualPlayerClass} ${userData.gender}`}
+                className="w-4/5 h-4/5 object-contain"
+                onError={(e) => {
+                  console.log('Player avatar loading failed, using emoji fallback');
+                  e.target.style.display = 'none';
+                  e.target.parentNode.innerHTML = getEmojiAvatar();
+                }}
+              />
+            );
           }
-    
-        // Otherwise use emoji fallback
+        }
+
         return getEmojiAvatar();
       };
       const getEmojiAvatar = () => {
@@ -665,6 +673,7 @@ const CombatSystem = ({
             
             // Apply skill effects
             applySkillEffects(hitSkillEffects, 'player');
+           
             
             const newPlayerHp = Math.max(0, playerHp - reducedDamage);
             setPlayerHp(newPlayerHp);
@@ -761,7 +770,6 @@ const CombatSystem = ({
     );
   };
 
-  // New: Drop animation component
   const DropAnimation = () => {
     if (!showDropAnimation || !dropResults) return null;
     
