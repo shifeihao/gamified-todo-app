@@ -5,6 +5,8 @@ import SocketManager from "./components/SocketManager.js";
 
 // components
 import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import TasksPage from "./pages/TasksPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -41,6 +43,8 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/inventoryShopTest" element={<InventoryShopPage />} />
           <Route path="/dungeon-test" element={<DungeonTest />} />
           <Route path="/inventory" element={<InventoryShopPage />} />
