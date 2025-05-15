@@ -5,7 +5,7 @@ import Level from "../models/Level.js";
 import Task from "../models/Task.js";
 import { calculateReward } from "../utils/TaskRewardCalculator.js";
 import eventBus from "../events/eventBus.js";
-import { SyncTaskHistory, SyncUser } from "../path/to/sync/functions.js";
+import { SyncTaskHistory, SyncUser } from "../utils/userStatsSync.js";
 
 export const handleTaskCompletion = async (req) => {
   try {
