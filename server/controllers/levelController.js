@@ -5,6 +5,7 @@ import Level from "../models/Level.js";
 import Task from "../models/Task.js";
 import { calculateReward } from "../utils/TaskRewardCalculator.js";
 import eventBus from "../events/eventBus.js";
+import { SyncTaskHistory, SyncUser } from "../utils/userStatsSync.js";
 
 export const handleTaskCompletion = async (req) => {
   try {
@@ -18,7 +19,7 @@ export const handleTaskCompletion = async (req) => {
     const task = await Task.findById(taskId).populate("cardUsed");
     if (!task || task.user.toString() !== userId.toString()) {
       console.error(
-        `The task is invalid or does not belong to the current user - Task ID: ${taskId}, User ID: ${userId}`
+        `Task is invalid or does not belong to the current user – Task ID: ${taskId}, User ID: ${userId}`
       );
       return {
         success: false,
@@ -41,7 +42,7 @@ export const handleTaskCompletion = async (req) => {
     // Find user information
     const user = await User.findById(userId);
     if (!user) {
-      console.error(`User does not exist - UserID: ${userId}`);
+      console.error(`User not found – User ID: ${userId}`);
       return {
         success: false,
         message: "User not found",
@@ -108,7 +109,7 @@ export const handleTaskCompletion = async (req) => {
         pendingSubTasksGold += gold;
 
         console.log(
-          `Automatically complete subtasks: ${subTask.title}, Obtain ${experience} XP, ${gold} Gold`
+          `Automatically completed subtask: ${subTask.title}, gained ${experience} XP, ${gold} Gold`
         );
       }
 
@@ -124,7 +125,7 @@ export const handleTaskCompletion = async (req) => {
         );
       }
 
-      // Calculate additional rewards for long-term tasks
+      // Calculate extra rewards for long-term tasks
       const bonusExp = task.experienceReward || task.finalBonusExperience || 30;
       const bonusGold = task.goldReward || task.finalBonusGold || 15;
 
@@ -140,14 +141,13 @@ export const handleTaskCompletion = async (req) => {
       console.log("Long-term task bonus (with multiplier) - XP:", finalExp);
       console.log("Long-term task bonus (with multiplier) - Gold:", finalGold);
 
-      // Calculate the final reward
-      // // If all subtasks have been completed, only the extra reward will be given; otherwise, the sum of the unfinished subtasks + the extra reward will be given
+      // If all subtasks are already completed, only give the bonus reward; otherwise give the sum of unfinished-subtask rewards + bonus reward
       if (pendingSubTasks.length === 0 && completedSubTasks.length > 0) {
-        // All sub-tasks have been completed, only additional rewards (long-term task completion rewards) are given
-        console.log("All sub-tasks have been completed, only additional rewards are given");
+        // All subtasks have been completed, only give the bonus reward (long-term task completion reward)
+        console.log("All subtasks have been completed, only give the bonus reward");
         totalExp = finalExp;
         totalGold = finalGold;
-        console.log("Final Reward (Extra Reward Only) - XP:", totalExp, "Gold:", totalGold);
+        console.log("Final reward (only bonus) – XP:", totalExp, "Gold:", totalGold);
       } else {
         // Total reward = unfinished subtask reward + long-term task extra reward
         totalExp = pendingSubTasksExp + finalExp;
@@ -157,7 +157,7 @@ export const handleTaskCompletion = async (req) => {
           totalExp,
           "(Subtasks:",
           pendingSubTasksExp,
-          "+ Mission Rewards:",
+          "+ Subtasks Rewards:",
           finalExp,
           ")"
         );
@@ -166,7 +166,7 @@ export const handleTaskCompletion = async (req) => {
           totalGold,
           "(Subtasks:",
           pendingSubTasksGold,
-          "+ Mission Rewards:",
+          "+ Subtasks Rewards:",
           finalGold,
           ")"
         );
@@ -221,7 +221,7 @@ export const handleTaskCompletion = async (req) => {
     await SyncUser(user);
 
     console.log(
-      `Rewards issued - User: ${userId}, get ${totalExp} XP, ${totalGold} Gold`
+      `Reward has been issued – User: ${userId}, gained ${totalExp} XP, ${totalGold} Gold`
     );
 
     // Calculate the user's current level and level progress
@@ -246,9 +246,10 @@ export const handleTaskCompletion = async (req) => {
       user.level = currentLevel.level;
       await user.save();
       console.log(`User upgrade! New level: ${currentLevel.level}`);
+      console.log(`Level up！New Level: ${currentLevel.level}`);
     }
 
-    // Calculate the experience points required to reach the next level
+    // to calculate required EXP to the next level
     const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
     const nextLevelExp = nextLevel
       ? nextLevel.expRequired

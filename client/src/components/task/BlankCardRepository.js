@@ -62,7 +62,7 @@ export const BlankCardRepository = ({ cards, tasks = [], onQuickCreate = null })
                     {/* Type select */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Applicable Quest Type
+                            Applicable Task Type
                         </label>
                         <select
                             value={selectedType}

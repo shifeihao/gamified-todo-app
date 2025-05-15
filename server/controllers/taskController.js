@@ -230,7 +230,7 @@ const updateTask = async (req, res) => {
 
       return res.json({
         message: allSubTasksCompleted
-          ? "Subtask completed! All subtasks have been completed, click the Complete Quest button to get additional rewards"
+          ? "Subtask completed! All subtasks have been completed, click the Complete Task button to get additional rewards"
           : "Subtask completed",
         task: result.task,
         subTaskReward: result.subTaskReward,
@@ -304,7 +304,7 @@ const updateTask = async (req, res) => {
       // Automatically remove after task is completed
       if (task.equipped) {
         task.equipped = false;
-        task.slotPosition = -1; // 重置槽位
+        task.slotPosition = -1;
         console.log(`Automatically unequipped completed task ${task._id}`);
       }
       

@@ -79,7 +79,7 @@ export const NewTaskCard = () => {
       <div className="flex rounded-lg shadow-md overflow-hidden bg-white border border-gray-100">
         <div className="bg-blue-100 w-1/6 flex items-center justify-center">
           <span className="font-medium text-blue-800 px-2 py-1 bg-blue-200 rounded-md text-xs">
-            Project Quest
+            Project Task
           </span>
         </div>
         <div className="w-5/6 p-4 flex flex-col">

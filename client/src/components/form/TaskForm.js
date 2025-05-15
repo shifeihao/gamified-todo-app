@@ -114,7 +114,7 @@ export const TaskForm = ({
     if (subTasks.length === 0) {
       toast.error(
         <div className="flex items-center">
-          <span className="font-medium">Quest Chain requires at least one step</span>
+          <span className="font-medium">Task Chain requires at least one step</span>
         </div>,
         { duration: 3000, position: 'top-center' }
       );
@@ -257,7 +257,7 @@ export const TaskForm = ({
       {taskType === 'long' && (
         <div className="bg-white rounded-lg">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-medium text-gray-700">Quest Steps</h3>
+            <h3 className="font-medium text-gray-700">Task Steps</h3>
             <button 
               type="button" 
               onClick={addSubTask} 

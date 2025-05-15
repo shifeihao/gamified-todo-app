@@ -38,7 +38,7 @@ const TimetablePanel = ({
       <div className="flex items-center justify-between h-14">
         <h2 className="text-xl font-bold text-blue-900 flex items-center">
           <Clipboard className="h-6 w-6 mr-2" />
-          Quest Chains
+          Task Chains
         </h2>
         <div className="flex space-x-2">
           <button

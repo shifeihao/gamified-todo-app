@@ -724,10 +724,10 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
               </div>
             )}
             
-            {/* Quest cards obtained */}
+            {/* Task cards obtained */}
             {accumulatedDrops.cards.length > 0 && (
               <div>
-                <h5 className="text-white mb-2">Quest Cards Obtained:</h5>
+                <h5 className="text-white mb-2">Task Cards Obtained:</h5>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2 justify-center">
                   {accumulatedDrops.cards.map((card, index) => (
                     <div key={index} className="bg-[#9c27b0] text-white p-2 rounded-md text-center">

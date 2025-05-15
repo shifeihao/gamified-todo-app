@@ -35,7 +35,7 @@ const DailyTaskPanel = ({
       <div className="flex items-center justify-between h-14">
         <h2 className="text-xl font-bold text-purple-900 flex items-center">
           <Zap className="h-6 w-6 mr-2" />
-          Quick Quests
+          Quick Tasks
         </h2>
         {/* Empty div, keeping the same structure as the other panel */}
         <div className="flex space-x-2">
