@@ -371,7 +371,7 @@ export const GameLayout = () => {
         <nav className="bg-[#4c2a85] border-b-4 border-[#6a3bab] py-3">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex flex-col">
-            <img src="/logo_min.png" alt="TaskMaster" className="h-8 w-auto" />
+              <img src="/logo_mini.png" alt="TaskMasters" className="h-8 w-auto mb-1" />
               <h1 className="text-xl font-bold text-white">TaskMasters</h1>
               <span className="text-xs text-[#b89be6]">Select Class</span>
             </div>
@@ -526,8 +526,10 @@ export const GameLayout = () => {
       <nav className="bg-[#4c2a85] border-b-4 border-[#6a3bab] py-3 shadow-lg shadow-black/30">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between gap-4">
           <div className="flex flex-col gap-0.5">
-            <h1 className="text-xl font-bold text-white shadow-[2px_2px_0px_#2c1810]">TaskMasters</h1>
-            <span className="text-xs text-[#b89be6] font-normal">Game Mode</span>
+            <div className="flex items-center">
+              <img src="/logo_mini.png" alt="TaskMasters" className="h-8 w-auto mr-2" />
+              <span onClick={() => window.location.href = '/tasks'} className="text-xl font-bold text-white cursor-pointer">TaskMasters</span>
+            </div>
           </div>
           
           <div className="flex gap-2 bg-[#3a1f6b] p-1 rounded-lg border-2 border-[#5d3494]">
@@ -668,9 +670,20 @@ export const GameLayout = () => {
       )}
       
       {/* Main content area */}
-      <main className="min-h-[calc(100vh-200px)] bg-[#1a0f12] p-4">
+      <main className="min-h-[calc(100vh-200px)] bg-[#1a0f12] p-4" 
+        style={{
+          backgroundImage: `
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Cg fill='%238b5cf6' fill-opacity='0.08'%3E%3Ccircle cx='100' cy='100' r='1.5'/%3E%3Ccircle cx='200' cy='150' r='1.5'/%3E%3Ccircle cx='150' cy='250' r='1.5'/%3E%3Ccircle cx='280' cy='210' r='1.5'/%3E%3Ccircle cx='300' cy='100' r='1.5'/%3E%3Cpath d='M100 100L200 150L150 250L280 210L300 100' stroke='%238b5cf6' stroke-width='0.5' stroke-opacity='0.05' fill='none'/%3E%3C/g%3E%3C/svg%3E"),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cpath d='M30 10.9L0 38.1V76.5L30 103.7L60 76.5V38.1L30 10.9zM30 0L60 17.3V52L30 69.3L0 52V17.3L30 0z' fill='none' stroke='%238b5cf6' stroke-opacity='0.07' stroke-width='1.5'/%3E%3C/svg%3E")
+          `,
+          backgroundSize: "400px 400px, 60px 104px",
+          backgroundPosition: "center center, center center",
+        }}
+      >
         <div className={`mx-auto ${
-          currentPage === PAGES.DUNGEON ? 'max-w-3xl' : 'max-w-6xl bg-[#f5f5f5] rounded-xl border-3 border-[#7e4ab8] p-4 text-[#2c1810]'
+          currentPage === PAGES.DUNGEON 
+            ? 'max-w-3xl' 
+            : 'max-w-6xl bg-[#21141e] bg-opacity-90 backdrop-blur-sm rounded-xl border-3 border-[#7e4ab8] p-4 text-[#e0e0e0] shadow-lg shadow-black/30'
         }`}>
           {currentPage === PAGES.DUNGEON && (
             <DungeonExplorer

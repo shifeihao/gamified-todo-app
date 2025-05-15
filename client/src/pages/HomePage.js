@@ -1,11 +1,9 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import {
   SparklesIcon,
   ChartBarIcon,
   BookOpenIcon,
-  ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import { LoginForm, RegisterForm } from "../components";
 
@@ -37,7 +35,7 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex-shrink-0 flex items-center">
-              <img src="/logo_min.png" alt="TaskMasters" className="h-8 w-auto" />
+              <img src="/logo_mini.png" alt="TaskMasters" className="h-8 w-auto mr-2" />
               <span className="text-2xl font-bold text-white">TaskMasters</span>
             </div>
           </div>
