@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
 import { RewardCardTile } from '../task/RewardCardTile'; // 引入RewardCardTile组件
@@ -15,6 +15,8 @@ export const CardSelector = ({
   const [cards, setCards] = useState([]);
   const [dailyCards, setDailyCards] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  // 添加一个ref来跟踪是否是初始加载
+  const initialLoadDone = useRef(false);
 
   useEffect(() => {
     const fetchCards = async () => {
@@ -52,13 +54,15 @@ export const CardSelector = ({
         setDailyCards(0);
       } finally {
         setIsLoading(false);
+        initialLoadDone.current = true;
       }
     };
     
-    if (user && user.token) {
+    // 只有在用户存在且尚未初始化时才获取卡片
+    if (user && user.token && !initialLoadDone.current) {
       fetchCards();
     }
-  }, [user, taskType, showRewards]);
+  }, [user]);
 
   const getCardColor = (type) => {
     switch (type) {
@@ -78,7 +82,7 @@ export const CardSelector = ({
   
   const rewardCards = showRewards ? getRewardCards() : [];
 
-  if (isLoading) {
+  if (isLoading && !initialLoadDone.current) {
     return <div className="mb-4">Loading cards...</div>;
   }
 

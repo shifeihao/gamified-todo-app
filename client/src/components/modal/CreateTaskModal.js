@@ -60,6 +60,8 @@ export const CreateTaskModal = ({
   const selectedCardIdRef = useRef(initialData?.selectedCardId || null);
   // Track if this modal was opened with a specific card to select
   const hasSpecificCardSelection = useRef(!!initialData?.selectedCardId || !!initialData?.useRewardCard);
+  // 添加一个ref来跟踪卡片是否已锁定选择
+  const cardSelectionLocked = useRef(false);
   
   // UI state
   const [currentStep, setCurrentStep] = useState(1);
@@ -306,6 +308,8 @@ export const CreateTaskModal = ({
           
           // 清除ID引用，以避免再次尝试选择
           selectedCardIdRef.current = null;
+          // 锁定卡片选择，防止后续代码覆盖已选择的卡片
+          cardSelectionLocked.current = true;
           
           setIsFetchingInventory(false);
           return;
@@ -317,6 +321,13 @@ export const CreateTaskModal = ({
           // 不清空selectedCardIdRef，保留它用于后续可能的查找
           console.log("保留卡片ID以便后续匹配");
         }
+      }
+      
+      // 如果卡片选择已锁定，表示已经选择了特定卡片，不再进行自动选择
+      if (cardSelectionLocked.current) {
+        console.log("卡片选择已锁定，保持当前选择");
+        setIsFetchingInventory(false);
+        return;
       }
       
       // Regular card selection logic
@@ -331,6 +342,8 @@ export const CreateTaskModal = ({
         if (hasRewardCards) {
           setSelectedCard(currentTypeRewardCards[0]);
           setSelectedBlankCard(null);
+          // 快速创建模式下，一旦选择了卡片就锁定选择
+          cardSelectionLocked.current = true;
         }
         
         setIsFetchingInventory(false);
@@ -392,11 +405,13 @@ export const CreateTaskModal = ({
         setUseReward(true);
         // 确保selectedCardIdRef被设置
         selectedCardIdRef.current = initialData.selectedCardId;
+        // 重置卡片选择锁定状态
+        cardSelectionLocked.current = false;
       }
       
       fetchInventory();
     }
-  }, [isOpen, user, useReward]);
+  }, [isOpen, user]);  // 移除useReward依赖，避免因useReward变化导致重新获取库存
 
   const resetFormState = () => {
     // Completely reset all states
@@ -407,6 +422,8 @@ export const CreateTaskModal = ({
     setCardError('');
     setCurrentStep(1);
     setFormValues(null);
+    // 重置卡片选择锁定状态
+    cardSelectionLocked.current = false;
     // Make sure to clear the form values
     if (document.getElementById('title')) document.getElementById('title').value = '';
     if (document.getElementById('description')) document.getElementById('description').value = '';
