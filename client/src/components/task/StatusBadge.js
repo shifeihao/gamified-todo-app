@@ -2,8 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 
 /**
- * 可复用的任务状态徽章组件
- * 根据任务状态显示不同颜色的徽章
+ * Reusable task status badge component
+ * Display badges in different colors according to task status
  */
 export const StatusBadge = ({ status, className = "" }) => {
   const getStatusStyles = () => {

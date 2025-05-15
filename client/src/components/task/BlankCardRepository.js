@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import {RewardCardTile} from './RewardCardTile'; // ✅ 新增引用
+import {RewardCardTile} from './RewardCardTile';
 
 
 export const BlankCardRepository = ({ cards }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedType, setSelectedType] = useState('All');
 
-    // 过滤：只显示类型为special且未使用的卡片
+    // Filter: Show only cards of type special and unused
     const filtered = cards.filter(card => {
-        // 只显示类型为special的未使用卡片
+        // Only show unused cards of type special
         const isSpecialCard = card.type === 'special';
         const isUnused = !card.isUsed;
         
@@ -26,10 +26,10 @@ export const BlankCardRepository = ({ cards }) => {
 
     return (
         <div className="mb-8">
-            {/* 过滤器 */}
+            {/* Filter */}
             <div className="card mb-6 p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* 搜索 */}
+                    {/* Search */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Search
@@ -43,7 +43,7 @@ export const BlankCardRepository = ({ cards }) => {
                         />
                     </div>
 
-                    {/* 类型筛选 */}
+                    {/* Type select */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Applicable Quest Type
@@ -63,7 +63,7 @@ export const BlankCardRepository = ({ cards }) => {
                 </div>
             </div>
 
-            {/* 展示卡片 */}
+            {/* Show Card */}
             {filtered.length === 0 ? (
                 <div className="text-center py-10 bg-gray-50 rounded-lg">
                     <p className="text-gray-500">No special reward cards available.</p>

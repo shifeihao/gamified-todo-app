@@ -62,10 +62,10 @@ export const TaskForm = ({
 
   // Notify parent component of form value changes
   useEffect(() => {
-    // 防止初始化和空值时触发更新
+    // Prevent updates from being triggered when initialization or null values are present
     if (!onChange || !title.trim()) return;
     
-    // 准备当前表单数据
+    // Prepare the current form data
     const formData = {
       title: title.trim(),
       description: description.trim(),
@@ -77,13 +77,13 @@ export const TaskForm = ({
       status: initialData?.status || 'pending'
     };
     
-    // 使用深度比较防止无限循环
+    // Using deep comparison to prevent infinite loops
     const formDataJSON = JSON.stringify(formData);
     
     if (formDataJSON !== prevFormDataRef.current) {
       prevFormDataRef.current = formDataJSON;
       
-      // 防止频繁更新，添加防抖
+      // Prevent frequent updates and add anti-shake
       const timeoutId = setTimeout(() => {
         onChange(formData);
       }, 500);
@@ -106,11 +106,11 @@ export const TaskForm = ({
     ]);
   };
 
-  // 验证子任务 - 仅用于表单提交时
+  // Validation subtask - only used when the form is submitted
   const validateSubTasks = () => {
     if (taskType !== 'long') return true;
     
-    // 检查是否有子任务
+    // Check if there are subtasks
     if (subTasks.length === 0) {
       toast.error(
         <div className="flex items-center">
@@ -120,12 +120,12 @@ export const TaskForm = ({
       );
       return false;
     }
-    
-    // 检查每个子任务
+
+    // Check each subtask
     for (let i = 0; i < subTasks.length; i++) {
       const subTask = subTasks[i];
       
-      // 检查标题
+      // Check the title
       if (!subTask.title || subTask.title.trim() === '') {
         toast.error(
           <div className="flex items-center">
@@ -137,7 +137,7 @@ export const TaskForm = ({
         return false;
       }
       
-      // 检查截止日期
+      // Check deadline
       if (!subTask.dueDate) {
         toast.error(
           <div className="flex items-center">
@@ -154,7 +154,7 @@ export const TaskForm = ({
   };
 
   const updateSubTask = (index, field, value) => {
-    // 不再进行即时验证，仅更新状态
+    // No more instant verification, only status update
     setSubTasks(prev =>
       prev.map((st, i) => (i === index ? { ...st, [field]: value } : st))
     );
@@ -166,7 +166,7 @@ export const TaskForm = ({
 
   const isButtonDisabled = loading || disableSubmit;
 
-  // 修改日期渲染和更新逻辑
+  // Modify date rendering and update logic
   const renderDueDate = () => {
     if (taskType === 'short') {
       return getTomorrowDate();
@@ -177,10 +177,10 @@ export const TaskForm = ({
   const handleSubmit = e => {
     e.preventDefault();
     
-    // 验证主表单
+    // Validate the main form
     if (!validateForm()) return;
     
-    // 验证子任务
+    // Verify subtask
     if (!validateSubTasks()) return;
     
     const processedSubTasks = subTasks.map(st => ({

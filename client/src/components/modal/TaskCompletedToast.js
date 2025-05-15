@@ -26,7 +26,7 @@ export const showTaskCompletedToast = (title, expGained, goldGained, isSubtask =
     }
   }
   
-  // 显示通知
+  // Show Notifications
   toast.success(
     <div className="flex flex-col space-y-1">
       <span className="font-semibold text-sm">{isSubtask ? "Subtask Complete!" : "Quest Complete!"}</span>
@@ -42,17 +42,17 @@ export const showTaskCompletedToast = (title, expGained, goldGained, isSubtask =
   );
 };
 
-// 显示长期任务完成的详细通知
+// Display detailed notifications for long-term task completions
 export const showLongTaskCompletedToast = (response, task) => {
   // Use the longTaskInfo returned by the server to determine whether all subtasks have been completed
   const longTaskInfo = response.longTaskInfo || {};
   const allSubTasksCompleted = longTaskInfo.allSubTasksCompleted;
   
-  // 获取服务器返回的奖励
+  // Get the reward returned by the server
   let totalXp = (response.reward?.expGained || 0);
   let totalGold = (response.reward?.goldGained || 0);
   
-  // 如果奖励为0，使用默认值
+  // If the reward is 0, use the default value
   if (totalXp === 0) {
     totalXp = longTaskInfo.finalBonusExperience || task?.experienceReward || 30;
     console.log(`Total XP reward is 0, using the mission defined value: ${totalXp}`);

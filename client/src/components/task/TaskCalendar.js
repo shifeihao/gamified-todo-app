@@ -12,7 +12,7 @@ export const TaskCalendar = ({ tasks }) => {
     const hoverTimeoutRef = useRef(null);
     const containerRef = useRef(null);
     
-    // 监听窗口大小变化
+    // Monitor window size changes
     useEffect(() => {
         const handleResize = () => {
             setWindowSize({
@@ -23,7 +23,7 @@ export const TaskCalendar = ({ tasks }) => {
         
         window.addEventListener('resize', handleResize);
         
-        // 初始渲染后强制更新日历大小
+        // Force calendar size to update after initial render
         if (calendarRef.current && calendarRef.current.getApi) {
             setTimeout(() => {
                 const api = calendarRef.current.getApi();
@@ -36,7 +36,7 @@ export const TaskCalendar = ({ tasks }) => {
         };
     }, []);
     
-    // 当窗口大小改变时，更新日历大小
+    // Update the calendar size when the window is resized
     useEffect(() => {
         if (calendarRef.current && calendarRef.current.getApi) {
             const api = calendarRef.current.getApi();
@@ -44,23 +44,23 @@ export const TaskCalendar = ({ tasks }) => {
         }
     }, [windowSize]);
     
-    // 修复日期处理，确保日期不会偏移
+    // Fixed date handling to ensure dates don't drift
     const normalizeDate = (dateString) => {
-        // 将日期字符串解析为YYYY-MM-DD格式
+        // Parse date string into YYYY-MM-DD format
         if (!dateString) return null;
         
-        // 首先尝试从ISO格式提取日期部分
+        // First try to extract the date part from ISO format
         let dateOnlyStr = dateString;
         if (dateString.includes('T')) {
             dateOnlyStr = dateString.split('T')[0];
         }
         
-        // 创建日期对象，确保使用正确的时区
+        // Create a date object, ensuring the correct time zone is used
         const [year, month, day] = dateOnlyStr.split('-').map(Number);
         return new Date(Date.UTC(year, month - 1, day));
     };
     
-    // 比较两个日期是否是同一天（使用UTC比较）
+    // Compare two dates to see if they are on the same day (using UTC)
     const isSameDay = (d1, d2) => {
         if (!d1 || !d2) return false;
         return d1.getUTCFullYear() === d2.getUTCFullYear() &&
@@ -68,18 +68,18 @@ export const TaskCalendar = ({ tasks }) => {
                d1.getUTCDate() === d2.getUTCDate();
     };
     
-    // 获取日期的YYYY-MM-DD格式字符串（UTC基准）
+    // Get the date in YYYY-MM-DD format (UTC basis)
     const formatDateToYYYYMMDD = (date) => {
         if (!date) return '';
         return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
     };
     
-    // 处理事件，确保日期正确
+    // Process the event, making sure the date is correct
     const processEvents = useCallback((tasks) => {
         const longTasks = tasks.filter(task => task.type === 'long' && task.equipped);
         const palette = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
         
-        console.log("处理任务列表:", longTasks);
+        console.log("Processing Task List:", longTasks);
         
         return longTasks.flatMap((task, idx) => {
             const baseColor = palette[task.slotPosition % palette.length] || '#1e3a8a';
@@ -88,17 +88,17 @@ export const TaskCalendar = ({ tasks }) => {
             if (task.subTasks && task.subTasks.length > 0) {
                 task.subTasks.forEach((sub, i) => {
                     if (sub.dueDate) {
-                        // 规范化日期，确保不会有偏移
+                        // Normalize the date to ensure there is no drift
                         const normalizedDate = normalizeDate(sub.dueDate);
                         
                         if (normalizedDate) {
                             const formattedDate = formatDateToYYYYMMDD(normalizedDate);
-                            console.log(`子任务 "${sub.title}" 原始日期: ${sub.dueDate}, 规范化后: ${formattedDate}`);
+                            console.log(`Subtask "${sub.title}" Original Date: ${sub.dueDate}, After normalization: ${formattedDate}`);
                             
                             items.push({
                                 id: `${task._id}-sub-${i}`,
                                 title: '',
-                                start: formattedDate, // 使用格式化的日期字符串而不是Date对象
+                                start: formattedDate, // Use formatted date strings instead of Date objects
                                 allDay: true,
                                 display: 'background',
                                 backgroundColor: 'transparent',
@@ -113,7 +113,7 @@ export const TaskCalendar = ({ tasks }) => {
                                 }
                             });
                         } else {
-                            console.log(`子任务日期解析失败: ${sub.dueDate}`);
+                            console.log(`Subtask date parsing failed: ${sub.dueDate}`);
                         }
                     }
                 });
@@ -128,15 +128,15 @@ export const TaskCalendar = ({ tasks }) => {
         setCalendarEvents(events);
     }, [tasks, processEvents]);
 
-    // 获取特定日期的所有任务
+    // Get all tasks for a specific date
     const getTasksForDate = useCallback((date) => {
-        // 获取日期的标准格式用于比较
+        // Get the standard format of the date for comparison
         const dateStr = formatDateToYYYYMMDD(new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())));
         
-        console.log(`查找日期 ${dateStr} 的任务`);
+        console.log(`Find tasks for date ${dateStr}`);
         
         return calendarEvents.filter(event => {
-            // 使用标准化的日期字符串进行比较
+            // Use normalized date strings for comparison
             return event.extendedProps.rawDate === dateStr;
         }).map(event => ({
             id: event.id,
@@ -149,13 +149,13 @@ export const TaskCalendar = ({ tasks }) => {
         }));
     }, [calendarEvents]);
 
-    // 处理日期单元格的鼠标事件
+    // Handle mouse events for date cells
     const handleDayCellMouseEnter = (info) => {
         const date = info.date;
         const tasksForDate = getTasksForDate(date);
         
         if (tasksForDate.length > 0) {
-            // 计算弹出框位置
+            // Calculate the popup box position
             const rect = info.el.getBoundingClientRect();
             const calendarRect = calendarRef.current.elRef.current.getBoundingClientRect();
             
@@ -197,17 +197,17 @@ export const TaskCalendar = ({ tasks }) => {
         setHoverInfo(prev => ({ ...prev, visible: false }));
     };
 
-    // 日期单元格内容渲染
+    // Date cell content rendering
     const dayCellContent = useCallback((info) => {
-        // 使用UTC日期格式进行比较
+        // Use UTC date format for comparison
         const dateStr = formatDateToYYYYMMDD(new Date(Date.UTC(info.date.getFullYear(), info.date.getMonth(), info.date.getDate())));
         
-        // 找出当天所有任务
+        // Find all tasks for the day
         const dayTasks = calendarEvents.filter(event => {
             return event.extendedProps.rawDate === dateStr;
         });
         
-        // 按颜色分组任务
+        //Group tasks by color
         const tasksByColor = {};
         dayTasks.forEach(task => {
             const color = task.extendedProps.color;
@@ -236,13 +236,13 @@ export const TaskCalendar = ({ tasks }) => {
     }, [calendarEvents]);
 
     useEffect(() => {
-        // 当日历组件挂载后，为每个日期单元格添加事件监听器
+        // When the calendar component is mounted, add an event listener for each date cell
         const addDateCellListeners = () => {
             if (calendarRef.current) {
                 const dayCells = calendarRef.current.elRef.current.querySelectorAll('.fc-daygrid-day');
                 
                 dayCells.forEach((cell) => {
-                    // 提取日期
+                    // Extraction date
                     const dateAttr = cell.getAttribute('data-date');
                     if (dateAttr) {
                         cell.addEventListener('mouseenter', (e) => {
@@ -256,7 +256,7 @@ export const TaskCalendar = ({ tasks }) => {
             }
         };
         
-        // 等待日历渲染完成
+        // Wait for calendar rendering to complete
         setTimeout(addDateCellListeners, 100);
         
         return () => {
@@ -266,11 +266,11 @@ export const TaskCalendar = ({ tasks }) => {
         };
     }, [calendarEvents]);
 
-    // 使用一个单独的组件来渲染悬停信息，这样可以挂载到body上
+    // Use a separate component to render hover information, which can be mounted on the body
     const HoverInfoPortal = () => {
         if (!hoverInfo.visible || hoverInfo.tasks.length === 0) return null;
         
-        // 计算绝对位置，而不是相对于日历容器的位置
+        // Calculates absolute position, not relative to the calendar container
         let absolutePosition = { top: 0, left: 0 };
         
         if (containerRef.current) {
@@ -358,7 +358,7 @@ export const TaskCalendar = ({ tasks }) => {
                 />
             </div>
             
-            {/* 使用Portal渲染悬停信息 */}
+            {/* Using Portals to render hover information */}
             <HoverInfoPortal />
 
             <style>

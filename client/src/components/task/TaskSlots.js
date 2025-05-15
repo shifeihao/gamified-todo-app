@@ -4,18 +4,18 @@ import { TaskCard } from './TaskCard';
 import { Plus, Lock } from 'lucide-react';
 
 export const TaskSlots = ({
-                            items = [],             // 待填充的任务列表
-                            totalSlots = 5,         // 总槽位数
-                            activeCount,        // 前 N 个可用，其余锁定
-                            renderCreateContent,    // 渲染"新建"按钮内部结构
-                            onCreate,               // 点击新建回调 (index -> slot)
-                            onDrop,                 // 拖放到槽位回调 (taskId, index)
+                            items = [],
+                            totalSlots = 5,
+                            activeCount,
+                            renderCreateContent,
+                            onCreate,
+                            onDrop,
                               onComplete,
                               onDelete,
                               onEdit,
                               onUnequip,
-                              slotHeight = 'min-h-28',  // 已修改为min-height而不是height
-                              themeColor = 'purple'  // 新增主题色参数
+                              slotHeight = 'min-h-28',
+                              themeColor = 'purple'
                           }) => {
     const slots = useMemo(() => {
         const arr = Array(totalSlots).fill(null);
@@ -32,7 +32,7 @@ export const TaskSlots = ({
         return arr;
     }, [items, totalSlots, activeCount]);
 
-    // 动态构建颜色类（text, bg, border）
+    // Dynamically construct color classes（text, bg, border）
     const colorMap = {
         purple: {
             primary: 'purple',
@@ -69,7 +69,7 @@ export const TaskSlots = ({
 
     const handleDragOver = e => {
         e.preventDefault();
-        // 拖拽悬停时添加更明显的视觉反馈
+        // Add more obvious visual feedback when dragging and hovering
         e.currentTarget.classList.add(theme.bg, theme.borderActive, 'ring-2', theme.ringColor);
     };
 
@@ -133,7 +133,7 @@ export const TaskSlots = ({
                             </button>
                         )}
                         
-                        {/* 添加槽位序号指示器 */}
+                        {/* Add slot number indicator */}
                         {task && (
                             <div className={`absolute -bottom-2 -right-2 w-5 h-5 rounded-full ${theme.iconBg} ${theme.iconColor} text-xs flex items-center justify-center shadow-sm`}>
                                 {idx + 1}

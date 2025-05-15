@@ -20,42 +20,42 @@ export const AuthProvider = ({ children }) => {
 
       if (userInfo?.token) {
         try {
-          console.log("开始请求 /api/users/profile...");
+          console.log("Start Request /api/users/profile...");
           const { data } = await axios.get("/api/users/profile", {
             headers: { Authorization: `Bearer ${userInfo.token}` },
           });
-          console.log("收到用户数据:", data);
+          console.log("Receive user data:", data);
 
           const updatedUser = { ...userInfo, ...data };
           localStorage.setItem("userInfo", JSON.stringify(updatedUser));
           setUser(updatedUser);
         } catch (err) {
-          console.error("刷新用户信息失败:", err);
-          setUser(userInfo); // 即使失败，也设置原始 user
+          console.error("Failed to refresh user information:", err);
+          setUser(userInfo); // Even if it fails, set the original user
         }
       } else {
-        setUser(userInfo); // 没 token 就直接设
+        setUser(userInfo); // If there is no token, just set
       }
 
-      setLoading(false); // ✅ loading 最后设置
+      setLoading(false); // ✅ loading last settings
     };
 
     initUser();
   }, []);
 
-  // 尝试为新用户获取卡片
+  // Try to get a card for a new user
   const initializeUserCards = async (token) => {
     try {
-      // 检查是否是新注册用户
+      // Check if it is a new registered user
       const isNewRegistration =
         localStorage.getItem("isNewRegistration") === "true";
 
-      // 如果是新注册用户，需要特殊处理确保只发一次卡片
+      // If it is a newly registered user, special processing is required to ensure that the card is only issued once
       if (isNewRegistration) {
-        console.log("检测到新注册用户，执行一次性卡片初始化");
+        console.log("Detect a new registered user and perform a one-time card initialization");
 
         try {
-          // 获取当前所有卡片状态
+          // Get the current status of all cards
           const inventoryResponse = await axios.get(
             "/api/cards/inventory?noAutoIssue=true",
             {
@@ -64,9 +64,9 @@ export const AuthProvider = ({ children }) => {
           );
 
           const cardData = inventoryResponse.data;
-          console.log("当前卡片库存状态:", cardData);
+          console.log("Current card inventory status:", cardData);
 
-          // 直接调用清晰的API发放短期卡片，参数isNewRegistration=true会清除旧卡片
+          // Directly call the clear API to issue a short-term card, the parameter isNewRegistration=true will clear the old card
           const shortCardResponse = await axios.post(
             "/api/cards/issue-daily?isNewRegistration=true",
             {},
@@ -74,9 +74,9 @@ export const AuthProvider = ({ children }) => {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
-          console.log("短期卡片初始化结果:", shortCardResponse.data);
+          console.log("Short-term card initialization results:", shortCardResponse.data);
 
-          // 获取当前长期卡片状态
+          // Get the current long-term card status
           const longCards =
             cardData.inventory?.filter(
               (card) =>
@@ -85,32 +85,32 @@ export const AuthProvider = ({ children }) => {
                 !card.used
             ) || [];
 
-          // 处理长期卡片
+          // Handling long-term cards
           if (longCards.length !== 3) {
-            // 如果已有长期卡片，先删除
+            // If there is a long-term card, delete it first
             if (longCards.length > 0) {
               for (const card of longCards) {
                 try {
                   await axios.delete(`/api/cards/${card._id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                   });
-                  console.log(`已删除现有长期卡片: ${card._id}`);
+                  console.log(`Existing long-term card has been deleted: ${card._id}`);
                 } catch (error) {
                   console.error(
-                    `删除长期卡片失败:`,
+                    `Failed to delete long-term card:`,
                     error.response?.data?.message || error.message
                   );
                 }
               }
             }
 
-            // 创建3张新的长期卡片
+            // Create 3 new long-term cards
             for (let i = 0; i < 3; i++) {
               await axios.post(
                 "/api/cards/issue-blank",
                 {
-                  title: "初始长期卡片",
-                  description: "新用户自动获得的长期卡片",
+                  title: "Initial long-term card",
+                  description: "Long-term card automatically given to new users",
                   taskDuration: "long",
                 },
                 {
@@ -118,12 +118,12 @@ export const AuthProvider = ({ children }) => {
                 }
               );
             }
-            console.log("成功创建3张长期卡片");
+            console.log("Successfully created 3 long-term cards");
           } else {
-            console.log("用户已有3张长期卡片，无需创建");
+            console.log("The user already has 3 long-term cards, no need to create");
           }
 
-          // 最后检查结果
+          // Final inspection results
           const finalCheckResponse = await axios.get(
             "/api/cards/inventory?noAutoIssue=true",
             {
@@ -142,25 +142,25 @@ export const AuthProvider = ({ children }) => {
             ) || [];
 
           console.log(
-            `最终检查: 用户有${finalShortCards.length}张短期卡片和${finalLongCards.length}张长期卡片`
+            `Final check: User has ${finalShortCards.length} Short-term cards and${finalLongCards.length} Long-term cards`
           );
 
-          // 移除新注册标记，避免重复操作
+          // Remove new registration mark to avoid repeated operations
           localStorage.removeItem("isNewRegistration");
 
-          return; // 完成初始化，提前退出
+          return; // Complete initialization and exit early
         } catch (error) {
           console.error(
-            "新用户初始化卡片失败:",
+            "Failed to initialize the card for new user:",
             error.response?.data?.message || error.message
           );
-          // 移除标记，避免陷入无法初始化的循环
+          // Remove the flag to avoid a loop that cannot be initialized
           localStorage.removeItem("isNewRegistration");
         }
       }
 
-      // 正常流程 (非新注册用户或新用户初始化失败的回退)
-      // 获取用户当前卡片库存
+      // Normal process (fallback for non-new registered users or new user initialization failure)
+      // Get the user's current card inventory
       const inventoryResponse = await axios.get(
         "/api/cards/inventory?noAutoIssue=true",
         {
@@ -169,13 +169,13 @@ export const AuthProvider = ({ children }) => {
       );
 
       const cardData = inventoryResponse.data;
-      console.log("检查用户卡片库存:", cardData);
+      console.log("Check user card inventory:", cardData);
 
-      // 如果用户没有卡片或卡片很少，执行初始化
+      // If the user has no card or few cards, perform initialization
       if (!cardData.inventory || cardData.inventory.length < 6) {
-        console.log("用户卡片不足，初始化卡片库存...");
+        console.log("Insufficient user cards, initialize card inventory...");
 
-        // 计算当前短期和长期卡片数量
+        // Calculate the current number of short-term and long-term cards
         const shortCards =
           cardData.inventory?.filter(
             (card) => card.taskDuration === "short" && card.type === "blank"
@@ -187,19 +187,19 @@ export const AuthProvider = ({ children }) => {
 
         let madeChanges = false;
 
-        // 检查短期卡片数量，确保正好有3张
+        // Check the number of short-term cards to make sure there are exactly 3
         if (shortCards.length < 3) {
           const shortCardsNeeded = 3 - shortCards.length;
-          console.log(`需要创建${shortCardsNeeded}张短期卡片`);
+          console.log(`${shortCardsNeeded} short-term cards need to be created`);
 
           try {
-            // 直接创建所需数量的短期卡片
+            // Directly create as many short-term cards as needed
             for (let i = 0; i < shortCardsNeeded; i++) {
               await axios.post(
                 "/api/cards/issue-blank",
                 {
-                  title: "初始短期卡片",
-                  description: "新用户自动获得的短期卡片",
+                  title: "Initial Short-Term Card",
+                  description: "Short-term card automatically given to new users",
                   taskDuration: "short",
                 },
                 {
@@ -207,17 +207,17 @@ export const AuthProvider = ({ children }) => {
                 }
               );
             }
-            console.log(`成功创建${shortCardsNeeded}张短期卡片`);
+            console.log(`Successfully created ${shortCardsNeeded} short-term cards`);
             madeChanges = true;
           } catch (err) {
             console.error(
-              "创建初始短期卡片失败:",
+              "Failed to create initial short-term card:",
               err.response?.data?.message || err.message
             );
           }
         } else if (shortCards.length > 3) {
           console.log(
-            `短期卡片数量(${shortCards.length})超过了3张，需要删除多余卡片`
+            `The number of short-term cards (${shortCards.length}) exceeds 3, and the extra cards need to be deleted`
           );
 
           try {
@@ -225,52 +225,52 @@ export const AuthProvider = ({ children }) => {
             const sortedShortCards = [...shortCards].sort((a, b) => {
               const dateA = new Date(a.issuedAt || a.createdAt);
               const dateB = new Date(b.issuedAt || b.createdAt);
-              return dateB - dateA; // 倒序，最新的排在前面
+              return dateB - dateA; // In reverse order, newest first
             });
 
-            // 保留最新的3张卡片，删除其余卡片
+            // Keep the latest 3 cards and delete the rest
             const cardsToKeep = sortedShortCards.slice(0, 3);
             const cardsToRemove = sortedShortCards.slice(3);
 
             console.log(
-              `保留${cardsToKeep.length}张最新短期卡片，删除${cardsToRemove.length}张多余卡片`
+              `Keep ${cardsToKeep.length} of the latest short-term cards and delete ${cardsToRemove.length} of the redundant cards`
             );
 
-            // 删除多余的卡片
+            // Delete extra cards
             for (const card of cardsToRemove) {
               try {
                 await axios.delete(`/api/cards/${card._id}`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
-                console.log(`已删除多余的短期卡片: ${card._id}`);
+                console.log(`Deleted redundant short-term cards: ${card._id}`);
               } catch (error) {
                 console.error(
-                  `删除多余卡片失败:`,
+                  `Failed to delete extra cards:`,
                   error.response?.data?.message || error.message
                 );
               }
             }
             madeChanges = true;
           } catch (error) {
-            console.error("处理多余短期卡片时出错:", error);
+            console.error("Error processing excess short-term cards:", error);
           }
         } else {
-          console.log("用户已有正好3张短期卡片");
+          console.log("The user has exactly 3 short-term cards");
         }
 
-        // 检查长期卡片数量，确保正好有3张
+        // Check the long-term card count to make sure there are exactly 3
         if (longCards.length < 3) {
           const longCardsNeeded = 3 - longCards.length;
-          console.log(`需要创建${longCardsNeeded}张长期卡片`);
+          console.log(`${longCardsNeeded} long-term cards need to be created`);
 
           try {
-            // 逐个创建长期卡片
+            // Create long-term cards one by one
             for (let i = 0; i < longCardsNeeded; i++) {
               await axios.post(
                 "/api/cards/issue-blank",
                 {
-                  title: "初始长期卡片",
-                  description: "新用户自动获得的长期卡片",
+                  title: "Initial long-term card",
+                  description: "Long-term card automatically given to new users",
                   taskDuration: "long",
                 },
                 {
@@ -278,60 +278,60 @@ export const AuthProvider = ({ children }) => {
                 }
               );
             }
-            console.log(`成功创建${longCardsNeeded}张长期卡片`);
+            console.log(`Successfully created ${longCardsNeeded} long-term cards`);
             madeChanges = true;
           } catch (error) {
             console.error(
-              "创建初始长期卡片失败:",
+              "Failed to create initial long-term card:",
               error.response?.data?.message || error.message
             );
           }
         } else if (longCards.length > 3) {
           console.log(
-            `长期卡片数量(${longCards.length})超过了3张，删除多余卡片`
+            `The number of long-term cards (${longCards.length}) exceeds 3, delete the extra cards`
           );
 
           try {
-            // 强制按创建时间排序
+            // Force sorting by creation time
             const sortedLongCards = [...longCards].sort((a, b) => {
               const dateA = new Date(a.issuedAt || a.createdAt);
               const dateB = new Date(b.issuedAt || b.createdAt);
-              return dateB - dateA; // 倒序，最新的排在前面
+              return dateB - dateA; // In reverse order, newest first
             });
 
-            // 保留最新的3张卡片，删除其余卡片
+            // Keep the latest 3 cards and delete the rest
             const cardsToKeep = sortedLongCards.slice(0, 3);
             const cardsToRemove = sortedLongCards.slice(3);
 
             console.log(
-              `保留${cardsToKeep.length}张最新卡片，删除${cardsToRemove.length}张多余卡片`
+              `Keep ${cardsToKeep.length} latest cards and delete ${cardsToRemove.length} extra cards`
             );
 
-            // 删除多余的卡片
+            // Delete extra cards
             for (const card of cardsToRemove) {
               try {
                 await axios.delete(`/api/cards/${card._id}`, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
-                console.log(`已删除多余的长期卡片: ${card._id}`);
+                console.log(`Deleted redundant long-term cards: ${card._id}`);
               } catch (error) {
                 console.error(
-                  `删除多余卡片失败:`,
+                  `Failed to delete extra cards:`,
                   error.response?.data?.message || error.message
                 );
               }
             }
             madeChanges = true;
           } catch (error) {
-            console.error("处理多余卡片时出错:", error);
+            console.error("Error processing extra cards:", error);
           }
         } else {
-          console.log("用户已有正好3张长期卡片");
+          console.log("The user has exactly 3 long-term cards");
         }
 
-        // 如果进行了卡片创建或删除操作，再次获取库存以确认数量
+        // If a card is created or deleted, obtain the inventory again to confirm the quantity
         if (madeChanges) {
-          // 再次获取用户卡片库存并确认数量是否正确
+          // Get the user's card inventory again and confirm whether the quantity is correct
           const finalCheckResponse = await axios.get(
             "/api/cards/inventory?noAutoIssue=true",
             {
@@ -350,21 +350,21 @@ export const AuthProvider = ({ children }) => {
             ) || [];
 
           console.log(
-            `最终检查: 用户有${finalShortCards.length}张短期卡片和${finalLongCards.length}张长期卡片`
+            `Final check: User has ${finalShortCards.length} short-term cards and ${finalLongCards.length} long-term cards`
           );
         }
       } else {
-        console.log("用户已有足够卡片，无需初始化");
+        console.log("The user already has enough cards, no initialization is needed");
       }
     } catch (error) {
       console.error(
-        "初始化卡片失败:",
+        "Failed to initialize the card:",
         error.response?.data?.message || error.message
       );
     }
   };
 
-  // 登录函数
+  // Login Function
   const login = async (email, password) => {
     try {
       setLoading(true);
@@ -373,11 +373,11 @@ export const AuthProvider = ({ children }) => {
         email,
         password,
       });
-      // 将用户信息保存到本地存储
+      // Save user information to local storage
       localStorage.setItem("userInfo", JSON.stringify(data));
       setUser(data);
 
-      // 尝试初始化卡片
+      // Try to initialize the card
       await initializeUserCards(data.token);
 
       return data;
@@ -393,7 +393,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 注册函数
+  // Registering functions
   const register = async (username, email, password) => {
     try {
       setLoading(true);
@@ -405,14 +405,14 @@ export const AuthProvider = ({ children }) => {
         password,
       });
 
-      // 将用户信息保存到本地存储
+      // Save user information to local storage
       localStorage.setItem("userInfo", JSON.stringify(data));
       setUser(data);
 
-      // 新注册用户一定要尝试初始化卡片
+      // New registered users must try to initialize the card
       console.log("新用户注册成功，初始化卡片...");
 
-      // 添加一个标记到localStorage，表示这是新注册的用户，需要控制卡片发放
+      // Add a marker to localStorage to indicate that this is a newly registered user and that card issuance needs to be controlled
       localStorage.setItem("isNewRegistration", "true");
 
       await initializeUserCards(data.token);
@@ -430,19 +430,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 登出函数
+  // Logout Function
   const logout = () => {
     localStorage.removeItem("userInfo");
     setUser(null);
   };
 
-  // 更新用户信息
+  // Update User Information
   const updateProfile = async (userData) => {
     try {
       setLoading(true);
       setError(null);
 
-      // 设置请求头中的认证token
+      // Set the authentication token in the request header
       const config = {
         headers: {
           Authorization: `Bearer ${user.token}`,
@@ -451,7 +451,7 @@ export const AuthProvider = ({ children }) => {
 
       const { data } = await axios.put("/api/users/profile", userData, config);
 
-      // 更新本地存储中的用户信息
+      // Update user information in local storage
       const updatedUser = { ...user, ...data };
       localStorage.setItem("userInfo", JSON.stringify(updatedUser));
       setUser(updatedUser);

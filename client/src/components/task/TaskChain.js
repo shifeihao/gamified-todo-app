@@ -13,7 +13,7 @@ export const TaskChain = ({
     const totalSlots = 5;
     const activeCount = 2;
 
-    // ✅ 使用 useMemo 来计算槽位内容，避免死循环
+    // ✅ Use useMemo to calculate slot contents to avoid infinite loops
     const slots = useMemo(() => {
         const longTermTasks = tasks.filter(task => task.type === 'long');
         const result = Array(totalSlots).fill(null);
@@ -75,7 +75,7 @@ export const TaskChain = ({
                 </button>
             )}
             
-            {/* 添加槽位序号指示器 */}
+            {/* Add slot number indicator */}
             {task && (
                 <div className="absolute -bottom-2 -right-2 w-5 h-5 rounded-full bg-purple-100 text-purple-600 text-xs flex items-center justify-center shadow-sm">
                     {idx + 1}
@@ -102,7 +102,7 @@ export const TaskChain = ({
         </div>
     );
 
-    // 渲染任务链之间的连接线
+    // Connecting lines between rendering task chains
     const renderTaskConnector = (idx) => {
         if (idx >= activeCount - 1 || !slots[idx] || !slots[idx+1]) return null;
         
