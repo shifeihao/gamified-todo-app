@@ -371,7 +371,6 @@ export const GameLayout = () => {
         <nav className="bg-[#4c2a85] border-b-4 border-[#6a3bab] py-3">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex flex-col">
-              <img src="/logo_mini.png" alt="TaskMasters" className="h-8 w-auto mb-1" />
               <h1 className="text-xl font-bold text-white">TaskMasters</h1>
               <span className="text-xs text-[#b89be6]">Select Class</span>
             </div>
