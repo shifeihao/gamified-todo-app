@@ -34,8 +34,4 @@ export const summarizeExploration = async (token) => {
   }
 };
 
-export const updateCombatResult = async (token, data) => {
-  return axios.post('/api/dungeon/combat-result', data, {
-    headers: { Authorization: `Bearer ${token}` }
-  }).then(res => res.data);
-};
+
