@@ -141,13 +141,6 @@ export const Navbar = () => {
           >
             Personal Profile
           </Link>
-          <Link
-            to="/achievements"
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            onClick={() => setIsProfileMenuOpen(false)}
-          >
-            Personal Achievements
-          </Link>
           <button
             onClick={() => {
               handleLogout();
@@ -183,17 +176,24 @@ export const Navbar = () => {
             {user ? (
               <>
                 <Link
-                  to="/game"
-                  className="px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold"
-                >
-                  Game
-                </Link>
-
-                <Link
                   to="/tasks"
                   className="px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold"
                 >
                   Tasks
+                </Link>
+
+                <Link
+                  to="/game"
+                  className="px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold"
+                >
+                  Dungeon
+                </Link>
+
+                <Link
+                  to="/achievements"
+                  className="px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold"
+                >
+                  Achievements
                 </Link>
 
                 <div className="relative">
@@ -274,13 +274,6 @@ export const Navbar = () => {
             {user ? (
               <>
                 <Link
-                  to="/dashboard"
-                  className="block px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold"
-                  onClick={toggleMenu}
-                >
-                  Dashboard
-                </Link>
-                <Link
                   to="/tasks"
                   className="block px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold"
                   onClick={toggleMenu}
@@ -288,11 +281,11 @@ export const Navbar = () => {
                   Tasks
                 </Link>
                 <Link
-                  to="/profile"
+                  to="/game"
                   className="block px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold"
                   onClick={toggleMenu}
                 >
-                  Profile
+                  Dungeon
                 </Link>
                 <Link
                   to="/achievements"
@@ -300,6 +293,13 @@ export const Navbar = () => {
                   onClick={toggleMenu}
                 >
                   Achievements
+                </Link>
+                <Link
+                  to="/profile"
+                  className="block px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold"
+                  onClick={toggleMenu}
+                >
+                  Profile
                 </Link>
                 <button
                   onClick={() => {

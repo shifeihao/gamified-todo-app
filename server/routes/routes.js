@@ -4,7 +4,7 @@ import apiRoutes from "./api/api.js";
 const router = express.Router();
 
 router.get("/", (req, res) => {
-  return res.json({ message: "API运行正常" });
+  return res.json({ message: "API normally operated" });
 });
 
 router.use((err, req, res, next) => {

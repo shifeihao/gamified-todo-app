@@ -107,7 +107,16 @@ const ProfilePage = () => {
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-cover bg-center bg-fixed"
+      style={{
+        backgroundColor: "#fff",
+        backgroundImage: `
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Cg fill='%238b5cf6' fill-opacity='0.15'%3E%3Ccircle cx='100' cy='100' r='1.5'/%3E%3Ccircle cx='200' cy='150' r='1.5'/%3E%3Ccircle cx='150' cy='250' r='1.5'/%3E%3Ccircle cx='280' cy='210' r='1.5'/%3E%3Ccircle cx='300' cy='100' r='1.5'/%3E%3Cpath d='M100 100L200 150L150 250L280 210L300 100' stroke='%238b5cf6' stroke-width='0.5' stroke-opacity='0.1' fill='none'/%3E%3C/g%3E%3C/svg%3E"),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cpath d='M30 10.9L0 38.1V76.5L30 103.7L60 76.5V38.1L30 10.9zM30 0L60 17.3V52L30 69.3L0 52V17.3L30 0z' fill='none' stroke='%238b5cf6' stroke-opacity='0.15' stroke-width='1.5'/%3E%3C/svg%3E")
+        `,
+        backgroundSize: "400px 400px, 60px 104px",
+        backgroundPosition: "center center, center center",
+      }}>
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
