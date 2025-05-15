@@ -111,7 +111,6 @@ export default function InventoryShopPage({ onEquipmentChange }) {
   const renderTooltip = () => {
     if (!hoveredItem) return null;
 
-    // 创建属性效果描述
     const effects = getItemEffects(hoveredItem.item) || {};
     const effectStrings = [];
     
