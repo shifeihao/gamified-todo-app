@@ -355,3 +355,17 @@ export const completeLongTask = async (id, token) => {
     };
   }
 };
+
+// Get task history
+export const getTaskHistory = async (token) => {
+  try {
+    const { data } = await axios.get('/api/tasks/history', getConfig(token));
+    return data;
+  } catch (error) {
+    throw new Error(
+      error.response && error.response.data.message
+        ? error.response.data.message
+        : 'Failed to obtain task history'
+    );
+  }
+};

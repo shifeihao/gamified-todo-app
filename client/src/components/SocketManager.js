@@ -13,14 +13,12 @@ export default function SocketManager() {
     const socket = io(process.env.REACT_APP_SOCKET_URL, {
       auth: { token: user.token },
     });
-    console.log("🔐 token:", user.token);
 
     socket.on("connect", () => {
       console.log("✅ WebSocket connected");
     });
 
     socket.on("disconnect", () => {
-      console.log("❌ WebSocket disconnected");
     });
 
     socket.on("newAchievements", (achievements) => {

@@ -164,7 +164,7 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-[#1f005c] via-[#5b1fa6] to-[#8e2de2] bg-opacity-90 backdrop-blur text-white shadow-md relative">
+    <nav className="bg-[#4c2a85] text-white shadow-md relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0">

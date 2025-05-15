@@ -2,6 +2,8 @@ import React, { useState, useContext, useEffect } from 'react';
 import { Navbar } from '../components/navbar';
 import AuthContext from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { fetchUserStat } from '../services/userStat';
+import { getEquippedTasks, getTaskHistory } from '../services/taskService';
 
 const ProfilePage = () => {
   const { user, updateProfile, loading, error } = useContext(AuthContext);
@@ -15,7 +17,7 @@ const ProfilePage = () => {
   const [formError, setFormError] = useState('');
   const [success, setSuccess] = useState(false);
   const [stats, setStats] = useState({
-    taskCount: 0,
+    currentTasks: 0,
     completedTasks: 0,
     completionRate: 0,
   });
@@ -32,15 +34,21 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  // Simulate obtaining user statistics
+  // Fetch real user statistics
   useEffect(() => {
-    // In actual applications, data should be obtained from the API
-    // Here we use simulated data
-    if (user) {
-      setStats({
-        taskCount: 24,
-        completedTasks: 18,
-        completionRate: 75,
+    if (user && user.token) {
+      Promise.all([
+        getEquippedTasks(user.token),
+        getTaskHistory(user.token)
+      ]).then(([equipped, history]) => {
+        const completed = history.filter(t => t.status === 'completed' || t.status === 'Completed');
+        setStats({
+          currentTasks: equipped.length,
+          completedTasks: completed.length,
+          completionRate: history.length ? Math.round((completed.length / history.length) * 100) : 0,
+        });
+      }).catch(() => {
+        setStats({ currentTasks: 0, completedTasks: 0, completionRate: 0 });
       });
     }
   }, [user]);
@@ -187,7 +195,7 @@ const ProfilePage = () => {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="btn-primary"
+                    className="px-6 py-2 rounded bg-purple-600 text-white font-semibold shadow hover:bg-purple-700 transition-colors"
                     disabled={loading}
                   >
                     {loading ? 'Updating...' : 'Update'}
@@ -199,21 +207,21 @@ const ProfilePage = () => {
 
           {/* User Information Card */}
           <div className="lg:col-span-1">
-            <div className="card bg-gradient-to-r from-primary-500 to-primary-700 text-white mb-6">
+            <div className="card bg-gradient-to-r from-purple-500 to-purple-700 text-white mb-6">
               <div className="flex flex-col items-center">
-                <div className="w-24 h-24 rounded-full bg-white text-primary-600 flex items-center justify-center text-3xl font-bold mb-4">
+                <div className="w-24 h-24 rounded-full bg-white text-purple-600 flex items-center justify-center text-3xl font-bold mb-4">
                   {user && user.username ? user.username.charAt(0).toUpperCase() : '?'}
                 </div>
                 <h2 className="text-xl font-bold mb-1">{user && user.username}</h2>
-                <p className="text-primary-100 mb-4">{user && user.email}</p>
+                <p className="text-purple-100 mb-4">{user && user.email}</p>
                 <div className="grid grid-cols-2 gap-4 w-full">
                   <div className="text-center">
                     <div className="text-2xl font-bold">{user && user.experience}</div>
-                    <div className="text-sm text-primary-100">Experience</div>
+                    <div className="text-sm text-purple-100">Experience</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">{user && user.gold}</div>
-                    <div className="text-sm text-primary-100">Coins</div>
+                    <div className="text-sm text-purple-100">Coins</div>
                   </div>
                 </div>
               </div>
@@ -224,26 +232,26 @@ const ProfilePage = () => {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700">Total number of tasks</span>
-                    <span className="text-sm font-medium text-gray-700">{stats.taskCount}</span>
+                    <span className="text-sm font-medium text-gray-700">Current Tasks</span>
+                    <span className="text-sm font-medium text-gray-700">{stats.currentTasks}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-primary-600 h-2 rounded-full"
-                      style={{ width: '100%' }}
+                      className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-purple-700"
+                      style={{ width: `${stats.completedTasks > 0 ? Math.min((stats.currentTasks / stats.completedTasks) * 100, 100) : 0}%` }}
                     ></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700">Completed tasks</span>
+                    <span className="text-sm font-medium text-gray-700">Completed Tasks</span>
                     <span className="text-sm font-medium text-gray-700">{stats.completedTasks}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-green-500 h-2 rounded-full"
-                      style={{ width: `${(stats.completedTasks / stats.taskCount) * 100}%` }}
+                      className="h-2 rounded-full bg-gradient-to-r from-violet-400 to-purple-600"
+                      style={{ width: '100%' }}
                     ></div>
                   </div>
                 </div>
@@ -255,7 +263,7 @@ const ProfilePage = () => {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-blue-500 h-2 rounded-full"
+                      className="h-2 rounded-full bg-gradient-to-r from-fuchsia-400 to-purple-500"
                       style={{ width: `${stats.completionRate}%` }}
                     ></div>
                   </div>
