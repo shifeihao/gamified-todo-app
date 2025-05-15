@@ -8,7 +8,7 @@ import {
 import eventBus from "../events/eventBus.js";
 
 
-// @desc    获取当前用户的所有任务
+// @desc    get all tasks from the current user
 // @route   GET /api/tasks
 // @access  Private
 const getTasks = async (req, res) => {
@@ -21,12 +21,11 @@ const getTasks = async (req, res) => {
   }
 };
 
-// @desc    创建新任务
+// @desc    create new tasks
 // @route   POST /api/tasks
 // @access  Private
 const createTask = async (req, res) => {
   try {
-    // 校验必要字段
     console.log(req.body);
     if (!req.body.title || !req.body.experienceReward || !req.body.goldReward) {
       return res
@@ -39,12 +38,11 @@ const createTask = async (req, res) => {
         .json({ message: "Must specify a card to use (cardUsed)" });
     }
 
-    // 验证卡片是否存在且可用
     const Card = (await import("../models/Card.js")).default;
     const card = await Card.findOne({
       _id: req.body.cardUsed,
       user: req.user._id,
-      used: false, // 确保卡片未被使用
+      used: false, 
     });
 
     if (!card) {
@@ -53,7 +51,6 @@ const createTask = async (req, res) => {
       });
     }
 
-    // 验证卡片类型与任务类型匹配
     if (
       card.taskDuration !== "general" &&
       card.taskDuration !== req.body.type
@@ -63,7 +60,6 @@ const createTask = async (req, res) => {
       });
     }
 
-    // 如果是长期任务，验证子任务
     if (req.body.type === "long") {
       if (
         !req.body.subTasks ||
@@ -75,7 +71,6 @@ const createTask = async (req, res) => {
         });
       }
 
-      // 验证每个子任务
       for (const subTask of req.body.subTasks) {
         if (!subTask.title || !subTask.title.trim()) {
           return res
@@ -90,7 +85,6 @@ const createTask = async (req, res) => {
       }
     }
 
-    // 为短期任务自动设置截止时间为创建时间+24小时
     let taskDueDate = req.body.dueDate;
     if (req.body.type === "short") {
       const now = new Date();
@@ -98,25 +92,22 @@ const createTask = async (req, res) => {
       taskDueDate = now.toISOString();
     }
 
-    // 使用前端传来的任务数据创建任务
     const task = await Task.create({
       user: req.user._id,
       title: req.body.title,
       description: req.body.description,
       type: req.body.type,
       category: req.body.category,
-      dueDate: taskDueDate, // 使用自动计算或前端传入的截止时间
+      dueDate: taskDueDate, 
       experienceReward: req.body.experienceReward,
       goldReward: req.body.goldReward,
       subTasks: req.body.subTasks || [],
       cardUsed: req.body.cardUsed,
     });
 
-    // 标记卡片为已使用
     card.used = true;
     await card.save();
 
-    // 如果是空白卡片，从用户库存中减少计数
     if (card.type === "blank") {
       await User.findByIdAndUpdate(req.user._id, {
         $inc: { "dailyCards.blank": -1 },
@@ -133,19 +124,14 @@ const createTask = async (req, res) => {
   }
 };
 
-// @desc    获取单个任务
-// @route   GET /api/tasks/:id
-// @access  Private
 const getTaskById = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
 
-    // 检查任务是否存在
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "No permission" });
     }
@@ -157,22 +143,17 @@ const getTaskById = async (req, res) => {
   }
 };
 
-// @desc    更新任务或子任务状态
-// @route   PUT /api/tasks/:id
-// @access  Private
+
 const updateTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate("cardUsed");
-    // 检查任务是否存在
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
-    // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "No permission" });
     }
 
-    // 如果更新包含子任务列表，进行验证
     if (req.body.subTasks) {
       if (
         task.type === "long" &&
@@ -183,7 +164,6 @@ const updateTask = async (req, res) => {
           .json({ message: "Long tasks must contain at least one subtask" });
       }
 
-      // 验证每个子任务
       for (const subTask of req.body.subTasks) {
         if (!subTask.title || !subTask.title.trim()) {
           return res
@@ -198,22 +178,18 @@ const updateTask = async (req, res) => {
       }
     }
 
-    // 处理子任务完成
     const { subTaskIndex } = req.body;
     if (subTaskIndex !== undefined) {
-      // 检查子任务是否存在
       if (!task.subTasks[subTaskIndex]) {
         return res.status(404).json({ message: "Subtask does not exist" });
       }
 
-      // 检查子任务是否已完成
       if (task.subTasks[subTaskIndex].status === "completed") {
         return res
           .status(400)
           .json({ message: "Subtask has already been completed" });
       }
 
-      // 调用子任务完成处理函数
       const { handleSubTaskCompletion } = await import("./levelController.js");
       const result = await handleSubTaskCompletion({
         user: req.user,
@@ -223,7 +199,6 @@ const updateTask = async (req, res) => {
         },
       });
 
-      // 检查是否所有子任务都已完成
       const allSubTasksCompleted = task.subTasks.every(
         (st) => st.status === "completed" || st === task.subTasks[subTaskIndex]
       );
@@ -239,7 +214,6 @@ const updateTask = async (req, res) => {
       });
     }
 
-    // 优先处理子任务状态更新
     const { subTaskId, status } = req.body;
     if (subTaskId && status) {
       const sub = task.subTasks.id(subTaskId);
@@ -251,10 +225,8 @@ const updateTask = async (req, res) => {
       return res.json(sub);
     }
 
-    const oldStatus = task.status; // 记录原始状态
-    // 更新主任务字段
+    const oldStatus = task.status; 
 
-    // 更新任务字段
     task.title = req.body.title || task.title;
     task.description = req.body.description || task.description;
     task.type = req.body.type || task.type;
@@ -264,7 +236,6 @@ const updateTask = async (req, res) => {
     task.experienceReward = req.body.experienceReward || task.experienceReward;
     task.goldReward = req.body.goldReward || task.goldReward;
 
-    // 更新子任务列表（如果提供）
     if (req.body.subTasks) {
       task.subTasks = req.body.subTasks;
     }
@@ -284,7 +255,6 @@ const updateTask = async (req, res) => {
       req.body.status.toLowerCase() === "completed" &&
       oldStatus !== "completed"
     ) {
-      // 如果主任务变为已完成，处理奖励与历史记录
       if (
         task.type === "short" &&
         task.slotEquippedAt &&
@@ -298,22 +268,19 @@ const updateTask = async (req, res) => {
         });
       }
 
-      // 仅设置完成时间，但不标记奖励已领取，让handleTaskCompletion处理奖励发放
       task.completedAt = task.completedAt || Date.now();
       
-      // 任务完成后自动卸下
       if (task.equipped) {
         task.equipped = false;
-        task.slotPosition = -1; // 重置槽位
+        task.slotPosition = -1; 
         console.log(`已自动将完成的任务 ${task._id} 卸下装备`);
       }
       
-      await task.save(); // ✅ 保存更新（包括 status 字段和装备状态）
+      await task.save(); 
       
       try {
-        console.log("Task ID:", task._id); // 应该是 ObjectId 类型
+        console.log("Task ID:", task._id); 
         console.log("ID passed to handleTaskCompletion:", task._id?.toString());
-        // ✅ 调用 handleTaskCompletion 并接收返回值
         const { handleTaskCompletion } = await import("./levelController.js");
 
         rewardResult = await handleTaskCompletion({
@@ -321,9 +288,8 @@ const updateTask = async (req, res) => {
           body: { taskId: task._id.toString() },
         });
 
-        console.log("任务完成奖励处理结果:", rewardResult);
+        console.log("Results of dealing with awards from finishing tasks:", rewardResult);
         if (rewardResult && !rewardResult.reward) {
-          // 确保reward对象存在
           rewardResult.reward = {
             expGained:
               task.experienceReward || (task.type === "long" ? 30 : 10),
@@ -331,11 +297,10 @@ const updateTask = async (req, res) => {
           };
         }
       } catch (err) {
-        console.error("处理任务完成奖励失败:", err);
-        // 即使失败也不要阻止更新任务状态，提供默认奖励值
+        console.error("Failed to deal with task finish:", err);
         rewardResult = {
           success: false,
-          message: err.message || "处理任务完成奖励失败",
+          message: err.message || "Failed to deal with task finish",
           task: task.toObject(),
           reward: {
             expGained:
@@ -353,10 +318,9 @@ const updateTask = async (req, res) => {
     //update user stats
     eventBus.emit("checkAchievements", req.user._id);
 
-    // ✅ 最终统一响应
     return res.json({
       message: "Task updated",
-      task: updatedTask.toObject(), // 👈 确保 _id 是字符串存在的
+      task: updatedTask.toObject(), 
       reward: rewardResult,
       success: rewardResult ? rewardResult.success !== false : true,
     });
@@ -366,9 +330,6 @@ const updateTask = async (req, res) => {
   }
 };
 
-// @desc 删除任务（并归档到历史记录）
-// @route DELETE /api/tasks/:id
-// @access Private
 const deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate("cardUsed");
@@ -376,7 +337,6 @@ const deleteTask = async (req, res) => {
     if (task.user.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "No permission" });
 
-    // 从用户卡片库存中移除
     if (task.cardUsed) {
       await User.findByIdAndUpdate(task.user, {
         $pull: { cardInventory: task.cardUsed._id },
@@ -384,7 +344,6 @@ const deleteTask = async (req, res) => {
       await task.cardUsed.deleteOne();
     }
 
-    // 删除任务本身
     await task.deleteOne();
     res.json({ message: "Task archived and deleted" });
 
@@ -398,9 +357,6 @@ const deleteTask = async (req, res) => {
   }
 };
 
-// @desc 获取用户任务历史记录
-// @route GET /api/tasks/history
-// @access Private
 const getTaskHistory = asyncHandler(async (req, res) => {
   const TaskHistory = (await import("../models/TaskHistory.js")).default;
   const records = await TaskHistory.find({ user: req.user.id }).sort({
@@ -409,9 +365,6 @@ const getTaskHistory = asyncHandler(async (req, res) => {
   res.json(records);
 });
 
-// @desc    获取已装备的任务
-// @route   GET /api/tasks/equipped
-// @access  Private
 const getEquippedTasks = async (req, res) => {
   try {
     const tasks = await Task.find({
@@ -425,32 +378,23 @@ const getEquippedTasks = async (req, res) => {
   }
 };
 
-// @desc    装备任务到任务槽
-// @route   PUT /api/tasks/:id/equip
-// @access  Private
 const equipTask = async (req, res) => {
   try {
     const { slotPosition, slotType } = req.body;
-    // 验证槽位位置
     if (slotPosition === undefined || slotPosition < 0 || slotPosition > 2) {
       return res.status(400).json({ message: "Invalid task slot position" });
     }
-    // 验证槽位类型
     if (!["short", "long"].includes(slotType)) {
       return res.status(400).json({ message: "Invalid slot type" });
     }
 
-    // 查找要装备的任务
     const task = await Task.findById(req.params.id);
-    // 检查任务是否存在
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
-    // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "No permission" });
     }
-    // 检查任务类型是否匹配槽位类型
     const expectedType = slotType === "long" ? "long" : "short";
     if (task.type !== expectedType) {
       return res
@@ -458,7 +402,6 @@ const equipTask = async (req, res) => {
         .json({ message: `Can only equip ${expectedType} tasks to this slot` });
     }
 
-    // 检查该槽位是否已有同类型任务
     const existingTask = await Task.findOne({
       user: req.user._id,
       equipped: true,
@@ -471,12 +414,9 @@ const equipTask = async (req, res) => {
         .status(400)
         .json({ message: "This slot is occupied by a task of the same type" });
     }
-    // 装备新任务
     task.equipped = true;
     task.slotPosition = slotPosition;
-    // 记录装备时间
     task.slotEquippedAt = Date.now();
-    // 如果任务状态是pending，自动更新为进行中
     if (task.status === "pending") {
       task.status = "in-progress";
     }
@@ -488,24 +428,18 @@ const equipTask = async (req, res) => {
   }
 };
 
-// @desc    卸下已装备的任务
-// @route   PUT /api/tasks/:id/unequip
-// @access  Private
 const unequipTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
 
-    // 检查任务是否存在
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // 检查任务是否属于当前用户
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "No permission" });
     }
 
-    // 卸下任务
     task.equipped = false;
     task.slotPosition = -1;
 
