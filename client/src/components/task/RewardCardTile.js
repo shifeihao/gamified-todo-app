@@ -1,7 +1,10 @@
 import React from 'react';
-import { Medal, Coins, Gift } from 'lucide-react';
+import { Medal, Coins, Gift, Zap } from 'lucide-react';
 
-export const RewardCardTile = ({ card, isSelected = false, onClick = null, readOnly = false }) => {
+export const RewardCardTile = ({ card, isSelected = false, onClick = null, readOnly = false, onQuickCreate = null }) => {
+    // Check if the card has been used - Two possible attribute names are supported
+    const isCardUsed = card.isUsed || card.used;
+    
     return (
         <div
             className={`rounded-xl p-4 cursor-pointer border-2 transition-all relative
@@ -61,10 +64,24 @@ export const RewardCardTile = ({ card, isSelected = false, onClick = null, readO
             </div>
             
             {/* Status indicator */}
-            {card.isUsed && (
+            {isCardUsed && (
                 <div className="absolute bottom-2 right-2 bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs font-bold">
                     Used
                 </div>
+            )}
+            
+            {/* Quick create button - only show if not used and onQuickCreate callback is provided */}
+            {!isCardUsed && onQuickCreate && (
+                <button 
+                    className="absolute bottom-2 right-2 bg-purple-500 hover:bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent the parent onClick from firing
+                        onQuickCreate(card);
+                    }}
+                    title="Quick create task with this card"
+                >
+                    <Zap size={18} />
+                </button>
             )}
         </div>
     );

@@ -51,10 +51,15 @@ export const CreateTaskModal = ({
 
   // Form state
   const [taskType, setTaskType] = useState(getInitialTaskType());
-  const [useReward, setUseReward] = useState(initialData?.cardId ? true : false);
+  const [useReward, setUseReward] = useState(initialData?.useRewardCard || initialData?.cardId ? true : false);
   const [selectedCard, setSelectedCard] = useState(initialData?.cardDetails || null);
   const [selectedBlankCard, setSelectedBlankCard] = useState(null);
   const [formValues, setFormValues] = useState(null);
+  
+  // Remember selectedCardId to auto-select later (used for quick create feature)
+  const selectedCardIdRef = useRef(initialData?.selectedCardId || null);
+  // Track if this modal was opened with a specific card to select
+  const hasSpecificCardSelection = useRef(!!initialData?.selectedCardId || !!initialData?.useRewardCard);
   
   // UI state
   const [currentStep, setCurrentStep] = useState(1);
@@ -108,6 +113,12 @@ export const CreateTaskModal = ({
       setTaskType(initialData.type);
       taskTypeInitializedRef.current = true;
       return; // Return early to avoid resetting card selection
+    }
+    
+    // 如果是快速创建模式（通过奖励卡片上的按钮），强制使用奖励卡片模式
+    if (hasSpecificCardSelection.current) {
+      console.log("快速创建模式，强制使用奖励卡片");
+      setUseReward(true);
     }
     
     taskTypeInitializedRef.current = true;
@@ -270,9 +281,61 @@ export const CreateTaskModal = ({
       
       console.log(`${taskType} task available cards - Blank:${currentTypeBlankCards.length}, Reward:${currentTypeRewardCards.length}`);
       
-      // Card selection logic
+      // Check if we need to auto-select a specific reward card (for quick create feature)
+      if (selectedCardIdRef.current) {
+        console.log(`尝试根据ID自动选择卡片: ${selectedCardIdRef.current}`);
+        
+        // 在所有奖励卡片中寻找精确匹配ID的卡片，不仅在当前任务类型中寻找
+        const allRewardCards = [...shortRewards, ...longRewards];
+        // 使用精确的ID匹配
+        const cardToSelect = allRewardCards.find(c => c._id === selectedCardIdRef.current);
+        
+        if (cardToSelect) {
+          console.log("找到匹配的奖励卡片:", cardToSelect.title);
+          
+          // 如果卡片的任务类型与当前不同，切换到对应的任务类型
+          if (cardToSelect.taskDuration !== 'general' && cardToSelect.taskDuration !== taskType) {
+            console.log(`切换任务类型以匹配卡片: ${cardToSelect.taskDuration}`);
+            setTaskType(cardToSelect.taskDuration);
+          }
+          
+          // 强制使用奖励卡片模式并选择此卡片
+          setUseReward(true); // 快速创建始终使用奖励卡片模式
+          setSelectedCard(cardToSelect);
+          setSelectedBlankCard(null);
+          
+          // 清除ID引用，以避免再次尝试选择
+          selectedCardIdRef.current = null;
+          
+          setIsFetchingInventory(false);
+          return;
+        } else {
+          console.log("在可用奖励卡片中未找到指定ID的卡片");
+          // 即使找不到匹配的卡片，也保持奖励卡片模式优先
+          setUseReward(true);
+          
+          // 不清空selectedCardIdRef，保留它用于后续可能的查找
+          console.log("保留卡片ID以便后续匹配");
+        }
+      }
+      
+      // Regular card selection logic
       const hasBlankCards = currentTypeBlankCards.length > 0;
       const hasRewardCards = currentTypeRewardCards.length > 0;
+      
+      // 如果是通过特定卡片打开的（快速创建模式），即使找不到精确的卡片，也优先使用奖励卡片模式
+      if (hasSpecificCardSelection.current) {
+        console.log("快速创建模式 - 优先使用奖励卡片");
+        setUseReward(true);
+        
+        if (hasRewardCards) {
+          setSelectedCard(currentTypeRewardCards[0]);
+          setSelectedBlankCard(null);
+        }
+        
+        setIsFetchingInventory(false);
+        return;
+      }
       
       // Check if previously selected cards are still valid
       const prevSelectedCardStillValid = useReward && selectedCard && 
@@ -323,6 +386,14 @@ export const CreateTaskModal = ({
   // Effect to fetch inventory when modal opens
   useEffect(() => {
     if (isOpen && user) {
+      // 当模态窗口打开时，如果是快速创建模式(selectedCardId存在)，强制设置useReward为true
+      if (initialData?.selectedCardId) {
+        console.log("快速创建模式检测到selectedCardId，强制使用奖励卡片");
+        setUseReward(true);
+        // 确保selectedCardIdRef被设置
+        selectedCardIdRef.current = initialData.selectedCardId;
+      }
+      
       fetchInventory();
     }
   }, [isOpen, user, useReward]);
@@ -772,13 +843,25 @@ export const CreateTaskModal = ({
           
           {/* Card type toggle */}
           <div className="flex items-center">
-            {/* Show toggle when reward cards are available */}
-            {getCurrentRewardCardCount() > 0 && (
+            {/* 只有在有奖励卡片，或者是快速创建模式时才显示开关 */}
+            {(getCurrentRewardCardCount() > 0 || hasSpecificCardSelection.current) && (
               <label className="relative inline-flex items-center cursor-pointer">
                 <input 
                   type="checkbox"
                   checked={useReward}
                   onChange={e => {
+                    // 如果是快速创建模式，不允许关闭奖励卡片模式
+                    if (hasSpecificCardSelection.current && !e.target.checked) {
+                      toast.error(
+                        <div className="flex items-center">
+                          <AlertCircle className="text-red-500 mr-2 h-5 w-5 flex-shrink-0" />
+                          <span className="font-medium">快速创建模式必须使用奖励卡片</span>
+                        </div>,
+                        { duration: 3000, position: 'top-center' }
+                      );
+                      return;
+                    }
+                    
                     setUseReward(e.target.checked);
                     if (!e.target.checked) {
                       setSelectedCard(null);
@@ -802,13 +885,13 @@ export const CreateTaskModal = ({
             
             {/* Show hint when no cards are available */}
             {getCurrentRewardCardCount() === 0 && getCurrentBlankCardCount() === 0 && (
-              <div className="text-xs text-red-500">
+              <div className="text-xs text-gray-500">
                 No cards available. Get cards first.
               </div>
             )}
             
             {/* Show hint when only blank cards are available */}
-            {getCurrentRewardCardCount() === 0 && getCurrentBlankCardCount() > 0 && (
+            {getCurrentRewardCardCount() === 0 && getCurrentBlankCardCount() > 0 && !hasSpecificCardSelection.current && (
               <div className="text-xs text-gray-500">
                 Only blank cards available
               </div>

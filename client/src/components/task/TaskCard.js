@@ -156,7 +156,7 @@ export const TaskCard = ({
   // Expired Mode
   if (isExpired) {
     return (
-      <div className={`flex overflow-hidden relative rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}>
+      <div className={`flex overflow-hidden relative rounded-lg border border-gray-200 bg-white/90 shadow-sm ${className}`}>
         {/* Left color bar: Red means expired */}
         <div className="w-1.5 md:w-2 flex-shrink-0 bg-red-500" />
         <div className="relative w-full p-4 flex flex-col items-center justify-center">
@@ -183,7 +183,7 @@ export const TaskCard = ({
     return (
       <>
         <div
-          className={`flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md ${task.type==='short' ? 'hover:bg-purple-50' : 'hover:bg-blue-50'} transition-all duration-300 ${className}`}
+          className={`flex overflow-hidden rounded-lg border border-gray-200 bg-white/90 shadow-sm hover:shadow-md ${task.type==='short' ? 'hover:bg-purple-50/90' : 'hover:bg-blue-50/90'} transition-all duration-300 ${className}`}
           draggable={draggable}
           onDragStart={e => onDragStart?.(e, task)}
         >
@@ -294,8 +294,8 @@ export const TaskCard = ({
   return (
     <>
       <div
-        className={`flex overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 task-card ${className}`}
-        draggable={draggable && task.status !== "completed"}
+        className={`group flex overflow-hidden rounded-lg border border-gray-200 bg-white/90 shadow-sm hover:shadow-md transition-all duration-300 ${className}`}
+        draggable={draggable}
         onDragStart={e => onDragStart?.(e, task)}
       >
         {/* Type Color Bar */}

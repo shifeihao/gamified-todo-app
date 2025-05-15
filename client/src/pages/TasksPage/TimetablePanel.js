@@ -18,7 +18,7 @@ const TimetablePanel = ({
   const [activeTab, setActiveTab] = useState("list");
   const longTasks = equippedTasks.filter((t) => t.type === "long");
   return (
-    <div className="bg-[#e8e0f5] rounded-xl shadow-lg p-4 border border-blue-200 backdrop-blur-sm">
+    <div className="bg-white/90 rounded-xl shadow-lg p-4 border border-blue-200 backdrop-blur-sm">
       {/* Fixed height title area */}
       <div className="flex items-center justify-between h-14">
         <h2 className="text-xl font-bold text-blue-900 flex items-center">

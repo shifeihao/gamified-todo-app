@@ -10,8 +10,46 @@ export const TaskRepository = ({
                           onEquip,
                           isExpanded = true
                         }) => {
-  // Only take unequipped tasks (including completed ones)
-  const unequippedTasks = tasks.filter(t => !t.equipped);
+  // 调试输出一下任务对象，看结构
+  console.log("任务仓库任务数据:", tasks);
+  
+  // 添加检查特殊卡片的used值的日志
+  tasks.forEach(task => {
+    if (task.type === 'special') {
+      console.log(`特殊卡片 [${task.title}] used值:`, task.used);
+    }
+    if (task.card?.type === 'special') {
+      console.log(`任务 [${task.title}] 的关联卡片used值:`, task.card.used);
+    }
+    if (task.cardDetails?.type === 'special') {
+      console.log(`任务 [${task.title}] 的cardDetails used值:`, task.cardDetails.used);
+    }
+    if (task.cardId && task.cardType === 'special') {
+      console.log(`任务 [${task.title}] 的cardId状态:`, task.isCardUsed ? 'used' : 'unused');
+    }
+  });
+
+  // Filter all the used reward cards
+  const availableTasks = tasks.filter(t => {
+    // The task has been equipped and is not displayed
+    if (t.equipped) return false;
+    
+    // Check all possible card reference locations
+    const isUsedRewardCard = 
+      // 1. Check the top-level property
+      (t.type === 'special' && t.used === true) || 
+      // 2. Check the card property
+      (t.card?.type === 'special' && t.card?.used === true) ||
+      // 3. Check the cardDetails property
+      (t.cardDetails?.type === 'special' && t.cardDetails?.used === true) ||
+      // 4. Check the cardId and other possible properties
+      (t.cardId && t.isCardUsed === true && t.cardType === 'special');
+    
+    return !isUsedRewardCard;
+  });
+
+  // Debug output the filtered tasks
+  console.log("filtered tasks:", availableTasks);
 
   // Local status: search, classification, type, sort
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +82,7 @@ export const TaskRepository = ({
   };
 
   // Filter + Sort
-  const filtered = unequippedTasks
+  const filtered = availableTasks
       .filter(task => {
         if (
             searchTerm &&

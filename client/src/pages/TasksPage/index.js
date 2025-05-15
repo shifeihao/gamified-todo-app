@@ -157,8 +157,8 @@ const TasksPage = () => {
       }
 
       if (
-        levelInfoResult.status === "fulfilled" &&
-        levelInfoResult.value?.data
+          levelInfoResult.status === "fulfilled" &&
+          levelInfoResult.value?.data
       ) {
         setRewardInfo(levelInfoResult.value.data);
       }
@@ -209,73 +209,29 @@ const TasksPage = () => {
   // Monitor task and subtask completion events and refresh task data
   useEffect(() => {
     // Creating an event handler
-    const handleTaskOrSubtaskCompleted = (event) => {
-      console.log("Task or subtask completion event triggered", event.type, event.detail);
-      
-      // If we have detailed task information in the event, update state directly
-      if (event.detail && event.detail.taskId && event.detail.updatedTask) {
-        const { taskId, updatedTask, isLongTask, isSubtaskCompletion } = event.detail;
-        
-        // Update tasks in repository
-        setTasks(prevTasks => 
-          prevTasks.map(task => 
-            task._id === taskId ? updatedTask : task
-          )
-        );
-        
-        // Update equipped short tasks
-        setEquippedShortTasks(prevTasks => 
-          prevTasks.map(task => 
-            task._id === taskId ? updatedTask : task
-          )
-        );
-        
-        // Update equipped long tasks
-        setEquippedLongTasks(prevTasks => 
-          prevTasks.map(task => 
-            task._id === taskId ? updatedTask : task
-          )
-        );
-        
-        // If task is completed and was a long task, ensure it's unequipped
-        if (updatedTask.status === 'completed' && isLongTask) {
-          try {
-            unequipTaskService(taskId, user?.token);
-            console.log("Unequipping completed long task from event handler");
-          } catch (err) {
-            console.error("Failed to unequip task from event handler:", err);
-          }
-        }
-        
-        // For subtask completion, we don't need to do anything special except update the state
-        if (isSubtaskCompletion) {
-          console.log("Subtask completion detected, state updated without opening edit window");
-        }
-      }
-      
-      // Always fetch tasks to ensure we have the latest data
+    const handleTaskOrSubtaskCompleted = () => {
       fetchTasks();
     };
 
     // Adding event listeners
     window.addEventListener(
-      SUBTASK_COMPLETED_EVENT,
-      handleTaskOrSubtaskCompleted
+        SUBTASK_COMPLETED_EVENT,
+        handleTaskOrSubtaskCompleted
     );
     window.addEventListener(TASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
 
     // Cleanup Function
     return () => {
       window.removeEventListener(
-        SUBTASK_COMPLETED_EVENT,
-        handleTaskOrSubtaskCompleted
+          SUBTASK_COMPLETED_EVENT,
+          handleTaskOrSubtaskCompleted
       );
       window.removeEventListener(
-        TASK_COMPLETED_EVENT,
-        handleTaskOrSubtaskCompleted
+          TASK_COMPLETED_EVENT,
+          handleTaskOrSubtaskCompleted
       );
     };
-  }, [user?.token]); // Add user token as dependency to ensure we have it available
+  }, []);
 
   // Display success information
   const showSuccessMessage = (msg) => {
@@ -355,19 +311,19 @@ const TasksPage = () => {
           if (task) {
             // Use the task's own reward value or a default value
             const defaultXp =
-              task.experienceReward || (task.type === "long" ? 30 : 10);
+                task.experienceReward || (task.type === "long" ? 30 : 10);
             const defaultGold =
-              task.goldReward || (task.type === "long" ? 15 : 5);
+                task.goldReward || (task.type === "long" ? 15 : 5);
 
             console.log(
-              `No reward information received, use the task itself or the default value: ${defaultXp} XP, ${defaultGold} Gold`
+                `No reward information received, use the task itself or the default value: ${defaultXp} XP, ${defaultGold} Gold`
             );
             showTaskCompletedToast(
-              task.title || "task",
-              defaultXp,
-              defaultGold,
-              false,
-              task
+                task.title || "task",
+                defaultXp,
+                defaultGold,
+                false,
+                task
             );
           } else {
             // There is no task or reward information at all
@@ -392,7 +348,7 @@ const TasksPage = () => {
         // Handle any errors that may occur while parsing the response
         console.error("Error processing task completion response:", error);
         showSuccess(
-          "Task may have been completed, but there was an issue displaying rewards"
+            "Task may have been completed, but there was an issue displaying rewards"
         );
       } finally {
         // In any case, refresh the task list to get the latest status
@@ -413,9 +369,9 @@ const TasksPage = () => {
     try {
       // Find the corresponding task
       let taskToComplete =
-        tasks.find((t) => t._id === id) ||
-        equippedShortTasks.find((t) => t._id === id) ||
-        equippedLongTasks.find((t) => t._id === id);
+          tasks.find((t) => t._id === id) ||
+          equippedShortTasks.find((t) => t._id === id) ||
+          equippedLongTasks.find((t) => t._id === id);
 
       // If the task does not exist, try to retrieve the task list and then search again.
       if (!taskToComplete) {
@@ -437,9 +393,9 @@ const TasksPage = () => {
           try {
             await fetchTasks();
             taskToComplete =
-              tasks.find((t) => t._id === id) ||
-              equippedShortTasks.find((t) => t._id === id) ||
-              equippedLongTasks.find((t) => t._id === id);
+                tasks.find((t) => t._id === id) ||
+                equippedShortTasks.find((t) => t._id === id) ||
+                equippedLongTasks.find((t) => t._id === id);
           } catch (fetchErr) {
             console.error("Failed to refresh task list:", fetchErr);
           }
@@ -453,7 +409,7 @@ const TasksPage = () => {
       }
 
       console.log(
-        `Prepare to complete the task: ${taskToComplete.title} (ID: ${id}, type: ${taskToComplete.type})`
+          `Prepare to complete the task: ${taskToComplete.title} (ID: ${id}, type: ${taskToComplete.type})`
       );
 
       // If it is a long-term task, use a dedicated completion method
@@ -491,7 +447,7 @@ const TasksPage = () => {
 
       try {
         // More tolerant success judgment conditions
-       // It is considered a failure only when an error flag is clearly received and there is no valid data
+        // It is considered a failure only when an error flag is clearly received and there is no valid data
         if (response?.success === false && !response.task && !response.reward) {
           showError(response?.message || "Failed to complete long-term task");
           console.error("Long-term task completion clearly failed:", response);
@@ -528,7 +484,7 @@ const TasksPage = () => {
         // Handle any errors that may occur while parsing the response
         console.error("Error processing long task completion response:", error);
         showSuccess(
-          "Long task may have been completed, but there was an issue displaying rewards"
+            "Long task may have been completed, but there was an issue displaying rewards"
         );
       } finally {
         // In any case, refresh the task list to get the latest status
@@ -538,29 +494,29 @@ const TasksPage = () => {
     onError: (err) => {
       console.error("Error in long task completion request:", err);
       showError(
-        err?.response?.data?.message || "Failed to complete the long task"
+          err?.response?.data?.message || "Failed to complete the long task"
       );
 
       // Get task data to display rewards
       const taskId = err?.config?.url?.split("/").pop();
       if (taskId) {
         const task =
-          tasks.find((t) => t._id === taskId) ||
-          equippedLongTasks.find((t) => t._id === taskId);
+            tasks.find((t) => t._id === taskId) ||
+            equippedLongTasks.find((t) => t._id === taskId);
 
         if (task) {
           // Display default reward value even if failed
           const defaultXp = task.experienceReward || 30;
           const defaultGold = task.goldReward || 15;
           console.log(
-            `Task completion request failed, using default reward: ${defaultXp} XP, ${defaultGold} Gold`
+              `Task completion request failed, using default reward: ${defaultXp} XP, ${defaultGold} Gold`
           );
           showTaskCompletedToast(
-            task.title || "Long-term tasks",
-            defaultXp,
-            defaultGold,
-            false,
-            task
+              task.title || "Long-term tasks",
+              defaultXp,
+              defaultGold,
+              false,
+              task
           );
         }
       }
@@ -603,7 +559,7 @@ const TasksPage = () => {
     onError: (err) => {
       console.error(err);
       // The error has been handled by taskService and does not need to be displayed again
-     // But we still keep this callback in case there is an uncaught error
+      // But we still keep this callback in case there is an uncaught error
     },
   });
 
@@ -653,14 +609,14 @@ const TasksPage = () => {
     // Select short/long slot
     const isLong = task.type === "long";
     const occupied = (isLong ? equippedLongTasks : equippedShortTasks).map(
-      (t) => t.slotPosition
+        (t) => t.slotPosition
     );
     let freeSlot = [...Array(3).keys()].find((i) => !occupied.includes(i));
     if (freeSlot == null) {
       showError(
-        isLong
-          ? "The long-term task slot is full"
-          : "The short-term task slot is full"
+          isLong
+              ? "The long-term task slot is full"
+              : "The short-term task slot is full"
       );
       return;
     }
@@ -681,9 +637,9 @@ const TasksPage = () => {
     const expectedType = slotType === "long" ? "long" : "short";
     if (task.type !== expectedType) {
       showError(
-        `Only can put ${
-          expectedType === "long" ? "long-term" : "short-term"
-        } task into this slot`
+          `Only can put ${
+              expectedType === "long" ? "long-term" : "short-term"
+          } task into this slot`
       );
       return;
     }
@@ -733,183 +689,174 @@ const TasksPage = () => {
 
   // Merge all loading / errors
   const loadingAny =
-    deleting || completing || creating || updating || equipping || unequipping;
+      deleting || completing || creating || updating || equipping || unequipping;
   const errorAny =
-    deleteError ||
-    completeError ||
-    createError ||
-    updateError ||
-    equipError ||
-    unequipError ||
-    error;
+      deleteError ||
+      completeError ||
+      createError ||
+      updateError ||
+      equipError ||
+      unequipError ||
+      error;
 
   const [isExpanded, setIsExpanded] = useState(false);
   console.log(" the shortslot of user is", user?.shortCardSlot);
   console.log(" the longslot of user is", user?.longCardSlot);
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center bg-fixed"
-      style={{
-        background: "linear-gradient(to bottom, #7b5cd6, #9370db)",
-        backgroundSize: "cover"
-      }}
-    >
-      <Navbar />
-      <div className="max-w-[95%] mx-auto py-4 space-y-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">My Tasks</h1>
+      <div
+          className="min-h-screen bg-cover bg-center bg-fixed"
+          style={{
+            backgroundColor: "#e2e8f0", // 加深背景色为更明显的灰蓝色
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104' viewBox='0 0 60 104'%3E%3Cpath d='M30 10.9L0 38.1V76.5L30 103.7L60 76.5V38.1L30 10.9zM30 0L60 17.3V52L30 69.3L0 52V17.3L30 0z' fill='none' stroke='%238b5cf6' stroke-opacity='0.15' stroke-width='1.5'/%3E%3C/svg%3E")`,
+            backgroundSize: "60px 104px",
+            backgroundPosition: "center center",
+          }}
 
-          <button
-            onClick={() => {
-              setCreateSlotType("short");
-              setCreateSlotIndex(-1);
-              setShowForm(true);
-            }}
-            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors duration-200"
-            disabled={loadingAny}
-          >
-            Create Task
-          </button>
-        </div>
+      >
+        <Navbar />
+        <div className="max-w-[95%] mx-auto py-4 space-y-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-800">My Tasks</h1>
 
-        {errorAny && (
-          <div className="text-red-400 bg-black bg-opacity-50 p-2 rounded">
-            {errorAny}
+            <button
+                onClick={() => {
+                  setCreateSlotType("short");
+                  setCreateSlotIndex(-1);
+                  setShowForm(true);
+                }}
+                className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors duration-200"
+                disabled={loadingAny}
+            >
+              Create Task
+            </button>
           </div>
-        )}
-        {loadingAny && (
-          <div className="text-gray-200 bg-black bg-opacity-50 p-2 rounded">
-            Loading...
-          </div>
-        )}
-        {successMessage && (
-          <div className="text-green-400 bg-black bg-opacity-50 p-2 rounded">
-            {successMessage}
-          </div>
-        )}
 
-        {/* Add NewTaskCard as a featured task display */}
-        {/* <div className="mb-6">
+          {errorAny && (
+              <div className="text-red-400 bg-black bg-opacity-50 p-2 rounded">
+                {errorAny}
+              </div>
+          )}
+          {loadingAny && (
+              <div className="text-gray-200 bg-black bg-opacity-50 p-2 rounded">
+                Loading...
+              </div>
+          )}
+          {successMessage && (
+              <div className="text-green-400 bg-black bg-opacity-50 p-2 rounded">
+                {successMessage}
+              </div>
+          )}
+
+          {/* Add NewTaskCard as a featured task display */}
+          {/* <div className="mb-6">
           <h2 className="text-xl font-semibold text-white mb-4">特色任务</h2>
           <NewTaskCard />
         </div> */}
 
-        <CreateTaskModal
-          isOpen={showForm}
-          onClose={() => {
-            setShowForm(false);
-            setEditingTask(null);
-            setCreateSlotIndex(-1);
-            setCreateSlotType("short"); // Reset task type every time you close it，确保下次能准确控制
-          }}
-          onSubmit={handleSubmit}
-          loading={editingTask ? updating : creating}
-          initialData={editingTask}
-          slotIndex={createSlotIndex}
-          defaultType={createSlotType}
-          defaultDueDateTime={
-            createSlotType === "short"
-              ? new Date(Date.now() + 24 * 60 * 60 * 1000)
-                  .toISOString()
-                  .slice(0, 19)
-              : undefined
-          }
-        />
+          <CreateTaskModal
+              isOpen={showForm}
+              onClose={() => {
+                setShowForm(false);
+                setEditingTask(null);
+                setCreateSlotIndex(-1);
+                setCreateSlotType("short"); // Reset task type every time you close it，确保下次能准确控制
+              }}
+              onSubmit={handleSubmit}
+              loading={editingTask ? updating : creating}
+              initialData={editingTask}
+              slotIndex={createSlotIndex}
+              defaultType={createSlotType}
+              defaultDueDateTime={
+                createSlotType === "short"
+                    ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+                        .toISOString()
+                        .slice(0, 19)
+                    : undefined
+              }
+          />
 
-        <div className="flex gap-4 relative">
-          {/* Left: Task slot area */}
-          <div
-            className={`transition-all duration-300 ease-in-out ${
-              isExpanded ? "w-1/2" : "w-3/4"
-            }`}
-          >
-            <div className="grid grid-cols-2 gap-4">
-              {" "}
-              {/* Change back to grid-cols-2 to achieve horizontal arrangement */}
-              <DailyTaskPanel
-                tasks={tasks}
-                user={user}
-                equippedTasks={equippedShortTasks}
-                onComplete={handleComplete}
-                onDelete={handleDelete}
-                onEdit={(task, forceEdit = false, isCompletion = false) => {
-                  // If this is a task completion update, just update the state without opening edit window
-                  if (isCompletion) {
-                    console.log("Task completed, updating state without opening edit window");
-                    return;
-                  }
-                  
-                  setEditingTask(task);
-                  setShowForm(true);
-                  if (task.type) {
-                    setCreateSlotType(task.type);
-                  }
-                }}
-                onUnequip={handleUnequip}
-                onDrop={(tid, idx) => handleDropToSlot(tid, idx, "short")}
-                onCreateTask={(idx) => handleCreateFromSlot(idx, "short")}
-                onEquip={handleEquip}
-              />
-              <TimetablePanel
-                tasks={tasks}
-                user={user}
-                equippedTasks={equippedLongTasks}
-                onComplete={handleComplete}
-                onDelete={handleDelete}
-                onEdit={(task, forceEdit = false, isCompletion = false) => {
-                  // If this is a task completion update, just update the state without opening edit window
-                  if (isCompletion) {
-                    console.log("Task completed, updating state without opening edit window");
-                    return;
-                  }
-                  
-                  // When the task has the isFromSubtaskComplete flag and is not forced to edit, only update the task without opening the edit window
-                  if (!forceEdit && task.isFromSubtaskComplete) {
-                    // Only update the task data, do not open the edit window
-                    console.log("Update long-term task data without opening the edit window");
-                    return;
-                  }
+          <div className="flex gap-4 relative">
+            {/* Left: Task slot area */}
+            <div
+                className={`transition-all duration-300 ease-in-out ${
+                    isExpanded ? "w-1/2" : "w-3/4"
+                }`}
+            >
+              <div className="grid grid-cols-2 gap-4">
+                {" "}
+                {/* Change back to grid-cols-2 to achieve horizontal arrangement */}
+                <DailyTaskPanel
+                    tasks={tasks}
+                    user={user}
+                    equippedTasks={equippedShortTasks}
+                    onComplete={handleComplete}
+                    onDelete={handleDelete}
+                    onEdit={(task) => {
+                      setEditingTask(task);
+                      setShowForm(true);
+                      if (task.type) {
+                        setCreateSlotType(task.type);
+                      }
+                    }}
+                    onUnequip={handleUnequip}
+                    onDrop={(tid, idx) => handleDropToSlot(tid, idx, "short")}
+                    onCreateTask={(idx) => handleCreateFromSlot(idx, "short")}
+                    onEquip={handleEquip}
+                />
+                <TimetablePanel
+                    tasks={tasks}
+                    user={user}
+                    equippedTasks={equippedLongTasks}
+                    onComplete={handleComplete}
+                    onDelete={handleDelete}
+                    onEdit={(task, forceEdit = false) => {
+                      // When the task has the isFromSubtaskComplete flag and is not forced to edit, only update the task without opening the edit window
+                      if (!forceEdit && task.isFromSubtaskComplete) {
+                        // Only update the task data, do not open the edit window
+                        console.log("Update long-term task data without opening the edit window");
+                        return;
+                      }
 
-                  // Normal editing process
-                  setEditingTask(task);
-                  setShowForm(true);
-                  if (task.type) {
-                    setCreateSlotType(task.type);
-                  }
-                }}
-                onDrop={(tid, idx) => handleDropToSlot(tid, idx, "long")}
-                onCreateTask={(idx) => handleCreateFromSlot(idx, "long")}
+                      // Normal editing process
+                      setEditingTask(task);
+                      setShowForm(true);
+                      if (task.type) {
+                        setCreateSlotType(task.type);
+                      }
+                    }}
+                    onDrop={(tid, idx) => handleDropToSlot(tid, idx, "long")}
+                    onCreateTask={(idx) => handleCreateFromSlot(idx, "long")}
+                />
+              </div>
+            </div>
+
+            {/* Right: Task warehouse with adjustable width */}
+            <div
+                className={`transition-all duration-300 ease-in-out ${
+                    isExpanded ? "w-1/2" : "w-1/4"
+                }`}
+            >
+              <RepositoryPanel
+                  tasks={tasks}
+                  cards={cards}
+                  onComplete={handleComplete}
+                  onDelete={handleDelete}
+                  onEdit={(task) => {
+                    setEditingTask(task);
+                    setShowForm(true);
+                    if (task.type) {
+                      setCreateSlotType(task.type);
+                    }
+                  }}
+                  onEquip={handleEquip}
+                  onExpand={setIsExpanded}
+                  isExpanded={isExpanded}
               />
             </div>
           </div>
-
-          {/* Right: Task warehouse with adjustable width */}
-          <div
-            className={`transition-all duration-300 ease-in-out ${
-              isExpanded ? "w-1/2" : "w-1/4"
-            }`}
-          >
-            <RepositoryPanel
-              tasks={tasks}
-              cards={cards}
-              onComplete={handleComplete}
-              onDelete={handleDelete}
-              onEdit={(task) => {
-                setEditingTask(task);
-                setShowForm(true);
-                if (task.type) {
-                  setCreateSlotType(task.type);
-                }
-              }}
-              onEquip={handleEquip}
-              onExpand={setIsExpanded}
-              isExpanded={isExpanded}
-            />
-          </div>
         </div>
       </div>
-    </div>
   );
 };
 

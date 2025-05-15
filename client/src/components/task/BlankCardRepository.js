@@ -2,15 +2,24 @@ import React, { useState } from 'react';
 import {RewardCardTile} from './RewardCardTile';
 
 
-export const BlankCardRepository = ({ cards }) => {
+export const BlankCardRepository = ({ cards, tasks = [], onQuickCreate = null }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedType, setSelectedType] = useState('All');
 
+    // Add the isUsed value of the log monitoring card
+    console.log("所有卡片数据:", cards);
+    cards.forEach(card => {
+        if (card.type === 'special') {
+            console.log(`奖励卡片 [${card.title || '无标题'}] isUsed值:`, card.isUsed);
+            console.log(`奖励卡片 [${card.title || '无标题'}] used值:`, card.used);
+        }
+    });
+    
     // Filter: Show only cards of type special and unused
     const filtered = cards.filter(card => {
         // Only show unused cards of type special
         const isSpecialCard = card.type === 'special';
-        const isUnused = !card.isUsed;
+        const isUnused = !card.isUsed && !card.used; // Check two possible usage status attributes
         
         const matchesSearch =
             (card.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -23,6 +32,13 @@ export const BlankCardRepository = ({ cards }) => {
     });
 
     console.log("Special reward cards filtered:", filtered.length);
+
+    // Handle quick create task with the selected card
+    const handleQuickCreate = (card) => {
+        if (onQuickCreate) {
+            onQuickCreate(card);
+        }
+    };
 
     return (
         <div className="mb-8">
@@ -71,7 +87,12 @@ export const BlankCardRepository = ({ cards }) => {
             ) : (
                 <div className="grid grid-cols-2 gap-6">
                     {filtered.map(card => (
-                        <RewardCardTile key={card._id || card.id} card={card} readOnly={true} />
+                        <RewardCardTile 
+                            key={card._id || card.id} 
+                            card={card} 
+                            readOnly={true}
+                            onQuickCreate={onQuickCreate ? handleQuickCreate : null}
+                        />
                     ))}
                 </div>
             )}

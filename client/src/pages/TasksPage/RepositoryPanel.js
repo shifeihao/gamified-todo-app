@@ -149,7 +149,7 @@ const RepositoryPanel = ({
     };
 
     return (
-        <div className="bg-[#e8e0f5] rounded-xl shadow-lg p-4 border border-amber-200 backdrop-blur-sm h-full relative">
+        <div className="bg-white/90 rounded-xl shadow-lg p-4 border border-amber-200 backdrop-blur-sm h-full relative">
             {/* Expand/Collapse button */}
             <button
                 onClick={() => onExpand(!isExpanded)}
@@ -213,7 +213,35 @@ const RepositoryPanel = ({
                     />
                 )}
                 {activeTab === 'blank' && (
-                    <BlankCardRepository cards={cards} />
+                    <BlankCardRepository 
+                        cards={cards} 
+                        tasks={tasks} 
+                        onQuickCreate={(card) => {
+                            // Create a task using the selected card
+                            // This will set the same parameters as in handleTemplateSelect
+                            if (onEdit) {
+                                // Use the card's taskDuration as the task type (short or long)
+                                const taskType = card.taskDuration === 'general' ? 'short' : card.taskDuration;
+                                
+                                // Create minimal task data with the selected card
+                                const taskData = {
+                                    title: `New Task with ${card.title || 'Reward Card'}`,
+                                    description: '',
+                                    type: taskType,
+                                    category: 'Default',
+                                    dueDate: taskType === 'short' ? 
+                                        new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 19) : 
+                                        undefined,
+                                    // Add the card information to force selection of this specific card
+                                    selectedCardId: card._id,
+                                    useRewardCard: true // Always use reward card mode
+                                };
+                                
+                                console.log('通过快速创建按钮创建任务:', taskData);
+                                onEdit(taskData);
+                            }
+                        }}
+                    />
                 )}
                 {activeTab === 'template' && (
                     <>
