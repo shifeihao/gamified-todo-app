@@ -183,7 +183,7 @@ const TasksPage = () => {
     }
   };
 
-  // 添加自动重试机制
+  // Add automatic retry mechanism
   useEffect(() => {
     let retryCount = 0;
     const maxRetries = 3;

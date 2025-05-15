@@ -1,15 +1,15 @@
 import mongoose from "mongoose";
 
-// 卡片模型架构
+// Card Model Architecture
 const cardSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      ref: "User", // 关联到User模型
+      ref: "User", // Related to the User model
     },
     type: {
-      // 卡片类型：空白 or 特殊
+      // Card Type: Blank or Special
       type: String,
       enum: ["blank", "special"],
       default: "blank",
@@ -24,9 +24,9 @@ const cardSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    // 奖励倍率等信息
+    // Reward rate and other information
     bonus: {
-      //金币和经验，默认倍率都是1
+      //The default multiplier for gold and experience is 1
       experienceMultiplier: {
         type: Number,
         default: 1.0,
@@ -40,38 +40,38 @@ const cardSchema = new mongoose.Schema(
         default: "",
       },
     },
-    // 任务持续时长：短期、长期或通用
+    // Mission duration: short, long, or general
     taskDuration: {
       type: String,
       enum: ["short", "long", "general"],
       default: "general",
     },
-    //表示是否为可重复使用的卡片
+    //Indicates whether the card is reusable
     reusable: {
       type: Boolean,
-      default: false, // 默认卡片不可重复使用
+      default: false, // By default, cards cannot be reused.
     },
-    //发放时间
+    //Distribution time
     issuedAt: {
       type: Date,
       default: Date.now,
     },
-    // 可选，卡片过期时间
+    // Optional, card expiration date
     expiresAt: {
       type: Date,
     },
-    // 标记卡片是否已使用
+    //Mark whether a card is used
     used: {
       type: Boolean,
       default: false,
     },
-    // 周期性卡片的冷却时间
+    // Cooldown time for periodic cards
     cooldownUntil: {
       type: Date,
     },
   },
   {
-    timestamps: true, // 自动添加createdAt和updatedAt字段
+    timestamps: true, // Automatically add createdAt and updatedAt fields
   }
 );
 

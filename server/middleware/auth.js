@@ -2,53 +2,53 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import dotenv from "dotenv";
 dotenv.config(); 
-// JWT密钥，在实际项目中应该存储在环境变量中
+// The JWT key should be stored in an environment variable in a real project.
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// 验证用户是否已登录的中间件
+// Middleware to verify if the user is logged in
 const protect = async (req, res, next) => {
   let token;
 
-  // 检查请求头中是否包含token
+    // Check if the request header contains a token
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // 获取token
+      // Get a token
       token = req.headers.authorization.split(' ')[1];
 
-      // 验证token
+      // Verify the token
       const decoded = jwt.verify(token, JWT_SECRET);
 
-      // 获取用户信息（不包含密码）
+      // Get user information (excluding password)
       req.user = await User.findById(decoded.id).select('-password');
 
       next();
     } catch (error) {
       console.error(error);
-      res.status(401).json({ message: '未授权，token无效' });
+      res.status(401).json({ message: 'Unauthorized, token invalid' });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: '未授权，没有token' });
+    res.status(401).json({ message: 'Unauthorized, no token' });
   }
 };
 
-// 检查用户是否为管理员的中间件
+// Middleware that checks if the user is an administrator
 const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(403).json({ message: '没有权限，仅限管理员访问' });
+    res.status(403).json({ message: 'No permissions, administrator access only' });
   }
 };
 
-// 生成JWT token的工具函数
+// Tool function for generating JWT token
 const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
-    expiresIn: '30d', // token有效期30天
+    expiresIn: '30d', // Token is valid for 30 days
   });
 };
 

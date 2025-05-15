@@ -19,7 +19,7 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 简单的表单验证
+    // Simple form validation
     if (!username || !email || !password || !confirmPassword) {
       showError('Please complete all fields.\n');
       return;
@@ -39,10 +39,10 @@ const RegisterPage = () => {
       setIsLoading(true);
       setError('');
       
-      // 调用注册函数
+      // Call the registration function
       await register(username, email, password);
       
-      // 注册成功后显示提示并跳转
+      // After successful registration, a prompt will be displayed and the page will be redirected.
       showSuccess('Register successful！');
       navigate('/tasks');
     } catch (error) {

@@ -8,7 +8,7 @@ import {
   updateSlot,
 } from "../../controllers/levelController.js";
 
-// ✅ 登录后查询当前用户等级信息
+// ✅ Query the current user level information after logging in
 router.get("/userLevelBar", protect, getUserLevelBar);
 router.post("/testAddExp", protect, addExperience);
 router.post("/slot", protect, updateSlot);

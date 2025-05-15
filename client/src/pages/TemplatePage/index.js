@@ -17,7 +17,7 @@ const TemplatePage = () => {
         subTasks: []
     });
 
-    // 获取模板列表
+    // Get Template List
     const fetchTemplates = async () => {
         try {
             const { data } = await axios.get('/api/templates');
@@ -35,7 +35,7 @@ const TemplatePage = () => {
         fetchTemplates();
     }, []);
 
-    // 处理表单提交
+    // Handling form submissions
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -67,7 +67,7 @@ const TemplatePage = () => {
         }
     };
 
-    // 处理模板编辑
+    // Processing template editing
     const handleEdit = (template) => {
         setEditingTemplate(template);
         setFormData({
@@ -80,7 +80,7 @@ const TemplatePage = () => {
         setShowForm(true);
     };
 
-    // 处理模板删除
+    // Processing template deletion
     const handleDelete = async (template) => {
         if (window.confirm('Are you sure you want to delete this template?')) {
             try {
@@ -94,9 +94,9 @@ const TemplatePage = () => {
         }
     };
 
-    // 处理模板选择
+    // Processing template selection
     const handleSelect = (template) => {
-        // TODO: 实现从模板创建任务的功能
+        // TODO: Implement the ability to create tasks from templates
         console.log('Selected template:', template);
     };
 

@@ -7,16 +7,16 @@ const userLevelSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    unique: true  // 每个用户只有一条等级记录
+    unique: true  // Each user has only one level record
   },
   exp: {
     type: Number,
     required: true,
-    default: 0     // 当前总经验
+    default: 0     // Current total experience
   },
   lastUpdate: {
     type: Date,
-    default: Date.now  // 上次经验更新时间
+    default: Date.now  // Last experience update time
   }
 });
 

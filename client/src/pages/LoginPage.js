@@ -30,7 +30,7 @@ const LoginPage = () => {
       // Call the login function
       await login(email, password);
       
-      // 登录成功后显示提示并跳转
+      // After successful login, a prompt will be displayed and the page will be redirected.
       showSuccess('Login successful！');
       navigate('/tasks');
     } catch (error) {
@@ -116,7 +116,7 @@ const LoginPage = () => {
           </form>
         </div>
 
-        {/* 演示账号信息 */}
+        {/* Demo Account Information */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <h3 className="text-lg font-semibold text-blue-800 mb-2">Demo Account</h3>
           <p className="text-blue-700 mb-1">Mail: demo@example.com</p>

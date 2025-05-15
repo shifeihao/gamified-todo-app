@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// 创建一个带有认证token的请求配置
+// Create a request configuration with an authentication token
 const getConfig = (token) => {
   return {
     headers: {
@@ -9,7 +9,7 @@ const getConfig = (token) => {
   };
 };
 
-// 获取所有任务
+// Get all tasks
 export const getTasks = async (token) => {
   try {
     const { data } = await axios.get('/api/tasks', getConfig(token));
@@ -18,12 +18,12 @@ export const getTasks = async (token) => {
     throw new Error(
       error.response && error.response.data.message
         ? error.response.data.message
-        : '获取任务失败'
+        : 'Failed to obtain task'
     );
   }
 };
 
-// 获取已装备的任务
+// Get equipped tasks
 export const getEquippedTasks = async (token) => {
   try {
     const { data } = await axios.get('/api/tasks/equipped', getConfig(token));
@@ -32,16 +32,16 @@ export const getEquippedTasks = async (token) => {
     throw new Error(
       error.response && error.response.data.message
         ? error.response.data.message
-        : '获取已装备任务失败'
+        : 'Failed to obtain equipped tasks'
     );
   }
 };
 
-// 获取已装备的short任务
+// Get the equipped short task
 export const getEquippedShortTasks = async (token) => {
   try {
     const { data } = await axios.get('/api/tasks/equipped', getConfig(token));
-    // 过滤出short任务，并标记是否过期（装备后24小时）
+    // Filter out short tasks and mark whether they are expired (24 hours after equipment)
     const now = Date.now();
     return data
       .filter(task => task.type === 'short' || task.slotType === 'short')
@@ -61,11 +61,11 @@ export const getEquippedShortTasks = async (token) => {
   }
 };
 
-// 获取已装备的长期任务
+// Get equipped long-term tasks
 export const getEquippedLongTasks = async (token) => {
   try {
     const { data } = await axios.get('/api/tasks/equipped', getConfig(token));
-    // 过滤出长期任务
+    // Filter out long-term tasks
     return data.filter(task => task.type === 'long' || task.slotType === 'long');
   } catch (error) {
     throw new Error(
@@ -76,33 +76,33 @@ export const getEquippedLongTasks = async (token) => {
   }
 };
 
-// 创建新任务
+// Create a new task
 export const createTask = async (taskData, token) => {
   try {
-    // ✅ 不再调用 /api/cards/consume
+    // ✅ No longer call /api/cards/consume
     const { data } = await axios.post(
         '/api/tasks',
-        taskData,  // taskData 已含经验奖励、卡片 ID 等
+        taskData,  // taskData Includes experience rewards, card ID, etc.
         getConfig(token)
     );
     return data;
   } catch (error) {
-    // 捕获服务器错误并以 toast 形式显示
-    const errorMessage = error.response?.data?.message || '创建任务失败';
+    // Capture server errors and display them as a toast
+    const errorMessage = error.response?.data?.message || 'Failed to create task';
     
-    // 导入 toast (确保按需导入，避免循环引用)
+    // Import toast (make sure to import as needed to avoid circular references)
     const { toast } = require('react-hot-toast');
     
-    // 显示错误信息
+    // Display error message
     toast.error(
       <div className="flex flex-col space-y-1">
-        <span className="font-semibold text-sm">创建任务失败</span>
+        <span className="font-semibold text-sm">Failed to create task</span>
         <div className="text-xs">{errorMessage}</div>
       </div>,
       { duration: 5000, position: 'top-center' }
     );
     
-    // 返回错误对象，而不是直接抛出错误
+    // Return an error object instead of throwing an error directly
     return {
       success: false,
       message: errorMessage
@@ -111,7 +111,7 @@ export const createTask = async (taskData, token) => {
 };
 
 
-// 获取单个任务
+// Get a single task
 export const getTaskById = async (id, token) => {
   try {
     const { data } = await axios.get(`/api/tasks/${id}`, getConfig(token));
@@ -120,12 +120,12 @@ export const getTaskById = async (id, token) => {
     throw new Error(
       error.response && error.response.data.message
         ? error.response.data.message
-        : '获取任务详情失败'
+        : 'Failed to obtain task details'
     );
   }
 };
 
-// 更新任务
+// Update Tasks
 export const updateTask = async (id, taskData, token) => {
   try {
     const { data } = await axios.put(`/api/tasks/${id}`, taskData, getConfig(token));
@@ -134,12 +134,12 @@ export const updateTask = async (id, taskData, token) => {
     throw new Error(
       error.response && error.response.data.message
         ? error.response.data.message
-        : '更新任务失败'
+        : 'Update task failed'
     );
   }
 };
 
-// 删除任务
+// Deleting a task
 export const deleteTask = async (id, token) => {
   try {
     const { data } = await axios.delete(`/api/tasks/${id}`, getConfig(token));
@@ -148,12 +148,12 @@ export const deleteTask = async (id, token) => {
     throw new Error(
       error.response && error.response.data.message
         ? error.response.data.message
-        : '删除任务失败'
+        : 'Failed to delete task'
     );
   }
 };
 
-// 完成任务
+// Complete the task
 export const completeTask = async (id, token) => {
   try {
     const { data } = await axios.put(
@@ -162,26 +162,26 @@ export const completeTask = async (id, token) => {
       getConfig(token)
     );
     
-    // 确保返回数据存在
+    // Make sure the returned data exists
     if (!data) {
-      console.error('任务完成接口返回数据为空');
+      console.error('The task completion interface returns empty data');
       return { 
         success: false, 
-        message: '任务完成操作失败，服务器未返回数据', 
+        message: 'The task completion operation failed and the server did not return data.',
         task: { _id: id, status: 'pending' },
         reward: { expGained: 0, goldGained: 0 }
       };
     }
     
-    console.log('任务完成接口响应数据:', data);
+    console.log('Task completion interface response data:', data);
     
-    // 如果response没有包含reward对象，但task属性存在，构造一个默认的reward对象
+    // If the response does not contain a reward object, but the task attribute exists, construct a default reward object
     if (!data.reward && data.task) {
       const task = data.task;
       const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
       const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
       
-      console.log(`没有找到奖励信息，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
+        console.log(`No reward information found, using default value: ${defaultXp} XP, ${defaultGold} Gold`);
       
       data.reward = {
         expGained: defaultXp,
@@ -191,10 +191,10 @@ export const completeTask = async (id, token) => {
     
     return data;
   } catch (error) {
-    console.error('完成任务失败:', error.response || error);
-    const errorMessage = error.response?.data?.message || '完成任务失败，请稍后再试';
+    console.error('Failed to complete the task:', error.response || error);
+    const errorMessage = error.response?.data?.message || 'Failed to complete the task, please try again later';
     
-    // 返回错误信息和默认数据结构，而不是抛出错误
+    // Return error information and a default data structure instead of throwing an error
     return {
       success: false,
       message: errorMessage,
@@ -204,7 +204,7 @@ export const completeTask = async (id, token) => {
   }
 };
 
-// 装备任务到任务槽
+// Equip the task to the task slot
 export const equipTask = async (id, slotPosition, token, slotType = 'short') => {
   try {
     const { data } = await axios.put(
@@ -217,12 +217,12 @@ export const equipTask = async (id, slotPosition, token, slotType = 'short') => 
     throw new Error(
       error.response && error.response.data.message
         ? error.response.data.message
-        : '装备任务失败'
+        : 'Equipment mission failed'
     );
   }
 };
 
-// 卸下已装备的任务
+// Remove equipped tasks
 export const unequipTask = async (id, token) => {
   try {
     const { data } = await axios.put(
@@ -235,12 +235,12 @@ export const unequipTask = async (id, token) => {
     throw new Error(
       error.response && error.response.data.message
         ? error.response.data.message
-        : '卸下任务失败'
+        : 'Uninstall task failed'
     );
   }
 };
 
-// 完成子任务
+// Complete subtasks
 export const completeSubtask = async (taskId, subtaskIndex, token) => {
   try {
     const { data } = await axios.put(
@@ -253,18 +253,18 @@ export const completeSubtask = async (taskId, subtaskIndex, token) => {
     throw new Error(
       error.response && error.response.data.message
         ? error.response.data.message
-        : '完成子任务失败'
+        : 'Failed to complete subtask'
     );
   }
 };
 
-// 完成长期任务（专用端点）
+// Completing long-term tasks (dedicated endpoints)
 export const completeLongTask = async (id, token) => {
   try {
-    console.log(`正在调用长期任务完成API，任务ID: ${id}`);
+    console.log(`Calling the long-term task completion API, task ID: ${id}`);
     
     const config = getConfig(token);
-    console.log('请求配置:', config);
+    console.log('Request Configuration:', config);
     
     const response = await axios.post(
       `/api/tasks/${id}/complete`,
@@ -273,20 +273,20 @@ export const completeLongTask = async (id, token) => {
     );
     
     const { data } = response;
-    console.log('长期任务完成API响应:', data);
+    console.log('Long-term task completion API response:', data);
     
     // 确保返回数据存在
     if (!data) {
-      console.error('长期任务完成接口返回数据为空');
+      console.error('The long-term task completion interface returns empty data');
       return { 
         success: false, 
-        message: '任务完成操作失败，服务器未返回数据', 
+        message: 'The task completion operation failed and the server did not return data.',
         task: { _id: id, status: 'pending' },
         reward: { expGained: 0, goldGained: 0 }
       };
     }
     
-    // 检查响应中是否包含longTaskInfo
+    // Check if the response contains longTaskInfo
     if (!data.longTaskInfo && data.task && data.task.type === 'long') {
       // 如果没有longTaskInfo但任务是长期任务，创建一个默认的longTaskInfo
       const subTaskCount = data.task.subTasks ? data.task.subTasks.length : 0;
@@ -301,57 +301,57 @@ export const completeLongTask = async (id, token) => {
         finalBonusGold: data.task.goldReward || 15
       };
       
-      console.log('创建了默认的longTaskInfo:', data.longTaskInfo);
+      console.log('Created a default longTaskInfo:', data.longTaskInfo);
     }
     
-    // 如果response没有包含reward对象，但task属性存在，构造一个默认的reward对象
+    // If the response does not contain a reward object, but the task attribute exists, construct a default reward object
     if (!data.reward && data.task) {
       const task = data.task;
       const defaultXp = task.experienceReward || 30;
       const defaultGold = task.goldReward || 15;
       
-      console.log(`没有找到奖励信息，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
+      console.log(`No reward information found, using default value: ${defaultXp} XP, ${defaultGold} Gold`);
       
       data.reward = {
         expGained: defaultXp,
         goldGained: defaultGold
       };
     } else if (data.reward && (data.reward.expGained === 0 || data.reward.goldGained === 0) && data.task) {
-      // 如果奖励值为0，也使用任务本身或默认值
+      // If the reward value is 0, the task itself or the default value is used.
       const task = data.task;
       
-      // 如果存在longTaskInfo且有finalBonusExperience/finalBonusGold，优先使用这些值
+      // If longTaskInfo exists and there is finalBonusExperience/finalBonusGold, these values ​​are used first
       if (data.longTaskInfo) {
         if (data.reward.expGained === 0) {
           data.reward.expGained = data.longTaskInfo.finalBonusExperience || task.experienceReward || 30;
-          console.log(`奖励XP为0，使用longTaskInfo中的值: ${data.reward.expGained} XP`);
+          console.log(`Reward XP is 0, use the value from longTaskInfo: ${data.reward.expGained} XP`);
         }
         if (data.reward.goldGained === 0) {
           data.reward.goldGained = data.longTaskInfo.finalBonusGold || task.goldReward || 15;
-          console.log(`奖励Gold为0，使用longTaskInfo中的值: ${data.reward.goldGained} Gold`);
+          console.log(`The reward Gold is 0, use the value in longTaskInfo: ${data.reward.goldGained} Gold`);
         }
       } else {
-        // 没有longTaskInfo，使用任务本身或默认值
+        // No longTaskInfo, use the task itself or default value
         if (data.reward.expGained === 0) {
           data.reward.expGained = task.experienceReward || 30;
-          console.log(`奖励XP为0，使用默认值: ${data.reward.expGained} XP`);
+          console.log(`Bonus XP is 0, use default value: ${data.reward.expGained} XP`);
         }
         if (data.reward.goldGained === 0) {
           data.reward.goldGained = task.goldReward || 15;
-          console.log(`奖励Gold为0，使用默认值: ${data.reward.goldGained} Gold`);
+          console.log(`The reward Gold is 0, using the default value: ${data.reward.goldGained} Gold`);
         }
       }
     }
     
     return data;
   } catch (error) {
-    console.error('长期任务完成API错误:', error.response || error);
-    // 返回错误信息和默认数据结构，不要抛出错误
+    console.error('Long-term task completion API error:', error.response || error);
+    // Return error information and default data structure, do not throw errors
     return {
       success: false,
-      message: error.response?.data?.message || '完成长期任务失败，请稍后再试',
+      message: error.response?.data?.message || 'Failed to complete the long task, please try again later',
       task: { _id: id, status: 'pending' },
-      reward: { expGained: 30, goldGained: 15 }  // 使用默认值
+      reward: { expGained: 30, goldGained: 15 }  // Use default values
     };
   }
 };

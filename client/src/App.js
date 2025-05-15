@@ -19,7 +19,7 @@ import { AuthProvider } from "./context/AuthContext";
 
 // styles
 const ProtectedRoute = ({ children }) => {
-  // 从本地存储中获取用户信息
+  // Get user information from local storage
   const userInfo = localStorage.getItem("userInfo")
     ? JSON.parse(localStorage.getItem("userInfo"))
     : null;

@@ -8,7 +8,7 @@ const scheduleDailyCardReset = () => {
     "0 0 * * *",
     async () => {
       try {
-        console.log("开始执行每日卡片重置...");
+        console.log("Start daily card reset...");
         const users = await User.find();
 
         for (const user of users) {

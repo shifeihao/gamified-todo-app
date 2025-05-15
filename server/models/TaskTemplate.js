@@ -8,7 +8,7 @@ const taskTemplateSchema = new mongoose.Schema({
   },
   title: {
     type: String,
-    required: [true, '请提供模板标题'],
+    required: [true, 'Please provide a template title'],
     trim: true,
   },
   description: {

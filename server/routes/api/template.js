@@ -12,7 +12,7 @@ import {
 import { protect } from "../../middleware/auth.js";
 import TaskTemplate from "../../models/TaskTemplate.js";
 
-// 测试路由 - 获取所有模板（不需要认证）
+// Test Routing - Get All Templates (No Authentication Required)
 router.get("/test", async (req, res) => {
   try {
     const templates = await TaskTemplate.find({});
@@ -24,13 +24,13 @@ router.get("/test", async (req, res) => {
   }
 });
 
-// 所有模板路由都需要认证
+// All template routes require authentication
 router.use(protect);
 
-// 获取所有模板和创建模板
+// Get all templates and create templates
 router.route("/").get(getTemplates).post(createTemplate);
 
-// 获取、更新和删除单个模板
+//Get, update, and delete a single template
 router
   .route("/:id")
   .get(getTemplateById)

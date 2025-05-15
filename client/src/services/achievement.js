@@ -1,4 +1,4 @@
-import axios from "./axios"; // 如果你有封装好的 axios 实例
+import axios from "./axios"; // If you have a packaged axios instance
 
 // Get all achievements and check if they are unlocked
 export const getAllAchievements = () => {

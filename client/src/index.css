@@ -16,7 +16,7 @@ code {
     monospace;
 }
 
-/* 自定义样式 */
+/* Custom styles */
 @layer components {
   .btn-primary {
     @apply bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded transition duration-300;
@@ -35,17 +35,17 @@ code {
   }
 }
 
-/* 任务仓库面板过渡动画 */
+/* Task warehouse panel transition animation */
 .repository-panel {
   transition: width 0.3s ease-in-out;
 }
 
-/* 确保内容在调整大小时平滑过渡 */
+/* Ensure content transitions smoothly when resizing */
 .repository-panel > * {
   transition: all 0.3s ease-in-out;
 }
 
-/* 筛选器相关样式 */
+/* Filter related styles */
 .filter-tag {
   @apply inline-flex items-center text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800;
 }
@@ -65,7 +65,7 @@ code {
   transition: max-height 0.5s ease-in;
 }
 
-/* 筛选器图标动画 */
+/* Filter Icon Animation */
 .filter-icon {
   @apply text-gray-400 transition-all duration-300;
 }
@@ -74,7 +74,7 @@ code {
   @apply text-amber-500 transform scale-110;
 }
 
-/* 过渡动画 */
+/* Transition Animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -84,7 +84,7 @@ code {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
-/* 任务卡片样式 */
+/* Task card style */
 .task-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   background-color: #f8f0ff;
@@ -98,13 +98,13 @@ code {
   border-color: #c8b4ee;
 }
 
-/* 锁定卡槽样式 */
+/* Locking card slot style */
 .slot-locked {
   background-color: #f0ebfa;
   border: 1px dashed #d1c4e9;
 }
 
-/* 创建任务卡槽样式 */
+/* Create a task slot style */
 .create-task-slot {
   background-color: #f5f0ff;
   border: 1px dashed #d4c5f9;
@@ -115,7 +115,7 @@ code {
   border-color: #b39ddb;
 }
 
-/* 自定义滚动条样式 */
+/* Custom scroll bar style */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }
@@ -134,7 +134,7 @@ code {
   background: #a0a0a0;
 }
 
-/* 对话框内容滚动样式 */
+/* Dialog content scrolling style */
 .dialog-content {
   max-height: 85vh;
   overflow-y: auto;

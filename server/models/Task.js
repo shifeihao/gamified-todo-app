@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-// 子任务模型架构（用于长期任务）
+// Subtask model architecture (for long-term tasks)
 const subTaskSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -19,7 +19,7 @@ const subTaskSchema = new mongoose.Schema({
   completedAt: {
     type: Date,
   },
-    // 子任务经验 + 金币
+    // Sub-task experience + gold
     experience: {
         type: Number,
         default: 10,
@@ -30,13 +30,13 @@ const subTaskSchema = new mongoose.Schema({
     },
 });
 
-// 任务模型架构
+// Task Model Architecture
 const taskSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      ref: 'User', // 关联到User模型
+      ref: 'User', // Related to the User model
     },
     cardUsed: {
       type: mongoose.Schema.Types.ObjectId,
@@ -51,7 +51,7 @@ const taskSchema = new mongoose.Schema(
       type: Number,
       default: 5
     },
-      // 新增主任务额外奖励（只针对长期任务）
+      // Added additional rewards for main tasks (only for long-term tasks)
       finalBonusExperience: {
           type: Number,
           default: 10,
@@ -87,16 +87,16 @@ const taskSchema = new mongoose.Schema(
     dueDate: {
       type: Date,
     },
-      //实际完成任务的时间
+      //The actual time to complete the task
     completedAt: {
       type: Date,
     },
-      //实际获得的经验奖励（可能受卡片影响）
+      //Actual experience reward obtained (may be affected by cards)
     experienceReward: {
       type: Number,
       default: 10,
     },
-      //实际获得的金币奖励（同上）
+      //Actual gold coin rewards obtained (same as above)
     goldReward: {
       type: Number,
       default: 5,
@@ -105,25 +105,25 @@ const taskSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-      //装备的任务槽位置（0、1、2），-1 表示未装备
+      //The task slot position of the equipment (0, 1, 2), -1 means not equipped
     slotPosition: {
       type: Number,
       default: -1,
     },
-    // 装备到槽位的时间
+    // Time to equip to slot
     slotEquippedAt: {
       type: Date,
       default: null
     },
-    // 标记任务奖励是否已领取
+    // Mark whether the task reward has been received
     rewardClaimed: {
       type: Boolean,
       default: false
     },
-    subTasks: [subTaskSchema], // 长期任务的子任务
+    subTasks: [subTaskSchema], // Subtasks of long-term tasks
   },
   {
-    timestamps: true, // 自动添加createdAt和updatedAt字段
+    timestamps: true, // Automatically add createdAt and updatedAt fields
   }
 );
 

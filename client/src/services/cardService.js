@@ -1,7 +1,7 @@
 // services/cardService.js
 import axios from 'axios';
 
-// 获取卡片库存 - 返回用户所有卡片信息
+// Get Card Inventory - Returns all card information of the user
 export const getCardInventory = async (token) => {
     try {
         const res = await axios.get('/api/cards/inventory', {
@@ -9,15 +9,15 @@ export const getCardInventory = async (token) => {
                 Authorization: `Bearer ${token}`
             }
         });
-        console.log("获取到的卡片数据:", res.data);
+        console.log("Obtained card data:", res.data);
         return res.data;
     } catch (error) {
-        console.error("获取卡片失败:", error);
+        console.error("Failed to obtain card:", error);
         throw error;
     }
 };
 
-// 获取每日卡片 - 尝试获取新的每日卡片
+// Get Daily Cards - Try to get new Daily Cards
 export const getNewDailyCards = async (token) => {
     try {
         const res = await axios.post('/api/cards/issue-daily', {}, {
@@ -25,30 +25,30 @@ export const getNewDailyCards = async (token) => {
                 Authorization: `Bearer ${token}`
             }
         });
-        console.log("获取每日卡片成功:", res.data);
+        console.log("Get daily card successfully:", res.data);
         return res.data;
     } catch (error) {
-        // 如果已经获取过卡片，会返回400错误
-        console.log("获取每日卡片失败:", error.response?.data?.message || error.message);
+        // If the card has already been obtained, a 400 error will be returned
+        console.log("Failed to get daily card:", error.response?.data?.message || error.message);
         return null;
     }
 };
 
-// 创建新的空白卡片 - 仅用于测试或新用户
+// Create a new blank card - only for testing or new users
 export const createBlankCard = async (token) => {
     try {
         const res = await axios.post('/api/cards/issue-blank', {
-            title: "新的空白卡片",
-            description: "系统自动创建的卡片"
+            title: "New blank card",
+            description: "Cards automatically created by the system"
         }, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
-        console.log("创建空白卡片成功:", res.data);
+        console.log("Created a blank card successfully:", res.data);
         return res.data;
     } catch (error) {
-        console.error("创建空白卡片失败:", error);
+        console.error("Failed to create blank card:", error);
         throw error;
     }
 };

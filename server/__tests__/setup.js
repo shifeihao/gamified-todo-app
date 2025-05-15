@@ -1,11 +1,11 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 
-// 导入Jest全局对象并设置到全局环境
+// Import the Jest global object and set it to the global environment
 import { jest } from '@jest/globals';
 global.jest = jest;
 
-// 连接到内存数据库
+// Connecting to an in-memory database
 let mongod;
 
 export const connectDB = async () => {
@@ -20,7 +20,7 @@ export const connectDB = async () => {
   await mongoose.connect(uri, mongooseOpts);
 };
 
-// 清空数据库中的所有集合
+// Clear all collections in the database
 export const clearDatabase = async () => {
   const collections = mongoose.connection.collections;
   
@@ -30,14 +30,14 @@ export const clearDatabase = async () => {
   }
 };
 
-// 关闭数据库连接并停止服务器
+// Close the database connection and stop the server
 export const closeDatabase = async () => {
   await mongoose.connection.dropDatabase();
   await mongoose.connection.close();
   await mongod.stop();
 };
 
-// 生成测试JWT令牌
+// Generate a test JWT token
 export const generateTestToken = async (userId) => {
   const jwt = await import('jsonwebtoken');
   return jwt.default.sign(

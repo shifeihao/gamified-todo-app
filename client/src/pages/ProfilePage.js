@@ -20,7 +20,7 @@ const ProfilePage = () => {
     completionRate: 0,
   });
 
-  // 当用户数据加载时，填充表单
+  // When user data is loaded, fill the form
   useEffect(() => {
     if (user) {
       setFormData({
@@ -32,10 +32,10 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  // 模拟获取用户统计数据
+  // Simulate obtaining user statistics
   useEffect(() => {
-    // 在实际应用中，这里应该从API获取数据
-    // 这里使用模拟数据
+    // In actual applications, data should be obtained from the API
+    // Here we use simulated data
     if (user) {
       setStats({
         taskCount: 24,
@@ -45,7 +45,7 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  // 处理输入变化
+  // Handling input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -54,34 +54,34 @@ const ProfilePage = () => {
     });
   };
 
-  // 处理表单提交
+  // Handling form submissions
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
     setSuccess(false);
 
-    // 验证密码
+    // Verify Password
     if (formData.password && formData.password !== formData.confirmPassword) {
       showError('The passwords you entered twice do not match');
       return;
     }
 
     try {
-      // 准备更新数据
+      // Prepare to update data
       const updateData = {
         username: formData.username,
         email: formData.email,
       };
 
-      // 只有当密码字段有值时才包含密码
+      // Include the password only if the password field has a value
       if (formData.password) {
         updateData.password = formData.password;
       }
 
-      // 调用更新个人资料API
+      // Calling the Update Profile API
       await updateProfile(updateData);
       
-      // 清空密码字段
+      // Clear the password field
       setFormData({
         ...formData,
         password: '',
@@ -106,7 +106,7 @@ const ProfilePage = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-8">Personal Profile</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 个人资料表单 */}
+          {/* Personal data form */}
           <div className="lg:col-span-2">
             <div className="card">
               <h2 className="text-lg font-semibold mb-4">Edit Profile</h2>
@@ -197,7 +197,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* 用户信息卡片 */}
+          {/* User Information Card */}
           <div className="lg:col-span-1">
             <div className="card bg-gradient-to-r from-primary-500 to-primary-700 text-white mb-6">
               <div className="flex flex-col items-center">

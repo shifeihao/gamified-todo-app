@@ -1,40 +1,40 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-// 用户模型架构
+// User Model Architecture
 const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: [true, "请提供用户名"],
+      required: [true, "Please provide a username"],
       unique: true,
       trim: true,
     },
     email: {
       type: String,
-      required: [true, "请提供邮箱"],
+      required: [true, "Please provide email"],
       unique: true,
       match: [
         /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        "请提供有效的邮箱地址",
+        "Please provide a valid email address",
       ],
     },
     password: {
       type: String,
-      required: [true, "请提供密码"],
+      required: [true, "Please provide a password"],
       minlength: 6,
-      select: false, // 默认查询不返回密码
+      select: false, // The default query does not return passwords
     },
 
     shortCardSlot: {
       type: Number,
       default: 2,
-      set: (v) => Math.min(v, 5), // 自动裁剪为不超过5
+      set: (v) => Math.min(v, 5), // Automatically crop to no more than 5
     },
     longCardSlot: {
       type: Number,
       default: 2,
-      set: (v) => Math.min(v, 5), // 自动裁剪为不超过5
+      set: (v) => Math.min(v, 5), // Automatically crop to no more than 5
     },
 
     role: {
@@ -53,32 +53,32 @@ const userSchema = new mongoose.Schema(
     level: {
       type: Number,
       required: true,
-      default: 1, // 当前等级
+      default: 1, // Current Level
     },
     nextLevelExp: {
       type: Number,
       required: true,
-      default: 155, // LV1 ➜ LV2 的经验门槛
+      default: 155, // Experience threshold from LV1 to LV2
     },
-    // 每日卡片配额
+    // Daily card quota
     dailyCards: {
       blank: {
         type: Number,
-        default: 3, // 默认每天3张空白卡片
+        default: 3, // Default is 3 blank cards per day
       },
       lastIssued: {
         type: Date,
-        default: null, // 上次发放日期
+        default: null, // Last payment date
       },
     },
-    // 每周长期卡片配额
+    // Weekly standing card quota
     weeklyCards: {
       lastIssued: {
         type: Date,
-        default: null, // 上次发放日期
+        default: null, // Last payment date
       },
     },
-    // 指向用户拥有的所有卡片
+    // Points to all cards owned by the user
     cardInventory: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -87,13 +87,13 @@ const userSchema = new mongoose.Schema(
     ],
   },
   {
-    timestamps: true, // 自动添加createdAt和updatedAt字段
+    timestamps: true, // Automatically add createdAt and updatedAt fields
   }
 );
 
-// 保存前加密密码
+    // Encrypt password before saving
 userSchema.pre("save", async function (next) {
-  // 只有在密码被修改时才重新加密
+  // Re-encrypt only when the password is changed
   if (!this.isModified("password")) {
     next();
   }
@@ -102,7 +102,7 @@ userSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// 验证密码的方法
+// Password verification method
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

@@ -46,7 +46,7 @@ export const getAvailableClasses = async (token) => {
       const response = await axios.get(`/api/character/stats`, config);
       return response.data;
     } catch (error) {
-      // 如果返回404，可能意味着用户还没有选择职业
+      // If a 404 is returned, it may mean that the user has not yet selected a career.
       if (error.response?.status === 404) {
         return { hasClass: false };
       }

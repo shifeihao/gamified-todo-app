@@ -1,7 +1,7 @@
 import TaskTemplate from "../models/TaskTemplate.js";
 import asyncHandler from "express-async-handler";
 
-// @desc    获取用户的所有模板
+// @desc    Get all templates for a user
 // @route   GET /api/templates
 // @access  Private
 export const getTemplates = asyncHandler(async (req, res) => {
@@ -11,7 +11,7 @@ export const getTemplates = asyncHandler(async (req, res) => {
   res.json(templates);
 });
 
-// @desc    创建新模板
+// @desc    Create a new template
 // @route   POST /api/templates
 // @access  Private
 export const createTemplate = asyncHandler(async (req, res) => {
@@ -37,7 +37,7 @@ export const createTemplate = asyncHandler(async (req, res) => {
   res.status(201).json(template);
 });
 
-// @desc    获取单个模板
+// @desc    Get a single template
 // @route   GET /api/templates/:id
 // @access  Private
 export const getTemplateById = asyncHandler(async (req, res) => {
@@ -49,14 +49,14 @@ export const getTemplateById = asyncHandler(async (req, res) => {
 
   if (!template) {
     res.status(404);
-    throw new Error("模板不存在");
+    throw new Error("Template does not exist");
   }
 
   console.log("Found template:", template);
   res.json(template);
 });
 
-// @desc    更新模板
+// @desc    Update Template
 // @route   PUT /api/templates/:id
 // @access  Private
 export const updateTemplate = asyncHandler(async (req, res) => {
@@ -68,7 +68,7 @@ export const updateTemplate = asyncHandler(async (req, res) => {
 
   if (!template) {
     res.status(404);
-    throw new Error("模板不存在");
+    throw new Error("Template does not exist");
   }
 
   const { title, description, category, type, subTasks } = req.body;
@@ -85,7 +85,7 @@ export const updateTemplate = asyncHandler(async (req, res) => {
   res.json(updatedTemplate);
 });
 
-// @desc    删除模板
+// @desc    Deleting a template
 // @route   DELETE /api/templates/:id
 // @access  Private
 export const deleteTemplate = asyncHandler(async (req, res) => {
@@ -97,10 +97,10 @@ export const deleteTemplate = asyncHandler(async (req, res) => {
 
   if (!template) {
     res.status(404);
-    throw new Error("模板不存在");
+    throw new Error("Template does not exist");
   }
 
   await template.deleteOne();
   console.log("Template deleted successfully");
-  res.json({ message: "模板已删除" });
+  res.json({ message: "Template deleted" });
 });

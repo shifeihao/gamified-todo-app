@@ -11,11 +11,11 @@ import{getUserInventory} from '../../controllers/inventoryController.js';
   
 import { protect } from '../../middleware/auth.js';
   
-// 公开路由
+// Public Routing
 router.post('/register', registerUser);
 router.post('/login', loginUser);
   
-// 需要认证的路由
+// Routes that require authentication
 router.route('/profile')
     .get(protect, getUserProfile)
     .put(protect, updateUserProfile);

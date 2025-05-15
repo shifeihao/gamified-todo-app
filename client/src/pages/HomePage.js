@@ -32,7 +32,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-      {/* 导航栏 */}
+      {/* Navbar */}
       <nav className="fixed w-full bg-black/30 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -43,11 +43,11 @@ const HomePage = () => {
         </div>
       </nav>
 
-      {/* 主要内容 */}
+      {/* Main content */}
       <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* 左侧文字内容 */}
+            {/* Text content on the left */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -67,7 +67,7 @@ const HomePage = () => {
                 achievements, and create your own exclusive task card book.
               </p>
 
-              {/* 功能亮点 */}
+              {/* Feature Highlights */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {features.map((feature) => (
                   <motion.div
@@ -85,7 +85,7 @@ const HomePage = () => {
               </div>
             </motion.div>
 
-            {/* 右侧交互展示 */}
+            {/* Interactive display on the right */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
