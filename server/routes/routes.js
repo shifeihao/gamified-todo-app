@@ -4,7 +4,7 @@ import apiRoutes from "./api/api.js";
 const router = express.Router();
 
 router.get("/", (req, res) => {
-  return res.json({ message: "Hello, world!" });
+  return res.json({ message: "API运行正常" });
 });
 
 router.use((err, req, res, next) => {
@@ -15,6 +15,7 @@ router.use((err, req, res, next) => {
   });
 });
 
-router.use("/api", apiRoutes);
+// 将所有API路由直接挂载到根路径
+router.use("/", apiRoutes);
 
 export default router;

@@ -1,7 +1,40 @@
-.DS_Store
-node_modules
+# dependencies
+node_modules/
 /client/node_modules
 /server/node_modules
-/.idea
+
+# build outputs
+dist/
+build/
+client/build/
+out/
+coverage/
+
+# environment
+.env
+.env.*
+!.env.example
+!.env.production
+!.env.shared
 /client/.env
+/client/.env.*
+!/client/.env.example
 /server/.env
+/server/.env.*
+!/server/.env.example
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# editor settings
+.vscode/
+.idea/
+
+# others
+*.swp
