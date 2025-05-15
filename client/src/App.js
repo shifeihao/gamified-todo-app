@@ -12,7 +12,7 @@ import ProfilePage from "./pages/ProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import InventoryShopPage from "./pages/InventoryShopPage";
 import AchievementCenterPage from "./pages/AchievementCenterPage.js";
-import DungeonTest from "./pages/DungeonTest";
+import DungeonExplorer from "./pages/DungeonExplorer";
 import TemplatePage from "./pages/TemplatePage";
 import GameLayout from "./pages/Gamelayout.js";
 
@@ -46,7 +46,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/inventoryShopTest" element={<InventoryShopPage />} />
-          <Route path="/dungeon-test" element={<DungeonTest />} />
+          <Route path="/dungeon-test" element={<DungeonExplorer />} />
           <Route path="/inventory" element={<InventoryShopPage />} />
           <Route path="/gamePanel" element={<GameLayout />} />
 

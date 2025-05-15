@@ -14,7 +14,8 @@ export const AuthNavbar = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold">TaskMaster</span>
+              <img src="/logo_min.png" alt="TaskMasters" className="h-8 w-auto" />
+              <span className="text-xl font-bold">TaskMasters</span>
             </Link>
           </div>
 

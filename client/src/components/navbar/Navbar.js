@@ -162,7 +162,8 @@ export const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0">
             <Link to="/tasks" className="flex items-center">
-              <span className="text-xl font-bold">TaskMaster</span>
+              <img src="/logo_min.png" alt="TaskMasters" className="h-8 w-auto" />
+              <span className="text-xl font-bold">TaskMasters</span>
             </Link>
           </div>
 
@@ -183,7 +184,7 @@ export const Navbar = () => {
                 </Link>
 
                 <Link
-                  to="/game"
+                  to="/gamePanel"
                   className="px-3 py-2 rounded-md hover:bg-[#a546f5] font-semibold"
                 >
                   Dungeon

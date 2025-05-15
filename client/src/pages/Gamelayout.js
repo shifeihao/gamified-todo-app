@@ -1,6 +1,6 @@
 // Redesigned GameLayout.jsx with Tailwind CSS - Part 1
 import React, { useState, useEffect, useMemo } from 'react';
-import DungeonTest from './DungeonTest';
+import DungeonExplorer from './DungeonExplorer';
 import InventoryShopPage from './InventoryShopPage';
 import axios from 'axios';
 import { getUserStats, getAvailableClasses, selectClass } from '../services/characterService';
@@ -371,6 +371,7 @@ export const GameLayout = () => {
         <nav className="bg-[#4c2a85] border-b-4 border-[#6a3bab] py-3">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex flex-col">
+            <img src="/logo_min.png" alt="TaskMaster" className="h-8 w-auto" />
               <h1 className="text-xl font-bold text-white">TaskMasters</h1>
               <span className="text-xs text-[#b89be6]">Select Class</span>
             </div>
@@ -672,7 +673,7 @@ export const GameLayout = () => {
           currentPage === PAGES.DUNGEON ? 'max-w-3xl' : 'max-w-6xl bg-[#f5f5f5] rounded-xl border-3 border-[#7e4ab8] p-4 text-[#2c1810]'
         }`}>
           {currentPage === PAGES.DUNGEON && (
-            <DungeonTest 
+            <DungeonExplorer
               userStats={{
                 ...userStats,
                 baseStats: effectiveBaseStats

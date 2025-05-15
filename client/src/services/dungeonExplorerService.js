@@ -1,4 +1,4 @@
-// 📦 api/DungeonTestService.js
+// 📦 api/DungeonExplorerService.js
 import axios from 'axios';
 
 const getConfig = (token) => ({

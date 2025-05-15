@@ -4,7 +4,7 @@ import {
   enterDungeon,
   exploreCurrentFloor,
   summarizeExploration
-} from '../services/dungeonTestService.js';
+} from '../services/dungeonExplorerService';
 import axios from 'axios';
 import StatAllocation from '../components/game/StatAllocation.js';
 import CombatSystem from '../components/game/CombatSystem';
@@ -93,7 +93,7 @@ const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
 };
 
 // Main component - Simplified
-const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
+const DungeonExplorer = ({ userStats, onGoldUpdate, gold  }) => {
   const [gameState, setGameState] = useState(GAME_STATES.IDLE);
   const [logs, setLogs] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -809,4 +809,4 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
   );
 };
 
-export default DungeonTest;
+export default DungeonExplorer;
