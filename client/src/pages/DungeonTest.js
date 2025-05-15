@@ -32,9 +32,9 @@ const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
       </h3>
       
       <div className="flex justify-end mb-4">
-        <div className="bg-[#ffa726] p-2 rounded-md flex items-center shadow-lg text-[#2c1810] border-2 border-[#ff8f00] font-bold">
-          <span className="mr-1">💰</span>
-          <span>{gold} Gold</span>
+        <div className="bg-[#ffb74d] p-2 rounded-md flex items-center shadow-lg text-[#2c1810] border-2 border-[#ff8f00] font-bold">
+          <span className="mr-1">🪙</span>
+          <span>{gold}</span>
         </div>
       </div>
       
@@ -99,6 +99,7 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState(null);
   const [currentFloor, setCurrentFloor] = useState(1);
+  const [currentHp, setCurrentHp] = useState(userStats?.baseStats?.hp || 100);
   const [shopItems, setShopItems] = useState([]);
   const [monsters, setMonsters] = useState([]);
   const [playerStats, setPlayerStats] = useState({
@@ -110,6 +111,7 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       critRate: userStats?.baseStats?.critRate || 5,
       evasion: userStats?.baseStats?.evasion || 0
     });
+
   const [accumulatedDrops, setAccumulatedDrops] = useState({
       gold: 0,
       exp: 0,
@@ -118,18 +120,29 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
     });
     
   useEffect(() => {
-  if (userStats?.baseStats) {
-    setPlayerStats({
-      hp: userStats.baseStats.hp || 100,
-      attack: userStats.baseStats.attack || 10,
-      defense: userStats.baseStats.defense || 5,
-      magicPower: userStats.baseStats.magicPower || 0,
-      speed: userStats.baseStats.speed || 0,
-      critRate: userStats.baseStats.critRate || 5,
-      evasion: userStats.baseStats.evasion || 0
-    });
-  }
-}, [userStats]);
+    if (userStats?.baseStats) {
+      setPlayerStats(prev => {
+        const newStats = {
+          attack: userStats.baseStats.attack || 10,
+          defense: userStats.baseStats.defense || 5,
+          magicPower: userStats.baseStats.magicPower || 0,
+          speed: userStats.baseStats.speed || 0,
+          critRate: userStats.baseStats.critRate || 5,
+          evasion: userStats.baseStats.evasion || 0
+        };
+
+        if (gameState === GAME_STATES.IDLE || prev.hp === undefined) {
+          newStats.hp = userStats.baseStats.hp || 100;
+          setCurrentHp(userStats.baseStats.hp || 100);
+        } else {
+
+          newStats.hp = prev.hp;
+        }
+
+        return newStats;
+      });
+    }
+  }, [userStats, gameState]);
   
   // Reference variables
   const logsEndRef = useRef(null);
@@ -234,11 +247,17 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
   // Handle combat end
   const handleCombatEnd = async (result) => {
     console.log("Combat ended:", result);
-    
+
     if (result.result === 'victory') {
       // Basic victory log
       setLogs(prev => [...prev, '🎯 Combat Victory!']);
-      
+
+      setCurrentHp(result.remainingHp);
+      setPlayerStats(prev => ({
+        ...prev,
+        hp: result.remainingHp
+      }));
+
       // If there are drop results, show drop information
       if (result.drops) {
         const { gold, exp, items, cards } = result.drops;
@@ -318,6 +337,11 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       }
     } else if (result.result === 'settlement') {
       // Handle when HP is 0
+      setCurrentHp(0);
+      setPlayerStats(prev => ({
+        ...prev,
+        hp: 0
+      }));
       setLogs(prev => [...prev, '💀 You were defeated, auto settling...']);
       
       try {
@@ -400,11 +424,19 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
   // Continue exploration after combat or shop
   const continueExploration = async () => {
     // If transition is in progress, avoid duplicate calls
+    if (currentHp <= 0) {
+      console.log('Player defeated, skipping exploration');
+      return;
+    }
     if (transitionInProgressRef.current) {
       if (DEBUG) console.log('Transition in progress, skipping continue exploration');
       return;
     }
-    
+      if (gameState === GAME_STATES.VICTORY) {
+    console.log('Game already ended, skipping exploration');
+    return;
+  }
+
     try {
       if (DEBUG) console.log('Starting continue exploration process');
       
@@ -511,8 +543,8 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
         setCurrentFloor(initialFloor);
       }
       
-      if (enter.stats) {
-        setPlayerStats({
+       if (enter.stats) {
+        const newStats = {
           hp: enter.stats.hp || 100,
           attack: enter.stats.attack || 10,
           defense: enter.stats.defense || 5,
@@ -520,9 +552,10 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
           speed: userStats.baseStats.speed || 0,
           critRate: userStats.baseStats.critRate || 5,
           evasion: userStats.baseStats.evasion || 0
-        });
+        };
+        setPlayerStats(newStats);
+        setCurrentHp(newStats.hp);
       }
-      
       // Add entry log with floor information
       setLogs([
         `✅ Entered: ${enter.dungeon.name}`,
@@ -621,7 +654,7 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
       {gameState === GAME_STATES.COMBAT && (
         <CombatSystem
           monsters={monsters}
-          playerStats={userStats.baseStats}  
+          playerStats={{ ...userStats.baseStats, hp: currentHp }}
           playerClass={userStats?.classSlug || "warrior"}
           playerClassName={userStats?.name}
           skills={userStats?.skills || []} 
@@ -713,10 +746,10 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
             {/* Items obtained */}
             {accumulatedDrops.items.length > 0 && (
               <div className="mb-4">
-                <h5 className="text-white mb-2">Items Obtained:</h5>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2">
+                <h5 className="flex flex-wrap justify-center gap-2 text-white mb-2">Items Obtained:</h5>
+                <div className="flex flex-wrap justify-center gap-2">
                   {accumulatedDrops.items.map((item, index) => (
-                    <div key={index} className="bg-[#4caf50] text-white p-2 rounded-md text-center text-sm font-bold">
+                    <div key={index} className="bg-[#4caf50] text-white p-2 rounded-md text-center text-sm font-bold min-w-[120px] max-w-[180px]">
                       🎁 {item.name}
                     </div>
                   ))}
@@ -727,10 +760,10 @@ const DungeonTest = ({ userStats, onGoldUpdate, gold  }) => {
             {/* Task cards obtained */}
             {accumulatedDrops.cards.length > 0 && (
               <div>
-                <h5 className="text-white mb-2">Task Cards Obtained:</h5>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2 justify-center">
+                <h5 className="flex flex-wrap justify-center gap-2 text-white mb-2">Task Cards Obtained:</h5>
+                <div className="flex flex-wrap justify-center gap-2">
                   {accumulatedDrops.cards.map((card, index) => (
-                    <div key={index} className="bg-[#9c27b0] text-white p-2 rounded-md text-center">
+                    <div key={index} className="bg-[#9c27b0] text-white p-2 rounded-md text-center min-w-[150px] max-w-[200px]">
                       <div className="text-xl mb-1">🃏</div>
                       <div className="text-sm font-bold">
                         {card.title}

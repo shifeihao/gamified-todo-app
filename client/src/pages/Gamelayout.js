@@ -1,4 +1,4 @@
-// Redesigned GameLayout.jsx with Tailwind CSS
+// Redesigned GameLayout.jsx with Tailwind CSS - Part 1
 import React, { useState, useEffect, useMemo } from 'react';
 import DungeonTest from './DungeonTest';
 import InventoryShopPage from './InventoryShopPage';
@@ -12,7 +12,140 @@ const PAGES = {
   INVENTORY: 'inventory'
 };
 
-const GameLayout = () => {
+const NarrativeIntro = ({ onComplete }) => {
+    const [currentText, setCurrentText] = useState('');
+    const [currentParagraph, setCurrentParagraph] = useState(0);
+    const [showButton, setShowButton] = useState(false);
+    
+    // Concise prophecy narrative
+    const narrativeParagraphs = [
+      "A mystical sage foresaw humanity's future: technology would reach its peak, but humans would become infinitely lazy.",
+      
+      "The ability to plan, persist, and complete tasks would fade. Only those who master self-discipline can save humanity.",
+      
+      "These chosen few can venture into the Mind Palace Labyrinth—where willpower becomes reality.",
+      
+      "Within lie challenges representing the obstacles you face when completing tasks.",
+      
+      "Rich rewards await those who persevere.",
+      
+      "Are you ready to enter your Mind Palace?"
+    ];
+    
+    // Typewriter effect for each paragraph
+    useEffect(() => {
+      if (currentParagraph < narrativeParagraphs.length) {
+        const fullText = narrativeParagraphs[currentParagraph];
+        let charIndex = 0;
+        
+        const typeWriter = setInterval(() => {
+          if (charIndex <= fullText.length) {
+            setCurrentText(fullText.slice(0, charIndex));
+            charIndex++;
+          } else {
+            clearInterval(typeWriter);
+            
+            // Pause between paragraphs
+            setTimeout(() => {
+              setCurrentParagraph(prev => prev + 1);
+              setCurrentText('');
+            }, 800);
+          }
+        }, 40); // Moderate typing speed
+        
+        return () => clearInterval(typeWriter);
+      } else {
+        // All paragraphs complete, show button
+        setTimeout(() => setShowButton(true), 1000);
+      }
+    }, [currentParagraph]);
+    
+    return (
+      <div className="h-screen bg-[#0f0f0f] text-[#e0e0e0] font-mono overflow-hidden fixed inset-0">
+        {/* Dark background */}
+        <div className="absolute inset-0 bg-[#0f0f0f]"></div>
+        
+        <div className="relative z-10 h-full flex items-center justify-center px-8">
+          {/* Main content box */}
+          <div className="bg-[#2c1810] border-3 border-[#5d3494] rounded-xl p-12 max-w-4xl w-full shadow-2xl">
+            
+            {/* Title */}
+            <div className="text-center mb-12">
+              <h1 className="text-5xl font-bold text-white tracking-wider mb-4">
+                TaskMasters
+              </h1>
+              <div className="text-xl text-[#b89be6] tracking-wide">
+                Mind Palace Initiative
+              </div>
+            </div>
+            
+            {/* Narrative content */}
+            <div className="space-y-6 text-center min-h-[300px] flex flex-col justify-center">
+              {narrativeParagraphs.map((paragraph, index) => {
+                if (index > currentParagraph) return null;
+                
+                return (
+                  <div key={index}>
+                    <p className={`text-lg leading-relaxed transition-all duration-500 ${
+                      index === currentParagraph 
+                        ? 'text-white' 
+                        : 'text-[#b89be6] opacity-80'
+                    }`}>
+                      {index === currentParagraph ? (
+                        <>
+                          {currentText}
+                          <span className="animate-pulse text-[#ffa726] ml-1">|</span>
+                        </>
+                      ) : (
+                        paragraph
+                      )}
+                    </p>
+                    
+                    {/* Add spacing between sections */}
+                    {index === 1 && index !== currentParagraph && (
+                      <div className="my-8">
+                        <div className="w-24 h-px bg-[#5d3494] mx-auto"></div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Call to action */}
+            {showButton && (
+              <div className="text-center mt-12 animate-fade-in">
+                <button
+                  onClick={onComplete}
+                  className="px-12 py-4 bg-[#4c2a85] border-2 border-[#7e4ab8] rounded-lg text-white font-bold text-xl transition-all duration-300 hover:bg-[#7e4ab8] hover:border-[#9866d4] hover:shadow-lg hover:shadow-[#7e4ab8]/30 hover:-translate-y-1"
+                >
+                  Enter the Mind Palace
+                </button>
+                
+                <div className="mt-4 text-sm text-[#b89be6] opacity-70">
+                  Your journey begins now
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* CSS for fade-in animation */}
+        <style jsx>{`
+          @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          
+          .animate-fade-in {
+            animation: fade-in 0.8s ease-out;
+          }
+        `}</style>
+      </div>
+    );
+  };
+
+export const GameLayout = () => {
   const [currentPage, setCurrentPage] = useState(PAGES.DUNGEON);
   const [gold, setGold] = useState(0);
   const [userInfo, setUserInfo] = useState(null);
@@ -23,6 +156,9 @@ const GameLayout = () => {
   const [error, setError] = useState(null);
   const [equipment, setEquipment] = useState(null);
   const [selectedGender, setSelectedGender] = useState('male');
+  const [showNarrative, setShowNarrative] = useState(false);
+  const [narrativeComplete, setNarrativeComplete] = useState(false);
+  const [taskLevel, setTaskLevel] = useState(0); // 新增：任务等级
 
   // Get token
   const token = userInfo?.token || null;
@@ -42,74 +178,92 @@ const GameLayout = () => {
 
   // Initialize user data
   useEffect(() => {
-    const initializeUser = async () => {
-      if (!token) {
-        setError('Please log in first');
-        setLoading(false);
-        return;
-      }
+  const initializeUser = async () => {
+    if (!token) {
+      setError('Please log in first');
+      setLoading(false);
+      return;
+    }
 
-      try {
-        // Get user stats
-        const stats = await getUserStats(token);
-        console.log('User stats:', stats);
-        
-        setUserStats({
-          ...stats,
-          skills: stats.skills || []
-        });
-        
-        // If user has no class, get available classes
-        if (!stats.hasClass) {
-          console.log('User needs to select class, getting available classes');
-          setIsSelecting(true);
-          const classData = await getAvailableClasses(token);
-          setClasses(classData.classes);
-        }
-        
-        // Get user gold
-        try {
-          const res = await axios.get('/api/users/profile', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setGold(res.data.gold || 0);
-        } catch (profileErr) {
-          console.error('Failed to get user profile:', profileErr);
-        }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Failed to initialize user data:', err);
-        setError(err.message);
-        setLoading(false);
+    try {
+      // Get user stats (dungeon character data)
+      const stats = await getUserStats(token);
+      console.log('User stats:', stats);
+      
+      setUserStats({
+        ...stats,
+        skills: stats.skills || []
+      });
+      
+      // If user has no class, show narrative first
+      if (!stats.hasClass) {
+        console.log('User needs to select class, showing narrative first');
+        setShowNarrative(true);  
+        const classData = await getAvailableClasses(token);
+        setClasses(classData.classes);
       }
-    };
+        
+      // Get user profile (including task level and gold)
+      try {
+        const res = await axios.get('/api/users/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setGold(res.data.gold || 0);
+        setTaskLevel(res.data.level || 0); // 获取任务等级
+        console.log('User task level:', res.data.level);
+      } catch (profileErr) {
+        console.error('Failed to get user profile:', profileErr);
+      }
+        
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to initialize user data:', err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
     if (userInfo?.token) {
       initializeUser();
     }
   }, [userInfo?.token]);
+
   
+  const handleNarrativeComplete = () => {
+    setNarrativeComplete(true);
+    setShowNarrative(false);
+    setIsSelecting(true);
+  };
   // Select class
   const handleClassSelect = async (classSlug) => {
-    try {
-      setLoading(true);
-      // Send selected class and gender to backend
-      const result = await selectClass(token, classSlug, selectedGender);
-      setUserStats({ 
-        ...userStats,
-        ...result.class,
-        hasClass: true,
-        gender: selectedGender, // Save selected gender
-        baseStats: result.class.baseStats || userStats.baseStats 
-      });
-      setIsSelecting(false);
-      setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const result = await selectClass(token, classSlug, selectedGender);
+    
+    setUserStats({ 
+      ...userStats,
+      ...result.class,
+      hasClass: true,
+      gender: selectedGender,
+      baseStats: result.class.baseStats || userStats.baseStats 
+    });
+    
+
+    setUserInfo(prev => ({
+      ...prev,
+      gender: selectedGender,
+      images: result.class.images 
+    }));
+    
+    setIsSelecting(false);
+    setLoading(false);
+  } catch (err) {
+    setError(err.message);
+    setLoading(false);
+  }
+};
+
+  
   
   // Refresh gold
   const refreshGold = async () => {
@@ -119,6 +273,7 @@ const GameLayout = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setGold(res.data.gold || 0);
+      setTaskLevel(res.data.level || 0); // 同时更新任务等级
     } catch (err) {
       console.error('Failed to refresh gold:', err);
     }
@@ -133,20 +288,63 @@ const GameLayout = () => {
       console.error('Failed to fetch equipment', err);
     }
   };
-
+  
+  // 计算装备加成
   const bonusStats = useMemo(() => {
     return equipment ? computeTotalStats(equipment?.slots) : { hp: 0, attack: 0, defense: 0, magicPower: 0, speed: 0, critRate: 0, evasion: 0 }
   }, [equipment]);
 
+  // 计算任务等级加成：每级增加5%基础属性
+  const taskLevelBonus = useMemo(() => {
+    const multiplier = 1 + (taskLevel * 0.05);
+    return { multiplier, percentage: taskLevel * 5 };
+  }, [taskLevel]);
+
+  // 计算最终有效属性：基础属性 × 任务等级加成 + 装备加成
   const effectiveBaseStats = useMemo(() => {
-    const base = userStats?.baseStats || {}
+    const base = userStats?.baseStats || {};
+    const { multiplier } = taskLevelBonus;
+    
     return Object.fromEntries(
       Object.entries(base).map(([key, val]) => [
         key,
-        val + (bonusStats[key] || 0)
+        Math.floor(val * multiplier) + (bonusStats[key] || 0)
       ])
-    )
-  }, [userStats?.baseStats, bonusStats])
+    );
+  }, [userStats?.baseStats, taskLevelBonus, bonusStats]);
+  const getPlayerAvatar = () => {
+    if (userStats?.images && userStats?.gender) {
+      const avatarPath = userStats.images[userStats.gender]?.avatar;
+      if (avatarPath) {
+        return (
+          <img 
+            src={`/icon/characters/${avatarPath}`}
+            alt={`${userStats.name} ${userStats.gender}`}
+            className="w-full h-full object-cover rounded-lg"
+            onError={(e) => {
+              console.log('Character avatar loading failed, using emoji fallback');
+              e.target.style.display = 'none';
+              e.target.parentNode.innerHTML = getEmojiAvatar();
+            }}
+          />
+        );
+      }
+    }
+    
+    return getEmojiAvatar();
+  };
+
+  const getEmojiAvatar = () => {
+    const emojiMap = {
+      'warrior': '⚔️',
+      'mage': '🔮',
+      'archer': '🏹',
+      'rogue': '🗡️',
+      'cleric': '✨'
+    };
+    
+    return <span className="text-2xl">{emojiMap[userStats.slug] || '👤'}</span>;
+  };
 
   // Show loading
   if (loading && !userStats) {
@@ -160,6 +358,10 @@ const GameLayout = () => {
         </div>
       </div>
     );
+  }
+
+  if (showNarrative && !narrativeComplete) {
+    return <NarrativeIntro onComplete={handleNarrativeComplete} />;
   }
 
   // Class selection interface
@@ -354,8 +556,8 @@ const GameLayout = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-[#ffa726] rounded-lg px-3 py-2 text-[#2c1810] font-bold text-sm border-2 border-[#ff8f00] shadow-md shadow-black/20">
-              <span className="text-base">💰</span>
+            <div className="flex items-center gap-1.5 bg-[#ffb74d] rounded-lg px-3 py-2 text-[#2c1810] font-bold text-sm border-2 border-[#ff8f00] shadow-md shadow-black/20">
+              <span className="text-base">🪙</span>
               <span>{gold}</span>
             </div>
             {userInfo && (
@@ -374,48 +576,83 @@ const GameLayout = () => {
           <div className="max-w-6xl mx-auto px-4 flex items-center justify-between gap-5">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-[#4c2a85] rounded-lg flex items-center justify-center text-2xl border-2 border-[#5d3494] text-white">
-                {userStats.slug === 'warrior' && '⚔️'}
-                {userStats.slug === 'mage' && '🔮'}
-                {userStats.slug === 'archer' && '🏹'}
-                {userStats.slug === 'cleric' && '✨'}
+                {getPlayerAvatar()}
               </div>
               
               <div>
                 <h3 className="text-lg font-bold m-0">{userStats.name}</h3>
-                <p className="text-sm text-[#666] m-0 mt-1">
-                  DungeonLevel: {userStats.level || 1} | EXP: {userStats.exp || 0}
-                </p>
+                <div className="text-sm text-[#666] m-0 mt-1 flex items-center gap-4">
+                  <span>DungeonLevel: {userStats.level || 1} | EXP: {userStats.exp || 0}</span>
+                  <span className="text-[#4caf50] font-bold">
+                    TaskLevel: {taskLevel} {taskLevel > 0 && `(+${taskLevelBonus.percentage}% Stats)`}
+                  </span>
+                </div>
               </div>
             </div>
             
             <div className="flex gap-4">
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">HP</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.hp || 100) + (bonusStats.hp || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.hp}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">ATK</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.attack || 10) + (bonusStats.attack || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.attack}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">DEF</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.defense || 5) + (bonusStats.defense || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.defense}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">MAG</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.magicPower || 0) + (bonusStats.magicPower || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.magicPower}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">SPD</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.speed || 0) + (bonusStats.speed || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.speed}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">CRIT</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.critRate || 0) + (bonusStats.critRate || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.critRate}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">EVA</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.evasion || 0) + (bonusStats.critRate || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.evasion}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
             </div>
             

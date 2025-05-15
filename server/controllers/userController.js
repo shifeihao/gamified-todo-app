@@ -84,6 +84,7 @@ const getUserProfile = async (req, res) => {
       res.json({
         _id: user._id,
         username: user.username,
+        level:user.level,
         email: user.email,
         role: user.role,
         experience: user.experience,
@@ -120,6 +121,7 @@ const updateUserProfile = async (req, res) => {
       res.json({
         _id: updatedUser._id,
         username: updatedUser.username,
+        level:user.level,
         email: updatedUser.email,
         role: updatedUser.role,
         experience: updatedUser.experience,

@@ -1,6 +1,4 @@
-// File: components/game/EquipmentPanel.js
-
-import React from "react";
+import React, { useState } from "react";
 
 const slotOrder = [
   "head",
@@ -71,36 +69,74 @@ export function computeTotalStats(slots) {
 }
 
 export default function EquipmentPanel({ equipment, onRightClick }) {
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
   const { slots } = equipment || {};
   const totalStats = computeTotalStats(slots);
 
+  const handleMouseEnter = (e, item) => {
+    setHoveredItem(item);
+    setMousePos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredItem(null);
+  };
+
+  const renderTooltip = () => {
+    if (!hoveredItem) return null;
+
+    const effects = getItemEffects(hoveredItem.item) || {};
+    const effectStrings = [];
+    
+    Object.entries(effects).forEach(([stat, value]) => {
+      if (value !== 0) {
+        effectStrings.push(`${stat}: ${value > 0 ? '+' : ''}${value}`);
+      }
+    });
+
+    const hasEffects = effectStrings.length > 0;
+
+    return (
+      <div
+        className="fixed bg-[#2c1810] text-[#e0e0e0] p-3 rounded-lg border-2 border-[#7e4ab8] font-mono text-sm min-w-[200px] max-w-[300px] z-[1000] shadow-lg"
+        style={{
+          left: mousePos.x + 10,
+          top: mousePos.y - 10,
+        }}
+      >
+        <div className="font-bold text-white mb-2">
+          {hoveredItem.item?.name || "Unknown Item"}
+        </div>
+        <div className="text-[#b89be6] mb-2.5 leading-relaxed">
+          {hoveredItem.item?.description || "No description available"}
+        </div>
+        <div className="border-t border-[#7e4ab8] pt-2 text-[#ffa726]">
+          ---
+        </div>
+        <div className={`mt-2 leading-relaxed ${hasEffects ? 'text-[#4caf50]' : 'text-[#999999]'}`}>
+          {hasEffects ? effectStrings.join(", ") : "No stat bonuses"}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div style={{
-      backgroundColor: "#ffffff",
-      border: "2px solid transparent",
-      borderRadius: "8px",
-      padding: "20px"
-    }}>
-      <h3 style={{ 
-        marginBottom: "20px",
-        color: "#2c1810",
-        borderBottom: "2px solid #4c2a85",
-        paddingBottom: "10px",
-        fontSize: "18px"
-      }}>
+    <div className="bg-white border-2 border-transparent rounded-lg p-5 relative">
+      <h3 className="mb-5 text-[#2c1810] border-b-2 border-[#4c2a85] pb-2.5 text-lg">
         🛡️ Current Equipment
       </h3>
       
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
-        gap: "15px",
-      }}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4">
         {slotOrder.map((slot) => {
           const userInventoryItem = slots?.[slot];
           const item = userInventoryItem?.item;
           const effects = getItemEffects(item);
-          
           
           return (
             <div
@@ -108,88 +144,38 @@ export default function EquipmentPanel({ equipment, onRightClick }) {
               onDoubleClick={() => {
                 if (item) onRightClick(slot, userInventoryItem);
               }}
+              onMouseEnter={item ? (e) => handleMouseEnter(e, userInventoryItem) : undefined}
+              onMouseMove={item ? handleMouseMove : undefined}
+              onMouseLeave={item ? handleMouseLeave : undefined}
+              className={`w-[100px] h-[100px] ${item ? 'bg-[#4c2a85] cursor-pointer hover:bg-[#5d3494] hover:scale-105' : 'bg-[#3a1f6b]'} rounded-lg relative border-2 border-[#5d3494] flex items-center justify-center transition-all duration-200 bg-contain bg-no-repeat bg-center`}
               style={{
-                width: "100px",
-                height: "100px",
-                backgroundColor: item ? "#4c2a85" : "#3a1f6b",
-                borderRadius: "8px",
-                position: "relative",
-                cursor: item ? "pointer" : "default",
-                border: "2px solid #5d3494",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
                 backgroundImage: item && item.icon ? `url(/Icon/Item/${item.icon}.png)` : "none",
-                backgroundSize: "contain",
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "center"
               }}
-              onMouseOver={(e) => {
-                if (item) {
-                  e.target.style.backgroundColor = "#5d3494";
-                  e.target.style.transform = "scale(1.05)";
-                }
-              }}
-              onMouseOut={(e) => {
-                e.target.style.backgroundColor = item ? "#4c2a85" : "#3a1f6b";
-                e.target.style.transform = "scale(1)";
-              }}
-              title={
-                item
-                  ? `${item.name}\n${item.description || "No description"}\n` +
-                    (effects ? 
-                      Object.entries(effects)
-                        .filter(([key, value]) => value > 0)
-                        .map(([key, value]) => `${key}: +${value}`)
-                        .join("\n") 
-                      : "No stat bonuses")
-                  : slotNames[slot]
-              }
             >
               {/* Slot icon when empty */}
               {!item && (
-                <div style={{
-                  fontSize: "24px",
-                  opacity: 0.7
-                }}>
+                <div className="text-2xl opacity-70">
                   {slotIcons[slot]}
                 </div>
               )}
               
               {/* Slot label */}
-              <div style={{
-                position: "absolute",
-                bottom: "2px",
-                left: "2px",
-                right: "2px",
-                backgroundColor: "rgba(44, 24, 16, 0.8)",
-                color: "#ffffff",
-                fontSize: "10px",
-                padding: "2px 4px",
-                borderRadius: "4px",
-                textAlign: "center",
-                fontWeight: "bold"
-              }}>
+              <div className="absolute bottom-0.5 left-0.5 right-0.5 bg-[#2c1810]/80 text-white text-xs px-1 py-0.5 rounded text-center font-bold">
                 {slotNames[slot]}
               </div>
               
               {/* Quality indicator (if item has rarity) */}
               {item && item.rarity && (
-                <div style={{
-                  position: "absolute",
-                  top: "2px",
-                  right: "2px",
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  backgroundColor: 
-                    item.rarity === "legendary" ? "#ffd700" :
-                    item.rarity === "epic" ? "#9c27b0" :
-                    item.rarity === "rare" ? "#2196f3" :
-                    item.rarity === "uncommon" ? "#4caf50" : "#9e9e9e"
-                }}
-              />
+                <div 
+                  className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full"
+                  style={{
+                    backgroundColor: 
+                      item.rarity === "legendary" ? "#ffd700" :
+                      item.rarity === "epic" ? "#9c27b0" :
+                      item.rarity === "rare" ? "#2196f3" :
+                      item.rarity === "uncommon" ? "#4caf50" : "#9e9e9e"
+                  }}
+                />
               )}
             </div>
           );
@@ -197,55 +183,32 @@ export default function EquipmentPanel({ equipment, onRightClick }) {
       </div>
       
       {/* Equipment Summary */}
-      <div style={{
-          marginTop: "20px",
-          backgroundColor: "#f5f5f5",
-          border: "2px solid #7e4ab8",
-          borderRadius: "8px",
-          padding: "15px"
-        }}>
-          <h4 style={{
-            margin: "0 0 10px 0",
-            color: "#2c1810",
-            fontSize: "14px"
-          }}>
-            📊 Equipment Summary
-          </h4>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-            gap: "10px",
-            fontSize: "12px"
-          }}>
-            {Object.entries(totalStats)
-              .filter(([stat, value]) => value > 0)
-              .map(([stat, value]) => (
-                <div key={stat} style={{
-                  backgroundColor: "#3a1f6b",
-                  color: "#e0e0e0",
-                  padding: "6px",
-                  borderRadius: "4px",
-                  textAlign: "center"
-                }}>
-                  <div style={{ fontWeight: "bold" }}>
-                    {stat.charAt(0).toUpperCase() + stat.slice(1)}
-                  </div>
-                  <div>+{value}</div>
+      <div className="mt-5 bg-[#f5f5f5] border-2 border-[#7e4ab8] rounded-lg p-4">
+        <h4 className="m-0 mb-2.5 text-[#2c1810] text-sm">
+          📊 Equipment Summary
+        </h4>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2.5 text-xs">
+          {Object.entries(totalStats)
+            .filter(([stat, value]) => value > 0)
+            .map(([stat, value]) => (
+              <div key={stat} className="bg-[#3a1f6b] text-[#e0e0e0] p-1.5 rounded text-center">
+                <div className="font-bold">
+                  {stat.charAt(0).toUpperCase() + stat.slice(1)}
                 </div>
-              ))
-            }
-          </div>
-          {Object.values(slots || {}).every(slot => !slot?.item) && (
-            <p style={{
-              textAlign: "center",
-              color: "#666",
-              fontStyle: "italic",
-              margin: "10px 0"
-            }}>
-              No equipment equipped
-            </p>
-          )}
+                <div>+{value}</div>
+              </div>
+            ))
+          }
         </div>
+        {Object.values(slots || {}).every(slot => !slot?.item) && (
+          <p className="text-center text-[#666] italic my-2.5">
+            No equipment equipped
+          </p>
+        )}
+      </div>
+
+      {/* Tooltip */}
+      {renderTooltip()}
     </div>
   );
 }
