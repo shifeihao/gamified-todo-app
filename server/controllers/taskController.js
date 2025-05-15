@@ -13,7 +13,7 @@ import eventBus from "../events/eventBus.js";
 // @access  Private
 const getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ user: req.user._id });
+    const tasks = await Task.find({ user: req.user._id }).populate("cardUsed");
     res.json(tasks);
   } catch (error) {
     console.error(error);
@@ -326,8 +326,8 @@ const updateTask = async (req, res) => {
           // Make sure the reward object exists
           rewardResult.reward = {
             expGained:
-              task.experienceReward || (task.type === "long" ? 30 : 10),
-            goldGained: task.goldReward || (task.type === "long" ? 15 : 5),
+              task.experienceReward || (task.type === "long" ? 30 : 30),
+            goldGained: task.goldReward || (task.type === "long" ? 15 : 15),
           };
         }
       } catch (err) {
@@ -339,8 +339,8 @@ const updateTask = async (req, res) => {
           task: task.toObject(),
           reward: {
             expGained:
-              task.experienceReward || (task.type === "long" ? 30 : 10),
-            goldGained: task.goldReward || (task.type === "long" ? 15 : 5),
+              task.experienceReward || (task.type === "long" ? 30 : 30),
+            goldGained: task.goldReward || (task.type === "long" ? 15 : 15),
           },
         };
       }
@@ -417,7 +417,7 @@ const getEquippedTasks = async (req, res) => {
     const tasks = await Task.find({
       user: req.user._id,
       equipped: true,
-    });
+    }).populate("cardUsed");
     res.json(tasks);
   } catch (error) {
     console.error(error);

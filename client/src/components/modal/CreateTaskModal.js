@@ -683,8 +683,8 @@ export const CreateTaskModal = ({
       dueDate: finalDueDate,
       fromSlot: isFromSlot,
       slotIndex: isFromSlot ? slotIndex : undefined,
-      experienceReward: formFields.experienceReward || 10,
-      goldReward: formFields.goldReward || 5,
+      experienceReward: formFields.experienceReward || 30,
+      goldReward: formFields.goldReward || 15,
       cardUsed: useReward ? selectedCard._id : selectedBlankCard._id
     };
 

@@ -96,8 +96,8 @@ export const handleTaskCompletion = async (req) => {
         subTask.status = "completed";
         subTask.completedAt = new Date();
 
-        const subTaskExp = subTask.experience || 10;
-        const subTaskGold = subTask.gold || 5;
+        const subTaskExp = subTask.experience || 30;
+        const subTaskGold = subTask.gold || 15;
 
         const { experience, gold } = calculateReward(
           subTaskExp,
@@ -184,8 +184,8 @@ export const handleTaskCompletion = async (req) => {
         );
       }
 
-      const baseExp = task.experienceReward || 10;
-      const baseGold = task.goldReward || 5;
+      const baseExp = task.experienceReward || 30;
+      const baseGold = task.goldReward || 15;
 
       console.log("Short task reward - XP:", baseExp);
       console.log("Short task reward - Gold:", baseGold);
@@ -373,8 +373,8 @@ export const handleSubTaskCompletion = async (req) => {
     task.subTasks[subTaskIndex].completedAt = new Date();
 
     // 3. Calculate subtask reward (same as short task)
-    const subTaskExp = task.subTasks[subTaskIndex].experience || 10;
-    const subTaskGold = task.subTasks[subTaskIndex].gold || 5;
+    const subTaskExp = task.subTasks[subTaskIndex].experience || 30;
+    const subTaskGold = task.subTasks[subTaskIndex].gold || 15;
 
     // 4. Apply card bonus if available
     const { experience, gold } = calculateReward(

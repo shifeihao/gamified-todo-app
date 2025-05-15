@@ -15,21 +15,31 @@ export const showTaskCompletedToast = (title, expGained, goldGained, isSubtask =
   let finalGold = goldGained;
   
   if ((finalXp === 0 || finalGold === 0) && task) {
+    // Get card bonus multipliers if available
+    const expMultiplier = task.cardUsed?.bonus?.experienceMultiplier || 1;
+    const goldMultiplier = task.cardUsed?.bonus?.goldMultiplier || 1;
+    
     if (finalXp === 0) {
-      finalXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
-      console.log(`Reward XP is 0, use the mission default value: ${finalXp} XP`);
+      // Get base experience value
+      const baseExp = task.experienceReward || 30;
+      // Apply multiplier
+      finalXp = Math.round(baseExp * expMultiplier);
+      console.log(`Reward XP is 0, using base value: ${baseExp} XP × ${expMultiplier} = ${finalXp} XP`);
     }
     
     if (finalGold === 0) {
-      finalGold = task.goldReward || (task.type === 'long' ? 15 : 5);
-      console.log(`The reward Gold is 0, using the task default value: ${finalGold} Gold`);
+      // Get base gold value
+      const baseGold = task.goldReward || 15;
+      // Apply multiplier
+      finalGold = Math.round(baseGold * goldMultiplier);
+      console.log(`Reward Gold is 0, using base value: ${baseGold} Gold × ${goldMultiplier} = ${finalGold} Gold`);
     }
   }
   
   // Show Notifications
   toast.success(
     <div className="flex flex-col space-y-1">
-      <span className="font-semibold text-sm">{isSubtask ? "Subtask Complete!" : "Quest Complete!"}</span>
+      <span className="font-semibold text-sm">{isSubtask ? "Subtask Complete!" : "Task Complete!"}</span>
       <div className="flex items-center">
         <span className="text-yellow-500 mr-1">🏅</span>
         <span className="text-xs">
@@ -52,15 +62,21 @@ export const showLongTaskCompletedToast = (response, task) => {
   let totalXp = (response.reward?.expGained || 0);
   let totalGold = (response.reward?.goldGained || 0);
   
-  // If the reward is 0, use the default value
+  // Get card bonus multipliers if available
+  const expMultiplier = task?.cardUsed?.bonus?.experienceMultiplier || 1;
+  const goldMultiplier = task?.cardUsed?.bonus?.goldMultiplier || 1;
+  
+  // If the reward is 0, use the default value with card multiplier
   if (totalXp === 0) {
-    totalXp = longTaskInfo.finalBonusExperience || task?.experienceReward || 30;
-    console.log(`Total XP reward is 0, using the mission defined value: ${totalXp}`);
+    const baseExp = longTaskInfo.finalBonusExperience || task?.experienceReward || 30;
+    totalXp = Math.round(baseExp * expMultiplier);
+    console.log(`Total XP reward is 0, using base value: ${baseExp} XP × ${expMultiplier} = ${totalXp} XP`);
   }
   
   if (totalGold === 0) {
-    totalGold = longTaskInfo.finalBonusGold || task?.goldReward || 15;
-    console.log(`The total gold reward is 0, using the task definition value: ${totalGold}`);
+    const baseGold = longTaskInfo.finalBonusGold || task?.goldReward || 15;
+    totalGold = Math.round(baseGold * goldMultiplier);
+    console.log(`Total Gold reward is 0, using base value: ${baseGold} Gold × ${goldMultiplier} = ${totalGold} Gold`);
   }
   
   // If there are unfinished subtasks, they will be automatically completed.

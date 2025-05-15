@@ -22,11 +22,11 @@ const subTaskSchema = new mongoose.Schema({
     // Sub-task experience + gold
     experience: {
         type: Number,
-        default: 10,
+        default: 30,
     },
     gold: {
         type: Number,
-        default: 5,
+        default: 15,
     },
 });
 
@@ -45,20 +45,20 @@ const taskSchema = new mongoose.Schema(
     },
     baseExperience: {
       type: Number,
-      default: 10
+      default: 30
     },
     baseGold: {
       type: Number,
-      default: 5
+      default: 15
     },
       // Added additional rewards for main tasks (only for long-term tasks)
       finalBonusExperience: {
           type: Number,
-          default: 10,
+          default: 30,
       },
       finalBonusGold: {
           type: Number,
-          default: 5,
+          default: 15,
       },
       title: {
       type: String,
@@ -94,12 +94,12 @@ const taskSchema = new mongoose.Schema(
       //Actual experience reward obtained (may be affected by cards)
     experienceReward: {
       type: Number,
-      default: 10,
+      default: 30,
     },
       //Actual gold coin rewards obtained (same as above)
     goldReward: {
       type: Number,
-      default: 5,
+      default: 15,
     },
     equipped: {
       type: Boolean,

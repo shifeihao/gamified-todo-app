@@ -351,9 +351,9 @@ const TasksPage = () => {
           if (task) {
             // Use the task's own reward value or a default value
             const defaultXp =
-              task.experienceReward || (task.type === "long" ? 30 : 10);
+              task.experienceReward || (task.type === "long" ? 30 : 30);
             const defaultGold =
-              task.goldReward || (task.type === "long" ? 15 : 5);
+              task.goldReward || (task.type === "long" ? 15 : 15);
 
             console.log(
               `No reward information received, use the task itself or the default value: ${defaultXp} XP, ${defaultGold} Gold`

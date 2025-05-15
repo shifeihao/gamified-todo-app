@@ -178,8 +178,8 @@ export const completeTask = async (id, token) => {
     // If the response does not contain a reward object, but the task attribute exists, construct a default reward object
     if (!data.reward && data.task) {
       const task = data.task;
-      const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
-      const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
+      const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 30);
+      const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 15);
       
         console.log(`No reward information found, using default value: ${defaultXp} XP, ${defaultGold} Gold`);
       

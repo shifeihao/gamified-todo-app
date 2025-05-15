@@ -27,7 +27,7 @@ router.route("/history").get(getTaskHistory);
 router.route("/:id/complete").post(async (req, res) => {
   try {
     const taskId = req.params.id;
-    const task = await Task.findById(taskId);
+    const task = await Task.findById(taskId).populate("cardUsed");
     if (!task) {
       return res.status(404).json({
         message: "cannot find task",
@@ -60,7 +60,7 @@ router.route("/:id/complete").post(async (req, res) => {
   } catch (error) {
     let defaultReward = { expGained: 30, goldGained: 15 };
     try {
-      const task = await Task.findById(req.params.id);
+      const task = await Task.findById(req.params.id).populate("cardUsed");
       if (task) {
         defaultReward = {
           expGained: task.experienceReward || 30,

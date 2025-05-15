@@ -366,8 +366,8 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             } else {
               // The reward value is 0, use the task itself or the default value
               const currentTask = updatedTask || task;
-              const defaultXp = currentTask.experienceReward || (currentTask.type === 'long' ? 30 : 10);
-              const defaultGold = currentTask.goldReward || (currentTask.type === 'long' ? 15 : 5);
+              const defaultXp = currentTask.experienceReward || (currentTask.type === 'long' ? 30 : 30);
+              const defaultGold = currentTask.goldReward || (currentTask.type === 'long' ? 15 : 15);
               
               console.log(`The task is completed but the reward value is 0, use the default value: ${defaultXp} XP, ${defaultGold} Gold`);
               
