@@ -2,10 +2,11 @@
 import mongoose from "mongoose";
 import { Skill } from "../../models/Skill.js";
 import { CharacterClass } from "../../models/CharacterClass.js";
+import { UserDungeonStats } from "../../models/UserDungeonStats.js";
+import dotenv from "dotenv";
 
-await mongoose.connect(
-  "mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-);
+dotenv.config();
+await mongoose.connect(process.env.MONGODB_URI);
 
 const getSkills = async (names) => {
   const skills = await Skill.find({ name: { $in: names } });

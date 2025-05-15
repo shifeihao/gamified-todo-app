@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import Level from "../models/Level.js";
 
 dotenv.config();
-await mongoose.connect(process.env.MONGO_URI);
+await mongoose.connect(process.env.MONGODB_URI);
 
 const levels = await Level.find();
 

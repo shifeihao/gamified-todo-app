@@ -1,10 +1,10 @@
 // seedSkills.js
 import mongoose from "mongoose";
 import { Skill } from "../../models/Skill.js";
+import dotenv from "dotenv";
 
-await mongoose.connect(
-  "mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-);
+dotenv.config();
+await mongoose.connect(process.env.MONGODB_URI);
 
 const withClass = (skills, classSlug) =>
   skills.map((s) => ({ ...s, allowedClasses: [classSlug] }));
@@ -332,7 +332,6 @@ const archerSkills = withClass(
       effectValue: 35,
       cooldown: 5,
       priority: 10,
-      cooldown: 3,
     },
     {
       name: "Piercing Shot",

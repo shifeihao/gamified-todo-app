@@ -1,13 +1,14 @@
 import mongoose from 'mongoose';
 import { Event } from '../../models/Event.js';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // 请替换成你已有的真实 ObjectId（可通过 MongoDB Compass 或 item 表查询）
 const ITEM_ID_HEALTH_POTION = new mongoose.Types.ObjectId(); 
 const SHOP_INVENTORY_ID = new mongoose.Types.ObjectId();
 
-await mongoose.connect(
-  'mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
-);
+await mongoose.connect(process.env.MONGODB_URI);
 
 const events = [
   {

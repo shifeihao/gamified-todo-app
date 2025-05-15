@@ -1,6 +1,7 @@
 // 📦 Task Master Seeder Script: Initialize ALL Items, Shop, User, Inventory
 import mongoose from "mongoose";
 import { generateTestUser } from "./generateTestUser.js";
+import dotenv from "dotenv";
 
 import {
   ShopItem,
@@ -18,9 +19,8 @@ import {
 import User from "../models/User.js";
 
 // 连接到 MongoDB 数据库
-await mongoose.connect(
-  `mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
-);
+dotenv.config();
+await mongoose.connect(process.env.MONGODB_URI);
 
 await generateTestUser();
 const user = await User.findOne({ username: "testuser" });

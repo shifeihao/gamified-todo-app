@@ -3,10 +3,10 @@ import mongoose from "mongoose";
 import { Dungeon } from "../../models/Dungeon.js";
 import { Monster } from "../../models/Monster.js";
 import { Event } from "../../models/Event.js";
+import dotenv from "dotenv";
 
-await mongoose.connect(
-  "mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-);
+dotenv.config();
+await mongoose.connect(process.env.MONGODB_URI);
 
 // 1. 预查询所需怪物和事件
 const monsterMap = Object.fromEntries(

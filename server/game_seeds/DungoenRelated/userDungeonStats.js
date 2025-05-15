@@ -2,10 +2,10 @@
 import mongoose from "mongoose";
 import User from "../../models/User.js";
 import { UserDungeonStats } from "../../models/UserDungeonStats.js";
+import dotenv from "dotenv";
 
-await mongoose.connect(
-  "mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-);
+dotenv.config();
+await mongoose.connect(process.env.MONGODB_URI);
 
 // Step 1: 找到测试用户
 const user = await User.findOne({ username: "testuser" });

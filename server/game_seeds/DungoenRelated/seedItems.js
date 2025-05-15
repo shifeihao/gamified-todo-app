@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
 import { ShopItem, WeaponItem, ArmorItem } from '../../models/ShopItem.js';
+import dotenv from 'dotenv';
 
-const MONGO_URI = 'mongodb+srv://new88394151:sWgPtbgtySQYgr4J@cluster0.diqa2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+dotenv.config();
+const MONGO_URI = process.env.MONGODB_URI;
 
 async function seedWarriorItems() {
   await mongoose.connect(MONGO_URI);

@@ -3,6 +3,13 @@ import mongoose from 'mongoose';
 // Connecting to MongoDB Database
 const connectDB = async () => {
   try {
+    // 检查环境变量是否存在
+    if (!process.env.MONGODB_URI) {
+      console.error('Error: MONGODB_URI environment variable is not defined.');
+      console.error('Please set the MONGODB_URI environment variable in your .env file.');
+      process.exit(1);
+    }
+
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
