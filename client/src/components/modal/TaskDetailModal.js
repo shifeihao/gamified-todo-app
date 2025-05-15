@@ -858,21 +858,25 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
                         Close
                       </button>
                       
-                      <button
-                        onClick={handleEditTask}
-                        className="px-4 py-2 flex items-center bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                      >
-                        <Edit2 className="h-4 w-4 mr-1" />
-                        Edit
-                      </button>
-                      
-                      <button
-                        onClick={() => setConfirmDelete(true)}
-                        className="px-4 py-2 flex items-center bg-red-100 text-red-700 rounded hover:bg-red-200"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </button>
+                      {task.status !== 'in-progress' && (
+                        <>
+                          <button
+                            onClick={handleEditTask}
+                            className="px-4 py-2 flex items-center bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                          >
+                            <Edit2 className="h-4 w-4 mr-1" />
+                            Edit
+                          </button>
+                          
+                          <button
+                            onClick={() => setConfirmDelete(true)}
+                            className="px-4 py-2 flex items-center bg-red-100 text-red-700 rounded hover:bg-red-200"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : (
