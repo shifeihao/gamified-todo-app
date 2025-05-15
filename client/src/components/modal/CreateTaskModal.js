@@ -771,13 +771,13 @@ export const CreateTaskModal = ({
           className={`flex-1 min-w-[120px] p-3 border rounded-lg transition-all flex flex-col ${
             taskType === 'short' 
               ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200' 
-              : 'border-gray-200 hover:border-purple-300'
+              : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
           } ${isFromSlot ? (defaultType === 'short' ? 'cursor-default' : 'cursor-not-allowed opacity-60') : 'cursor-pointer'}`}
           onClick={() => !isFromSlot && setTaskType('short')}
         >
           <div className="flex items-center gap-2 mb-1">
             <Clock className="w-4 h-4 text-purple-500" />
-            <span className="font-medium text-sm">Daily Task</span>
+            <span className="font-medium text-sm">Daily Quest</span>
             {isFromSlot && defaultType === 'short' && (
               <div className="ml-auto">
                 <div 
@@ -787,7 +787,7 @@ export const CreateTaskModal = ({
                   {/* Floating Tips */}
                   <div className="absolute hidden group-hover:block w-52 bg-white border border-gray-200 shadow-lg text-gray-700 text-xs rounded-md p-2 -right-6 top-6 z-10">
                     <span className="font-medium">Fixed Task Type</span>
-                    <p className="mt-1">This slot({slotIndex+1})only support Daily Task type</p>
+                    <p className="mt-1">This slot({slotIndex+1})only support Daily Quest type</p>
                     <div className="absolute -top-1 right-7 w-2 h-2 bg-white border-t border-l border-gray-200 transform rotate-45"></div>
                   </div>
                 </div>
@@ -809,7 +809,7 @@ export const CreateTaskModal = ({
           className={`flex-1 min-w-[120px] p-3 border rounded-lg transition-all flex flex-col ${
             taskType === 'long' 
               ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-200' 
-              : 'border-gray-200 hover:border-teal-300'
+              : 'border-gray-200 hover:border-teal-300 hover:bg-teal-50'
           } ${isFromSlot ? (defaultType === 'long' ? 'cursor-default' : 'cursor-not-allowed opacity-60') : 'cursor-pointer'}`}
           onClick={() => !isFromSlot && setTaskType('long')}
         >
