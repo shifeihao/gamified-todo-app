@@ -1,108 +1,303 @@
 <h1 align="center">
   <a href="https://github.com">
-    <img src="https://github.com/Jiaofeisiling/732demo/blob/099be042fc88f0b0be3fa42862fa6fc8611953ec/client/public/logo.png?raw=true" width="150" height="150" alt="banner" />
+    <img src="./client/public/logo.png" width="150" height="150" alt="banner" />
   </a>
 </h1>
+
 <p align="center">
-  <a href="./README_EN.md">English</a> | 中文 <br></p>
-<div align="center">
-</div>
+    <a href="http://134.199.168.173:5000/"> 🌍 Demo Deployment </a> <br>
+</p>
 
-# 游戏化任务管理系统
+# TaskMasters - Gamified Task Management System
 
-基于MERN技术栈(MongoDB, Express, React, Node.js)开发的任务管理系统，结合游戏化元素（如任务卡、装备槽、奖励机制）提升用户体验。
+A full-stack gamified task management system built with the MERN stack (MongoDB, Express.js, React, Node.js) that transforms everyday task management into an engaging game-like experience.
 
-## 功能特性
+## Overview
 
-### 核心功能
-- ✅ 用户认证（注册/登录）
-- ✅ 任务管理（创建/编辑/删除）
-- ✅ 任务分类（短期/长期）
-- ✅ 子任务系统（长期任务分解）
-- ✅ 任务装备槽（每日3个槽位）
+TaskMasters combines traditional task management with gamification elements including:
+- **Card System**: Blank cards and reward cards with cooldown mechanics
+- **Character Development**: Experience points, levels, and stat allocation
+- **Achievement System**: Track progress and unlock achievements
+- **Dungeon Mode**: Combat system with monsters and reward cards
+- **Inventory & Shop**: Collect and purchase equipment and items
 
-### 游戏化元素
-- 🃏 卡片系统（空白卡、奖励卡）
-- 🎯 每日卡片配额机制
-- ⏳ 周期性卡片冷却
-- 🏆 任务完成奖励加成
+## Features
 
-## 技术栈
+### Core System Modules
 
-### 前端
-- React 18 + React Router 6
-- Tailwind CSS + 自定义主题
-- Axios HTTP客户端
-- Framer Motion动画库
+#### Task Management System
+- Create, edit, and delete tasks with subtask decomposition
+- Daily tasks (maximum 3 per day) with equipment mechanics
+- Task status tracking and completion rewards
 
-### 后端
-- Express.js 服务框架
-- MongoDB 数据库
-- Mongoose ODM
-- JWT 认证
+#### Card System (Core Mechanism)
+- **Task-Card Binding**: All tasks must be equipped with cards
+- **Daily Draw System**: Limited draws per day with cooldown periods
+- **Card Types**: Reward cards and blank (normal) cards
+- **Strategic Element**: Cards affect task completion bonuses
 
-## 快速启动
+#### Leveling & Experience System
+- Experience accumulation through task completion
+- Level-based rewards and unlock mechanisms
+- Stat point allocation upon leveling up
 
-### 前置要求
+#### Achievement System
+- Automatic achievement unlocking based on user behavior
+- Categorized achievements (hidden and visible)
+- Achievement rewards and progression tracking
+
+#### User Statistics Module
+- Track task completion counts and streaks
+- Record dungeon exploration progress
+- Comprehensive statistics for achievement calculations
+
+#### Shop & Economy System
+- Purchase items, cards, and equipment with earned currency
+- Character class and level-based item restrictions
+- Dynamic inventory with seasonal items
+
+#### Inventory & Equipment Management
+- Manage collected items and equipment
+- Item effects and character enhancement
+
+#### Character Class System
+- Choose from multiple character classes (Warrior, Mage, etc.)
+- Class-specific equipment and abilities
+- Initial stat distribution based on chosen class
+
+#### Dungeon Exploration
+- Daily dungeon challenges with increasing difficulty (infinite exploration in demo version)
+- Progress tracking and reward systems
+- Highest floor achievements and challenge history
+
+#### User Account Management
+- Secure registration and login with JWT authentication
+- Profile customization and character setup
+- Account settings and preferences
+
+## System Architecture
+
+### Core Modules Overview
+Our system is built with 11 interconnected modules, each handling specific aspects of the gamified experience:
+
+1. **Task Module** - Core task management and templates
+2. **Level Module** - Experience and progression system  
+3. **Achievement Module** - Goal tracking and rewards
+4. **User Stats Module** - Comprehensive analytics
+5. **Card Module** - Strategic card-based mechanics 
+6. **Shop Module** - In-game economy and purchases
+7. **Inventory Module** - Item and equipment management
+8. **Character Module** - Class system and attributes
+9. **Dungeon Module** - Adventure and challenge content
+10. **User Module** - Authentication and account management
+11. **Middleware & Services** - Cross-cutting concerns
+
+### Key Design Principles
+- **Modular Architecture**: Each module handles specific functionalities
+- **Card-Task Integration**: The unique card system enhances traditional task management
+- **Progressive Unlocking**: Features unlock as users advance through levels
+- **Balanced Economy**: Multiple currency systems and reward mechanisms
+
+## Quick Start
+
+### Prerequisites
 - Node.js 16+
-- MongoDB 4.4+
+- MongoDB 4.4+ or MongoDB Atlas
+- npm
 
-### 安装步骤
-1. 克隆仓库
-   ```bash
-   git clone <仓库地址>
-   ```
+### Installation
 
-2. 安装依赖
-   ```bash
-   cd server && npm install
-   cd ../client && npm install
-   ```
-
-3. 配置环境
-    - 复制`.env.example`为`.env`并填写配置
-    - 确保MongoDB服务已运行
-
-4. 启动开发服务器
-   ```bash
-   # 后端
-   cd server && npm run dev
-   
-   # 前端
-   cd client && npm start
-   ```
-
-## 项目结构
-
-```
-├── client/            # 前端React应用
-│   ├── public/        # 静态资源
-│   └── src/           # 源码目录
-│       ├── components/ # 可复用组件
-│       ├── pages/      # 页面组件
-│       └── services/   # API服务层
-│
-├── server/            # 后端Express服务
-│   ├── config/        # 数据库配置
-│   ├── controllers/   # 业务逻辑
-│   ├── models/        # 数据模型
-│   └── routes/        # API路由
-└── README.md          # 项目文档
+1. **Clone the repository**
+```bash
+git clone git@github.com:UOA-CS732-S1-2025/group-project-taskmasters.git
+cd group-project-taskmasters
 ```
 
-## 开发指南
+2. **Install server dependencies**
+```bash
+cd ./server
+npm install
+```
 
-### 常用命令
-| 命令                | 作用                  |
-|---------------------|----------------------|
-| `npm run dev`       | 启动后端开发服务器    |
-| `npm start`         | 启动前端开发服务器    |
-| `npm test`          | 运行前端测试          |
+3. **Install client dependencies**
+```bash
+cd ./client
+npm install
+```
 
-### 扩展建议
-- 添加更多卡片类型
-- 实现成就系统
-- 开发移动端适配
+4. **Environment setup**
 
-## 贡献说明
-欢迎提交Issue和PR，请遵循现有代码风格。
+Copy the provided `.env.example` files to `.env` in both server and client directories and fill in the required values.
+
+**Note**: The actual environment variables are provided separately to avoid exposing sensitive information in the public repository. See `ENV_SETUP.md` for details.
+
+5. **Start MongoDB**
+Make sure MongoDB is running on your system.
+
+6. **Run the application**
+
+Start the backend server:
+```bash
+cd server
+npm run dev
+```
+
+Start the frontend application:
+```bash
+cd client
+npm start
+```
+
+The application will be available at `http://localhost:3000`
+
+## Testing
+
+### Frontend Tests
+Run React component tests:
+```bash
+cd client
+npm test
+```
+
+### Backend Tests
+Run server-side tests with coverage:
+```bash
+cd server
+npm test
+npm run test:coverage
+```
+
+### Integration Tests
+Run the full test suite:
+```bash
+# From the root directory
+npm run test:all
+```
+
+## Project Structure
+
+```
+TaskMasters/
+├── client/                 # React frontend
+│   ├── public/            # Static assets and game icons
+│   ├── src/
+│   │   ├── components/    # Reusable React components
+│   │   │   ├── task/      # Task-related components
+│   │   │   ├── game/      # Game mechanics components
+│   │   │   ├── achievement/ # Achievement system
+│   │   │   └── ...
+│   │   ├── pages/         # Page components
+│   │   ├── context/       # React context providers
+│   │   ├── services/      # API service functions
+│   │   └── utils/         # Utility functions
+│   └── package.json
+├── server/                # Express.js backend
+│   ├── controllers/       # 11 core module controllers
+│   │   ├── taskController.js
+│   │   ├── cardController.js     # Core Card System
+│   │   ├── levelController.js
+│   │   └── ...
+
+│   ├── models/           # Mongoose schemas for each module
+│   ├── routes/           # Module-based API routes
+│   ├── middleware/       # Authentication & validation
+│   ├── services/         # Cross-module business logic
+│   ├── utils/            # Helper functions
+│   └── __tests__/        # Comprehensive test suite
+```
+
+## How to Use
+
+### Getting Started
+1. **Create an Account**: Register and choose your character class
+2. **Complete Tutorial**: Learn the card system and task mechanics
+3. **Daily Routine**:
+   - Draw your daily cards
+   - Create and equip tasks in your 3 daily slots
+   - Attach appropriate cards to tasks
+   - Complete tasks to earn XP and rewards
+4. **Level Up**: Allocate stat points and unlock new abilities
+5. **Explore Dungeons**: Challenge floors for additional rewards
+6. **Shop & Upgrade**: Purchase better cards and equipment
+7. **Achievements**: Track your progress and unlock special rewards
+
+### Pro Tips
+- Strategic card management is key to maximizing rewards
+- Different character classes excel with different task types
+- Daily dungeon runs provide valuable resources
+- Long-term tasks can be broken into manageable subtasks
+
+## Technology Stack
+
+### Frontend
+- React 18
+- React Router 6
+- Tailwind CSS
+- Framer Motion (animations)
+- Axios (HTTP client)
+- Socket.IO Client (real-time features)
+
+### Backend
+- Express.js
+- MongoDB with Mongoose
+- JWT Authentication
+- Socket.IO (real-time communication)
+- Node Cron (scheduled tasks)
+
+### Backend Architecture
+- **Modular Design**: 11 core modules with separated concerns
+- **RESTful API**: Organized by feature modules
+- **Middleware Layer**: Authentication, error handling, and request validation
+- **Service Layer**: Business logic separation for achievements and statistics
+
+### Testing
+- Jest
+- React Testing Library
+- Supertest (API testing)
+
+## Team Members
+
+- Feihao Shi (fshi538@aucklanduni.ac.nz)
+- Siqi Li (sli776@aucklanduni.ac.nz)
+- Hairui Qiu (hqiu131@aucklanduni.ac.nz)
+- Mingze Du (mdu277@aucklanduni.ac.nz)
+- Franklin Yu (yyu753@aucklanduni.ac.nz)
+- Shuhuai Huang (shua754@aucklanduni.ac.nz)
+
+## Local Development Tips
+
+1. **Hot Reloading**: Both frontend and backend support hot-reload development
+
+2. **Database Management**: Use MongoDB Compass to visualize data
+   ```bash
+   # Install MongoDB Compass on Windows
+   choco install mongodb-compass
+   ```
+
+3. **Environment Variables**: See `ENV_SETUP.md` for detailed instructions
+   ```bash
+   # Quick copy of development environment
+   cd client && copy .env.development .env
+   cd server && copy .env.development .env
+   ```
+
+4. **Debugging**: Use Chrome DevTools to debug React application
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000/api
+
+## License
+
+This project is part of CS732 coursework at the University of Auckland.
+
+All visual assets were AI-generated via ChatGPT and are used solely for this project.
+
+## Future Enhancements
+
+- Mobile app development
+- Multiplayer features
+- More dungeon content
+- Advanced achievement system
+- Social features
+- Task templates marketplace
+
+---
