@@ -18,7 +18,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import AuthContext from "../../context/AuthContext";
 
-// 图标映射，用于渲染任务分类图标
+// Icon mapping, used to render task classification icons
 const iconComponents = {
   BookOpen, BookMarked, GraduationCap,
   Microscope, Users, Kanban,
@@ -49,14 +49,14 @@ export const TaskCard = ({
   });
   const timeLeft = useRemainingTime(isEquipped, task.dueDate);
 
-  // 计算子任务完成进度
+  // Calculate the progress of subtask completion
   const progress = React.useMemo(() => {
     if (!localSubTasks.length) return 0;
     const done = localSubTasks.filter(s => s.status === "completed").length;
     return Math.round((done / localSubTasks.length) * 100);
   }, [localSubTasks]);
 
-  // 根据分类选择颜色和图标
+  // Choose colors and icons based on categories
   const typeStyles = React.useMemo(() => {
     const key = task.category?.toLowerCase() || "others";
     return tagStyleMap[key] ?? tagStyleMap.others;
@@ -66,7 +66,7 @@ export const TaskCard = ({
     return iconComponents[iconName] || FileText;
   }, [typeStyles]);
 
-  // 根据任务状态映射 Badge 样式
+  // Map Badge styles based on task status
   const statusStyles = React.useMemo(() => {
     switch (task.status) {
       case "completed":
@@ -82,7 +82,7 @@ export const TaskCard = ({
     }
   }, [task.status]);
 
-  // 处理子任务完成逻辑
+  // Handle subtask completion logic
   const handleSubtaskComplete = async idx => {
     if (completingSubtask || processingSubtaskIndex === idx) return;
     setCompletingSubtask(true);
@@ -93,7 +93,7 @@ export const TaskCard = ({
         toast.error("This subtask is already completed");
         return;
       }
-      // UI 先行更新
+      // UI first update
       const updated = [...localSubTasks];
       updated[idx] = { ...updated[idx], status: "completed" };
       setLocalSubTasks(updated);
@@ -105,7 +105,7 @@ export const TaskCard = ({
       );
       const { subTaskReward, task: updatedTask } = data;
 
-      // 奖励提示
+      // Bonus Tips
       if (subTaskReward) {
         toast.success(
           <div className="flex flex-col space-y-1">
@@ -124,18 +124,18 @@ export const TaskCard = ({
         toast.success("Subtask completed!");
       }
 
-      // 更新任务数据
+      // Update task data
       if (onEdit && updatedTask) {
-        onEdit(updatedTask);
+        onEdit({...updatedTask, isFromSubtaskComplete: true});
       }
 
-      // 触发子任务完成事件，更新等级条
+      // Trigger subtask completion event and update level bar
       window.dispatchEvent(new CustomEvent('subtaskCompleted'));
     } catch (error) {
       console.error("Failed to complete subtask:", error);
       toast.error(error.response?.data?.message || "Failed to complete subtask");
 
-      // 如果API调用失败，恢复本地状态
+      // If the API call fails, restore the local state
       setLocalSubTasks(task.subTasks || []);
     } finally {
       setCompletingSubtask(false);
@@ -153,14 +153,14 @@ export const TaskCard = ({
     />
   );
 
-  // 已过期模式
+  // Expired Mode
   if (isExpired) {
     return (
       <div className={`flex overflow-hidden relative rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}>
-        {/* 左侧色条：红色表示过期 */}
+        {/* Left color bar: Red means expired */}
         <div className="w-1.5 md:w-2 flex-shrink-0 bg-red-500" />
         <div className="relative w-full p-4 flex flex-col items-center justify-center">
-          {/* 红色角标 */}
+          {/* Red corner mark */}
           <div className="absolute top-0 right-0 bg-red-500 px-2 py-1 text-xs font-bold text-white">
             Expired
           </div>
@@ -178,7 +178,7 @@ export const TaskCard = ({
     );
   }
 
-  // 装备中模式
+  // Equipped Mode
   if (isEquipped) {
     return (
       <>
@@ -187,22 +187,22 @@ export const TaskCard = ({
           draggable={draggable}
           onDragStart={e => onDragStart?.(e, task)}
         >
-          {/* 左侧类型色条：短期/连锁 */}
+          {/* Left Type Color Bar: Short-Term/Chain */}
           <div className={`w-1.5 md:w-2 flex-shrink-0 ${task.type==='short' ? 'bg-purple-500' : 'bg-blue-500'}`}/>
 
           <div className="relative w-full space-y-2 p-2">
-            {/* 状态徽章 */}
+            {/* Status Badge */}
             <div className={`absolute top-2 right-2 rounded-full px-2 py-1 text-xs font-medium ${task.status === "pending" ? "bg-blue-100 text-blue-800 border-blue-200" : statusStyles}`}>
               {task.status === "pending" ? "in-progress" : task.status}
             </div>
-            {/* 标题 & 描述 */}
+            {/* Title & Description */}
             <div>
               <h3 className="font-bold text-gray-900 line-clamp-1 mt-1">{task.title}</h3>
               {task.description && (
                 <p className="line-clamp-2 text-xs text-gray-600 mt-1">{task.description}</p>
               )}
             </div>
-            {/* 子任务进度 & 列表 */}
+            {/* Subtask Progress & List */}
             {localSubTasks.length > 0 && (
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs font-medium text-gray-700">
@@ -246,7 +246,7 @@ export const TaskCard = ({
                 </div>
               </div>
             )}
-            {/* 底部时间信息 */}
+            {/* Bottom time information */}
             <div className="flex justify-between items-center text-xs text-gray-500">
               <div className="flex items-center">
                 <Calendar className="h-3 w-3 mr-1" />
@@ -257,10 +257,11 @@ export const TaskCard = ({
                 <span data-testid="time-left">{timeLeft || "-"}</span>
               </div>
             </div>
-            {/* 操作按钮区 */}
+            {/* Operation button area */}
             <div className="flex items-center justify-between pt-1.5 border-t border-gray-100">
               <div className="flex space-x-2">
-                {(task.status === "in-progress" || task.status === "pending") && (
+                {((task.type === 'long' && task.status === "in-progress") || 
+                  (task.type === 'short' && task.status === "in-progress")) && (
                   <button
                     onClick={() => onComplete?.(task._id)}
                     className={`rounded p-1 ${
@@ -289,7 +290,7 @@ export const TaskCard = ({
     );
   }
 
-  // 仓库模式（默认）
+  // Warehouse mode (default)
   return (
     <>
       <div
@@ -297,21 +298,21 @@ export const TaskCard = ({
         draggable={draggable && task.status !== "completed"}
         onDragStart={e => onDragStart?.(e, task)}
       >
-        {/* 类型色条 */}
+        {/* Type Color Bar */}
           <div className={`w-1.5 md:w-2 flex-shrink-0 ${task.type==='short'?'bg-purple-500':'bg-blue-500'}`} />
         <div className="relative w-full space-y-3 p-3">
-          {/* 状态徽章 */}
+          {/* Status Badge */}
           <div className={`absolute top-2 right-2 rounded-full px-2 py-1 text-xs font-medium ${statusStyles}`}>
             {task.status}
           </div>
-          {/* 标题 & 描述 */}
+          {/* Title & Description */}
           <div>
             <h3 className="font-bold text-gray-900 line-clamp-1 mt-1">{task.title}</h3>
             {task.description && (
               <p className="line-clamp-2 text-xs text-gray-600 mt-1">{task.description}</p>
             )}
           </div>
-          {/* 进度条 */}
+          {/* Progress Bar */}
           {task.subTasks?.length > 0 && (
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs font-medium text-gray-700">
@@ -327,10 +328,11 @@ export const TaskCard = ({
               </div>
             </div>
           )}
-          {/* 操作区 */}
+          {/* Operation Area */}
           <div className="flex items-center justify-between pt-2">
             <div className="flex space-x-2">
-              {task.status === "in-progress" && (
+              {((task.type === 'long' && task.status === "in-progress") || 
+                (task.type === 'short' && task.status === "in-progress")) && (
                 <button
                   onClick={() => onComplete?.(task._id)}
                   className={`rounded p-1 ${

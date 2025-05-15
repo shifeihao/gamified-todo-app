@@ -512,28 +512,26 @@ export const enterDungeon = async (req, res) => {
 
         try {
           await stats.save();
-          
-          // 检查成就
-          const { checkAndUnlockAchievements } = await import("../utils/checkAchievements.js");
-          const newlyUnlocked = await checkAndUnlockAchievements(userId);
-
-          return res.json({
-            logs,
-            monsters: monsterInfos,
-            result: "completed",
-            gainedExp: expGained,
-            totalExp,
-            levelUp: levelDiff > 0,
-            newLevel,
-            statPointsGained: levelDiff * 5,
-            unspentStatPoints: stats.unspentStatPoints,
-            message: `You have completed ${dungeon.name}!`,
-            newlyUnlockedAchievements: newlyUnlocked
-          });
         } catch (saveError) {
           console.error("Error saving completion stats:", saveError);
           return res.status(500).json({ error: "Failed to save game progress" });
         }
+
+        return res.json({
+          logs,
+          monsters: monsterInfos,
+          result: "completed",
+          gainedExp: expGained,
+          totalExp,
+          levelUp: levelDiff > 0,
+          newLevel,
+          statPointsGained: levelDiff * 5,
+          
+          unspentStatPoints: stats.unspentStatPoints, // Save user progress
+          message: `You have completed ${dungeon.name}!`
+
+
+        });
       }
 
       // Check if checkpoint is reached
@@ -550,23 +548,6 @@ export const enterDungeon = async (req, res) => {
         logs.push(
           `You have reached a checkpoint at floor ${stats.currentExploration.floorIndex}!`
         );
-
-        // Check for achievements when reaching checkpoint
-        const { checkAndUnlockAchievements } = await import("../utils/checkAchievements.js");
-        const newlyUnlocked = await checkAndUnlockAchievements(userId);
-        
-        if (newlyUnlocked.length > 0) {
-          return res.json({
-            logs,
-            monsters: monsterInfos,
-            result: "continue",
-            nextFloor: stats.currentExploration.floorIndex,
-            gainedExp: expGained,
-            currentHp: combatResult.remainingHp,
-            atCheckpoint: true,
-            newlyUnlockedAchievements: newlyUnlocked
-          });
-        }
       }
 
       try {
@@ -716,7 +697,7 @@ export const interactWithShopEvent = async (req, res) => {
       return res.status(400).json({ error: "Not currently in an exploration" });
     }
 
-    // Handle purchase action
+    //  Handle purchase action
     if (action === "buy" && itemId) {
       const shopItem = await ShopInventory.findById(itemId);
       if (!shopItem) {
@@ -728,24 +709,24 @@ export const interactWithShopEvent = async (req, res) => {
       }
 
       stats.gold -= shopItem.price;
-
       await stats.save();
 
-      // Check for achievements after purchase
-      const { checkAndUnlockAchievements } = await import("../utils/checkAchievements.js");
-      const newlyUnlocked = await checkAndUnlockAchievements(userId);
+      await UserInventory.updateOne(
+        { userId: userId, item: shopItem.item },
+        { $inc: { quantity: 1 } },
+        { upsert: true }
+      );
 
       return res.json({
         success: true,
         message: `You bought ${shopItem.name} for ${shopItem.price} gold!`,
         gold: stats.gold,
-        newlyUnlockedAchievements: newlyUnlocked
       });
     } else if (action === "leave") {
       return res.json({
         success: true,
         message: "You left the shop.",
-        canContinue: true
+        canContinue: true,
       });
     }
 

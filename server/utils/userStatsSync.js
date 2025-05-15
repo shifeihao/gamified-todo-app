@@ -16,7 +16,6 @@ export async function SyncUserStats(userId) {
   await checkCardNumber(userId);
   await checkTaskNumber(userId);
   await checkGameStats(userId);
-  await checkAndUnlockAchievements(userId);
 }
 // check if UserStats table exists
 export async function checkUserStats(userId) {

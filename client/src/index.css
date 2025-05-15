@@ -84,12 +84,58 @@ code {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
-/* 任务卡片悬停效果 */
+/* 任务卡片样式 */
 .task-card {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: #f8f0ff;
+  border: 1px solid #e0d5f5;
+  border-radius: 0.75rem;
 }
 
 .task-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(123, 92, 214, 0.1), 0 4px 6px -2px rgba(123, 92, 214, 0.05);
+  border-color: #c8b4ee;
+}
+
+/* 锁定卡槽样式 */
+.slot-locked {
+  background-color: #f0ebfa;
+  border: 1px dashed #d1c4e9;
+}
+
+/* 创建任务卡槽样式 */
+.create-task-slot {
+  background-color: #f5f0ff;
+  border: 1px dashed #d4c5f9;
+}
+
+.create-task-slot:hover {
+  background-color: #ede7f8;
+  border-color: #b39ddb;
+}
+
+/* 自定义滚动条样式 */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #c5c5c5;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+
+/* 对话框内容滚动样式 */
+.dialog-content {
+  max-height: 85vh;
+  overflow-y: auto;
 }

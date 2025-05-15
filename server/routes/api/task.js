@@ -2,65 +2,93 @@ import express from "express";
 const router = express.Router();
 
 import {
-    getTasks,
-    createTask,
-    getTaskById,
-    updateTask,
-    deleteTask,
-    getEquippedTasks,
-    equipTask,
-    unequipTask,
-    getTaskHistory
-  } from '../../controllers/taskController.js';
-  
-import { protect } from '../../middleware/auth.js';
-import { handleTaskCompletion } from '../../controllers/levelController.js';
+  getTasks,
+  createTask,
+  getTaskById,
+  updateTask,
+  deleteTask,
+  getEquippedTasks,
+  equipTask,
+  unequipTask,
+  getTaskHistory,
+} from "../../controllers/taskController.js";
 
-// 所有任务路由都需要认证
+import { protect } from "../../middleware/auth.js";
+import { handleTaskCompletion } from "../../controllers/levelController.js";
+import Task from "../../models/Task.js";
+
 router.use(protect);
 
-// 获取已装备的任务
-// 注意：这个路由必须放在/:id路由之前，否则会被误认为是id为'equipped'的任务
-router.route('/equipped')
-  .get(getEquippedTasks);
-
-// 获取历史记录（可分页）
-router.route('/history')
-    .get(getTaskHistory);
-
-// 专门用于处理长期任务完成的路由
-router.route('/:id/complete')
-  .post(async (req, res) => {
-    try {
-      const taskId = req.params.id;
-      const result = await handleTaskCompletion({
-        user: req.user,
-        body: { taskId }
+// Get the equipped tasks
+router.route("/equipped").get(getEquippedTasks);
+// Get the task history
+router.route("/history").get(getTaskHistory);
+// Get the task history by user ID
+router.route("/:id/complete").post(async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({
+        message: "cannot find task",
+        success: false,
+        reward: { expGained: 30, goldGained: 15 },
       });
-      res.json(result);
-    } catch (error) {
-      console.error("完成长期任务失败:", error);
-      res.status(500).json({ message: error.message || "Server error" });
     }
-  });
+    // check if the task is already completed
+    if (task.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        message: "no permission to complete this task",
+        success: false,
+        reward: { expGained: 30, goldGained: 15 },
+      });
+    }
+    // check if the task is already completed
+    const result = await handleTaskCompletion({
+      user: req.user,
+      body: { taskId },
+    });
 
-// 获取所有任务和创建任务
-router.route('/')
-  .get(getTasks)
-  .post(createTask);
+    // if the task is equipped, unequip it
+    if (task.equipped) {
+      task.equipped = false;
+      task.slotPosition = -1;
+      await task.save();
+    }
 
-// 获取、更新和删除单个任务
-router.route('/:id')
-  .get(getTaskById)
-  .put(updateTask)
-  .delete(deleteTask);
+    res.json(result);
+  } catch (error) {
+    let defaultReward = { expGained: 30, goldGained: 15 };
+    try {
+      const task = await Task.findById(req.params.id);
+      if (task) {
+        defaultReward = {
+          expGained: task.experienceReward || 30,
+          goldGained: task.goldReward || 15,
+        };
+      }
+    } catch (findError) {
+      console.error("fail to get long-term task:", findError);
+    }
 
-// 装备任务到任务槽
-router.route('/:id/equip')
-  .put(equipTask);
+    res.status(500).json({
+      message: error.message || "Server error",
+      success: false,
+      reward: defaultReward,
+    });
+  }
+});
 
-// 卸下已装备的任务
-router.route('/:id/unequip')
-  .put(unequipTask);
+// get all tasks
+router.route("/").get(getTasks).post(createTask);
+
+// get task by id
+router.route("/:id").get(getTaskById).put(updateTask).delete(deleteTask);
+
+// equip a task
+router.route("/:id/equip").put(equipTask);
+
+// unequip a task
+router.route("/:id/unequip").put(unequipTask);
 
 export default router;

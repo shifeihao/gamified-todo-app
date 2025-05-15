@@ -1,4 +1,5 @@
 import express from "express";
+import "./events/listeners.js";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
@@ -8,82 +9,86 @@ import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import { setupSocket } from "./socket/socketInit.js";
+import http from "http";
+import { Server } from "socket.io";
+
 import {
   scheduleDailyCardReset,
   schedulePeriodicCardCheck,
 } from "./utils/scheduler.js";
 
-// ES模块中获取__dirname
+// Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 确保logs目录存在
+// Ensure the logs directory exists
 const logsDir = path.join(__dirname, 'logs');
 if (!fs.existsSync(logsDir)) {
   try {
     fs.mkdirSync(logsDir, { recursive: true });
-    console.log('日志目录已创建:', logsDir);
+    console.log('Logs directory created:', logsDir);
   } catch (err) {
-    console.warn('无法创建日志目录:', err.message);
+    console.warn('Failed to create logs directory:', err.message);
   }
 }
+
 
 // 加载环境变量
 dotenv.config();
 
-// 连接数据库
+// define global variables`
 connectDB();
 
-// 初始化Express应用
+// express app
 const app = express();
 
-// 中间件
-app.use(cors()); // 允许跨域请求
-app.use(express.json()); // 解析JSON请求体
-app.use(cookieParser()); // 解析 Cookie
-app.use(morgan("dev")); // HTTP请求日志
+// middleware
+app.use(cors());
+app.use(express.json());
+app.use(cookieParser());
+app.use(morgan("dev"));
 
-// API路由
+// routes
 import routes from "./routes/routes.js";
 app.use("/api", routes);
 
-// 生产环境静态文件服务
+// Serve static files in production
 if (process.env.NODE_ENV === 'production') {
-  // 静态文件夹
+  // Path to the build folder
   const clientBuildPath = path.join(__dirname, '../client/build');
   app.use(express.static(clientBuildPath));
-  
-  // 任何未匹配的路由都返回index.html
+
+  // For any routes not matching /api, return index.html
   app.get('*', (req, res) => {
-    if (req.url.startsWith('/api')) return; // API路由不处理
+    if (req.url.startsWith('/api')) return; // Skip API routes
     res.sendFile(path.join(clientBuildPath, 'index.html'));
   });
-  
-  console.log('已配置前端静态文件服务');
+
+  console.log('Frontend static file serving configured');
 } else {
-  // 开发环境基础路由
+  // Basic route in development
   app.get('/', (req, res) => {
-    res.json({ message: 'API已运行' });
+    res.json({ message: 'API is running' });
   });
 }
 
-// app.use('/api/users', require('./routes/userRoutes'));
-// app.use('/api/tasks', require('./routes/taskRoutes'));
-// app.use('/api/cards', require('./routes/cardRoutes'));
 
-// 错误处理中间件
-
-// 设置端口并启动服务器
+// socket.io initialization
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" },
+});
+setupSocket(io);
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, async () => {
-  console.log(`服务器运行在端口 ${PORT}`);
-
-  // 👇 初始化定时任务
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  // Initialize scheduled tasks
   try {
     scheduleDailyCardReset();
     schedulePeriodicCardCheck();
-    console.log("定时任务初始化成功");
+    console.log("Scheduled tasks initialized successfully");
   } catch (error) {
-    console.error("定时任务初始化失败:", error);
+    console.error(":Fail", error);
   }
 });

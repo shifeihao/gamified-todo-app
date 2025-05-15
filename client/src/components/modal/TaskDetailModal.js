@@ -145,7 +145,8 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
       if (updatedTask) {
         setTask(updatedTask);
         if (onTaskUpdated) {
-          onTaskUpdated(updatedTask);
+          // Pass additional parameter to indicate this is from subtask completion
+          onTaskUpdated(updatedTask, false, true);
         }
         
         // Show reward information
@@ -162,14 +163,29 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
                 </span>
               </div>
             </div>,
-            { duration: 5000, position: 'top-center' }
+            { 
+              duration: 3000, 
+              position: 'top-center',
+              id: 'subtask-completion', // 使用固定ID，确保新通知会替换旧通知
+            }
           );
         } else {
-          toast.success('Subtask completed!');
+          toast.success('Subtask completed!', {
+            duration: 3000,
+            position: 'top-center',
+            id: 'subtask-completion', // 使用固定ID，确保新通知会替换旧通知
+          });
         }
         
-        // Trigger task completion event
-        window.dispatchEvent(new CustomEvent('subtaskCompleted'));
+        // Trigger task completion event with detailed information
+        window.dispatchEvent(new CustomEvent('subtaskCompleted', {
+          detail: {
+            taskId,
+            updatedTask,
+            subTaskIndex,
+            isSubtaskCompletion: true
+          }
+        }));
       }
     } catch (err) {
       console.error('Failed to complete subtask:', err);
@@ -186,81 +202,200 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
     setLoading(true);
     
     try {
-      const response = await axios.put(
-        `/api/tasks/${taskId}`,
-        { status: 'completed' },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      
-      console.log("任务完成响应:", response);
-      
-      try {
-        // 从响应中提取任务和奖励数据，考虑多种可能的结构
-        let updatedTask = null;
-        let reward = null;
-        
-        // 尝试从不同位置获取数据
-        if (response?.data?.task) updatedTask = response.data.task;
-        else if (response?.task) updatedTask = response.task;
-        
-        if (response?.data?.reward) reward = response.data.reward;
-        else if (response?.reward) reward = response.reward;
-        
-        console.log("解析后的任务数据:", updatedTask);
-        console.log("解析后的奖励数据:", reward);
-        
-        // 更新本地任务状态(如果获得了有效的更新数据)
-        if (updatedTask) {
-          setTask(updatedTask);
-          if (onTaskUpdated) {
-            onTaskUpdated(updatedTask);
+      // If it is a long-term task, use a dedicated API to complete it
+      if (task.type === 'long') {
+        // Importing dedicated services for long-term tasks
+        const { completeLongTask } = await import('../../services/taskService');
+        const response = await completeLongTask(taskId, user.token);
+
+        console.log("Long-term task completion response:", response);
+
+        try {
+          // Extract the task and reward data from the response
+          const updatedTask = response.task;
+          const reward = response.reward;
+
+          console.log("Parsed long-term mission data:", updatedTask);
+          console.log("Parsed long-term task reward data:", reward);
+
+          // Update local task status
+          if (updatedTask) {
+            setTask(updatedTask);
+            if (onTaskUpdated) {
+              onTaskUpdated(updatedTask, false, true);
+            }
+          } else {
+            // If no updated task data is obtained, the current task is also marked as completed
+            const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
+            setTask(localUpdatedTask);
+            if (onTaskUpdated) {
+              onTaskUpdated(localUpdatedTask, false, true);
+            }
+            console.log("No update task data was obtained, using local update status");
           }
-        } else {
-          // 即使没有获得更新的任务数据，也把当前任务标记为完成
+
+          // Use a dedicated long-term task completion notification component
+          const { showLongTaskCompletedToast } = await import('./TaskCompletedToast');
+          showLongTaskCompletedToast(response, updatedTask || task);
+
+          // Automatically unequip completed long-term task
+          try {
+            const { unequipTask } = await import('../../services/taskService');
+            await unequipTask(taskId, user.token);
+            console.log("Successfully unequipped completed long-term task");
+          } catch (unequipError) {
+            console.error("Failed to unequip completed long-term task:", unequipError);
+          }
+
+          // Triggering a task completion event with detailed task data
+          window.dispatchEvent(new CustomEvent('taskCompleted', {
+            detail: {
+              taskId,
+              updatedTask: updatedTask || task,
+              isLongTask: true,
+              status: 'completed'
+            }
+          }));
+
+          // Delay closing the details modal after the task is completed
+          setTimeout(() => {
+            onClose();
+          }, 1000);
+        } catch (parseError) {
+          // Handle possible errors in parsing responses
+          console.error("Error parsing long task completion response:", parseError);
+
+          // Even if parsing errors occur, task completion information is still displayed
+          toast.success("Quest Complete!");
+
+          // Update local task status
           const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
           setTask(localUpdatedTask);
           if (onTaskUpdated) {
-            onTaskUpdated(localUpdatedTask);
+            onTaskUpdated(localUpdatedTask, false, true);
           }
-          console.log("未获得更新任务数据，使用本地更新状态");
+
+          // Automatically unequip completed long-term task (in error handler)
+          try {
+            const { unequipTask } = await import('../../services/taskService');
+            await unequipTask(taskId, user.token);
+            console.log("Successfully unequipped completed long-term task (error handler)");
+          } catch (unequipError) {
+            console.error("Failed to unequip completed long-term task (error handler):", unequipError);
+          }
+
+          // Triggering a task completion event with detailed task data
+          window.dispatchEvent(new CustomEvent('taskCompleted', {
+            detail: {
+              taskId,
+              updatedTask: localUpdatedTask,
+              isLongTask: true,
+              status: 'completed'
+            }
+          }));
+
+          // Delay closing modal
+          setTimeout(() => onClose(), 1000);
         }
+      } else {
+        // Normal task completion logic
+        const response = await axios.put(
+          `/api/tasks/${taskId}`,
+          { status: 'completed' },
+          { headers: { Authorization: `Bearer ${user.token}` } }
+        );
         
-        // 显示奖励信息
-        if (reward) {
-          const { expGained, goldGained, leveledUp, newLevel } = reward;
+        console.log("Normal task completion response:", response);
+        
+        try {
+          // Extract task and reward data from the response, considering multiple possible structures
+          let updatedTask = null;
+          let reward = null;
           
-          // 确保奖励值有效
-          if (expGained > 0 || goldGained > 0) {
-            toast.success(
-              <div className="flex flex-col space-y-1">
-                <span className="font-semibold text-sm">Task Completed!</span>
-                <div className="flex items-center">
-                  <span className="text-yellow-500 mr-1">🏅</span>
-                  <span className="text-xs">
-                    Earned <span className="font-bold text-yellow-600">{expGained} XP</span>
-                    and <span className="font-bold text-amber-500">{goldGained} Gold</span>
-                  </span>
-                </div>
-                {leveledUp && (
-                  <div className="flex items-center text-xs text-blue-600">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    <span>Level Up! You've reached level {newLevel}</span>
-                  </div>
-                )}
-              </div>,
-              { duration: 5000, position: 'top-center' }
-            );
+          // Try getting data from different locations
+          if (response?.data?.task) updatedTask = response.data.task;
+          else if (response?.task) updatedTask = response.task;
+          
+          if (response?.data?.reward) reward = response.data.reward;
+          else if (response?.reward) reward = response.reward;
+          
+          console.log("Parsed common task data:", updatedTask);
+          console.log("Parsed reward data for common tasks:", reward);
+          
+          // Update local task status (if valid update data is obtained)
+          if (updatedTask) {
+            setTask(updatedTask);
+            if (onTaskUpdated) {
+              onTaskUpdated(updatedTask, false, true);
+            }
           } else {
-            // 奖励值为0，使用任务自身或默认值
+            // Mark the current task as completed even if no updated task data is obtained
+            const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
+            setTask(localUpdatedTask);
+            if (onTaskUpdated) {
+              onTaskUpdated(localUpdatedTask, false, true);
+            }
+            console.log("No update task data was obtained, using local update status");
+          }
+          
+          // Show reward information
+          if (reward) {
+            const { expGained, goldGained, leveledUp, newLevel } = reward;
+            
+            // Make sure the reward value is valid
+            if (expGained > 0 || goldGained > 0) {
+              toast.success(
+                <div className="flex flex-col space-y-1">
+                  <span className="font-semibold text-sm">Quest Complete!</span>
+                  <div className="flex items-center">
+                    <span className="text-yellow-500 mr-1">🏅</span>
+                    <span className="text-xs">
+                      Earned <span className="font-bold text-yellow-600">{expGained} XP</span>
+                      and <span className="font-bold text-amber-500">{goldGained} Gold</span>
+                    </span>
+                  </div>
+                  {leveledUp && (
+                    <div className="flex items-center text-xs text-blue-600">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      <span>Level Up! You've reached level {newLevel}</span>
+                    </div>
+                  )}
+                </div>,
+                { duration: 5000, position: 'top-center' }
+              );
+            } else {
+              // The reward value is 0, use the task itself or the default value
+              const currentTask = updatedTask || task;
+              const defaultXp = currentTask.experienceReward || (currentTask.type === 'long' ? 30 : 10);
+              const defaultGold = currentTask.goldReward || (currentTask.type === 'long' ? 15 : 5);
+              
+              console.log(`The task is completed but the reward value is 0, use the default value: ${defaultXp} XP, ${defaultGold} Gold`);
+              
+              toast.success(
+                <div className="flex flex-col space-y-1">
+                  <span className="font-semibold text-sm">Quest Complete!</span>
+                  <div className="flex items-center">
+                    <span className="text-yellow-500 mr-1">🏅</span>
+                    <span className="text-xs">
+                      Earned <span className="font-bold text-yellow-600">{defaultXp} XP</span>
+                      and <span className="font-bold text-amber-500">{defaultGold} Gold</span>
+                    </span>
+                  </div>
+                </div>,
+                { duration: 5000, position: 'top-center' }
+              );
+            }
+          } else {
+            // No reward data, use the task itself or default value
             const currentTask = updatedTask || task;
             const defaultXp = currentTask.experienceReward || (currentTask.type === 'long' ? 30 : 10);
             const defaultGold = currentTask.goldReward || (currentTask.type === 'long' ? 15 : 5);
             
-            console.log(`任务完成但奖励值为0，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
+              console.log(`The task is completed but there is no reward data, use the default value: ${defaultXp} XP, ${defaultGold} Gold`);
             
             toast.success(
               <div className="flex flex-col space-y-1">
-                <span className="font-semibold text-sm">Task Completed!</span>
+                <span className="font-semibold text-sm">Quest Complete!</span>
                 <div className="flex items-center">
                   <span className="text-yellow-500 mr-1">🏅</span>
                   <span className="text-xs">
@@ -272,86 +407,87 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
               { duration: 5000, position: 'top-center' }
             );
           }
-        } else {
-          // 没有奖励数据，使用任务自身或默认值
-          const currentTask = updatedTask || task;
-          const defaultXp = currentTask.experienceReward || (currentTask.type === 'long' ? 30 : 10);
-          const defaultGold = currentTask.goldReward || (currentTask.type === 'long' ? 15 : 5);
           
-          console.log(`任务完成但无奖励数据，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
-          
-          toast.success(
-            <div className="flex flex-col space-y-1">
-              <span className="font-semibold text-sm">Task Completed!</span>
-              <div className="flex items-center">
-                <span className="text-yellow-500 mr-1">🏅</span>
-                <span className="text-xs">
-                  Earned <span className="font-bold text-yellow-600">{defaultXp} XP</span>
-                  and <span className="font-bold text-amber-500">{defaultGold} Gold</span>
-                </span>
-              </div>
-            </div>,
-            { duration: 5000, position: 'top-center' }
-          );
-        }
-        
-        // 触发任务完成事件
-        window.dispatchEvent(new CustomEvent('taskCompleted'));
-        
-        // 任务完成后延迟关闭详情模态框
-        setTimeout(() => {
-          onClose();
-        }, 1000);
-
-        // Check for new achievements
-        const newlyUnlocked = await checkAchievements();
-        
-        // Show achievement notifications
-        newlyUnlocked.forEach(achievement => {
-          toast.success(
-            <AchievementUnlockNotification achievement={achievement} />,
-            {
-              duration: 5000,
-              position: "top-right",
-              style: {
-                minWidth: '320px'
-              }
+          // Triggering a task completion event
+          window.dispatchEvent(new CustomEvent('taskCompleted', {
+            detail: {
+              taskId,
+              updatedTask: updatedTask || (task ? {...task, status: 'completed', completedAt: new Date()} : null),
+              status: 'completed'
             }
-          );
-        });
-      } catch (parseError) {
-        // 处理解析响应中可能出现的错误
-        console.error("解析任务完成响应时出错:", parseError);
-        
-        // 即使解析出错，仍然显示任务完成信息
-        toast.success("Task completed successfully!");
-        
-        // 更新本地任务状态
-        const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
-        setTask(localUpdatedTask);
-        if (onTaskUpdated) {
-          onTaskUpdated(localUpdatedTask);
+          }));
+          
+          // Delay closing the details modal after the task is completed
+          setTimeout(() => {
+            onClose();
+          }, 1000);
+
+          // Check for new achievements
+          const newlyUnlocked = await checkAchievements();
+
+          // Show achievement notifications
+          newlyUnlocked.forEach(achievement => {
+            toast.success(
+              <AchievementUnlockNotification achievement={achievement} />,
+              {
+                duration: 5000,
+                position: "top-right",
+                style: {
+                  minWidth: '320px'
+                }
+              }
+            );
+          });
+        } catch (parseError) {
+          // Handle possible errors in parsing responses
+          console.error("Error parsing task completion response:", parseError);
+          
+          // Even if parsing errors occur, task completion information is still displayed
+          toast.success("Quest completed successfully!");
+          
+          // Update local task status
+          const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
+          setTask(localUpdatedTask);
+          if (onTaskUpdated) {
+            onTaskUpdated(localUpdatedTask, false, true);
+          }
+          
+          // Automatically unequip completed long-term task (in error handler)
+          try {
+            const { unequipTask } = await import('../../services/taskService');
+            await unequipTask(taskId, user.token);
+            console.log("Successfully unequipped completed long-term task (error handler)");
+          } catch (unequipError) {
+            console.error("Failed to unequip completed long-term task (error handler):", unequipError);
+          }
+
+          // Triggering a task completion event with detailed task data
+          window.dispatchEvent(new CustomEvent('taskCompleted', {
+            detail: {
+              taskId,
+              updatedTask: localUpdatedTask,
+              isLongTask: true,
+              status: 'completed'
+            }
+          }));
+
+          // Delay closing modal
+          setTimeout(() => onClose(), 1000);
         }
-        
-        // 触发任务完成事件
-        window.dispatchEvent(new CustomEvent('taskCompleted'));
-        
-        // 延迟关闭模态框
-        setTimeout(() => onClose(), 1000);
       }
     } catch (err) {
       console.error('Failed to complete task:', err);
       const errorMessage = err.response?.data?.message || 'Failed to complete task';
       toast.error(errorMessage);
       
-      // 如果是网络错误或其他非服务器拒绝的错误，尝试本地更新任务状态
+      // If it is a network error or other non-server rejection error, try to update the task status locally
       if (!err.response || err.response.status >= 500) {
-        console.log("尝试本地任务状态更新(服务器错误情况)");
+        console.log("Attempt to update local task status (server error condition)");
         try {
           const localUpdatedTask = {...task, status: 'completed', completedAt: new Date()};
           setTask(localUpdatedTask);
           if (onTaskUpdated) {
-            onTaskUpdated(localUpdatedTask);
+            onTaskUpdated(localUpdatedTask, false, true);
           }
           
           toast.success(
@@ -364,10 +500,10 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             { duration: 5000, position: 'top-center' }
           );
           
-          // 稍后关闭模态框
+          // Close the modal later
           setTimeout(() => onClose(), 2000);
         } catch (localError) {
-          console.error("本地任务状态更新失败:", localError);
+          console.error("Local task status update failed:", localError);
         }
       }
     } finally {
@@ -395,7 +531,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
 
       // Check for new achievements
       const newlyUnlocked = await checkAchievements();
-      
+
       // Show achievement notifications
       newlyUnlocked.forEach(achievement => {
         toast.success(
@@ -455,7 +591,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="mx-auto w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg"
+            className="mx-auto w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg max-h-[85vh] overflow-y-auto scrollbar-thin"
           >
             {loading && !task ? (
               <div className="flex justify-center items-center h-48">
@@ -647,7 +783,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
                       <Award className="h-4 w-4 mr-1 text-blue-500" />
                       Subtasks
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-60 overflow-y-auto scrollbar-thin pr-2">
                       {task.subTasks.map((subTask, idx) => {
                         const isDone = subTask.status === 'completed';
                         return (
@@ -770,12 +906,3 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
   );
 };
 
-// TaskDetailModal改进说明：
-// 1. 增加了任务进度显示卡片，清晰展示任务完成百分比 
-// 2. 添加了卡片详情展示，显示使用的卡片及其加成效果
-// 3. 增加了奖励信息区域，展示基础及额外奖励
-// 4. 添加了时间信息区域，显示任务时间轴包括创建、装备、完成时间
-// 5. 增加了任务完成按钮，直接在详情页完成任务
-// 6. 改进了子任务显示，添加了截止日期和完成时间
-// 7. 优化了整体布局和视觉设计，使用卡片布局和分区展示信息
-// 8. 加强了游戏化体验，显示详细奖励和完成效果

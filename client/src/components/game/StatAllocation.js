@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// 属性点换算比例
+// Stat point conversion rates
 const STAT_MULTIPLIERS = {
   hp: 15,
   attack: 1,
@@ -12,18 +12,18 @@ const STAT_MULTIPLIERS = {
   evasion: 0.2
 };
 
-// 属性中文名称
+// Stat names in English
 const STAT_NAMES = {
   hp: 'HP',
-  attack: '攻击',
-  defense: '防御',
-  magicPower: '魔法',
-  speed: '速度',
-  critRate: '暴击率',
-  evasion: '闪避率'
+  attack: 'Attack',
+  defense: 'Defense',
+  magicPower: 'Magic',
+  speed: 'Speed',
+  critRate: 'Crit Rate',
+  evasion: 'Evasion'
 };
 
-// 像素风的属性背景颜色
+// Pixel-style stat background colors
 const STAT_COLORS = {
   hp: '#4c2a85',
   attack: '#ff8f00',
@@ -43,11 +43,11 @@ const StatAllocation = ({ onClose }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   
-  // 获取令牌
+  // Get token
   const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null;
   const token = userInfo?.token || null;
   
-  // 加载属性数据
+  // Load stat data
   useEffect(() => {
     const fetchStatData = async () => {
       try {
@@ -59,7 +59,7 @@ const StatAllocation = ({ onClose }) => {
         setCurrentStats(response.data.assignedStats || {});
         setUnspentPoints(response.data.unspentPoints || 0);
         
-        // 初始化分配对象
+        // Initialize allocation object
         const initialAllocation = {};
         Object.keys(STAT_MULTIPLIERS).forEach(stat => {
           initialAllocation[stat] = 0;
@@ -68,8 +68,8 @@ const StatAllocation = ({ onClose }) => {
         
         setLoading(false);
       } catch (err) {
-        console.error('获取属性数据失败:', err);
-        setError('获取属性数据失败，请刷新页面重试');
+        console.error('Failed to get stat data:', err);
+        setError('Failed to get stat data, please refresh and try again');
         setLoading(false);
       }
     };
@@ -79,12 +79,12 @@ const StatAllocation = ({ onClose }) => {
     }
   }, [token]);
   
-  // 计算总分配点数
+  // Calculate total allocated points
   const getTotalAllocated = () => {
     return Object.values(allocation).reduce((sum, value) => sum + (value || 0), 0);
   };
   
-  // 增加属性点
+  // Increase stat points
   const handleIncrement = (stat) => {
     if (getTotalAllocated() < unspentPoints) {
       const newAllocation = {
@@ -92,11 +92,11 @@ const StatAllocation = ({ onClose }) => {
         [stat]: (allocation[stat] || 0) + 1
       };
       setAllocation(newAllocation);
-      setShowSubmit(true); // 显示提交按钮
+      setShowSubmit(true); // Show submit button
     }
   };
   
-  // 减少属性点
+  // Decrease stat points
   const handleDecrement = (stat) => {
     if ((allocation[stat] || 0) > 0) {
       const newAllocation = {
@@ -105,19 +105,19 @@ const StatAllocation = ({ onClose }) => {
       };
       setAllocation(newAllocation);
       
-      // 如果没有任何分配点数，隐藏提交按钮
+      // If no allocation points, hide submit button
       if (Object.values(newAllocation).every(value => value === 0)) {
         setShowSubmit(false);
       }
     }
   };
   
-  // 提交分配
+  // Submit allocation
   const handleSubmit = async () => {
     try {
-      // 验证是否有分配点数
+      // Verify if there are allocation points
       if (getTotalAllocated() <= 0) {
-        setError('请至少分配1点属性点');
+        setError('Please allocate at least 1 stat point');
         return;
       }
       
@@ -128,11 +128,11 @@ const StatAllocation = ({ onClose }) => {
         { headers: { Authorization: `Bearer ${token}` }}
       );
       
-      // 更新状态
+      // Update state
       setCurrentStats(response.data.assignedStats);
       setUnspentPoints(response.data.unspentPoints);
       
-      // 重置分配
+      // Reset allocation
       const resetAllocation = {};
       Object.keys(allocation).forEach(stat => {
         resetAllocation[stat] = 0;
@@ -140,18 +140,18 @@ const StatAllocation = ({ onClose }) => {
       setAllocation(resetAllocation);
       setShowSubmit(false);
       
-      setSuccess('属性点分配成功！');
+      setSuccess('Stat points allocated successfully!');
       setTimeout(() => {
         setSuccess(null);
         if (response.data.unspentPoints <= 0) {
-          onClose(); // 如果没有未分配点数了，自动关闭
+          onClose(); // Auto close if no unspent points left
         }
       }, 1500);
       
       setLoading(false);
     } catch (err) {
-      console.error('属性分配失败:', err);
-      setError(err.response?.data?.error || '属性分配失败，请重试');
+      console.error('Stat allocation failed:', err);
+      setError(err.response?.data?.error || 'Stat allocation failed, please try again');
       setLoading(false);
       setTimeout(() => setError(null), 3000);
     }
@@ -159,106 +159,49 @@ const StatAllocation = ({ onClose }) => {
   
   if (loading && Object.keys(currentStats).length === 0) {
     return (
-      <div style={{ 
-        padding: '20px', 
-        textAlign: 'center', 
-        backgroundColor: '#2c1810',
-        borderRadius: '12px',
-        color: '#e0e0e0'
-      }}>
-        <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-        <div>加载中...</div>
+      <div className="p-5 text-center bg-[#2c1810] rounded-xl text-[#e0e0e0]">
+        <div className="text-2xl mb-2">⏳</div>
+        <div>Loading...</div>
       </div>
     );
   }
   
   return (
-    <div style={{
-      backgroundColor: '#3a1f6b',
-      borderRadius: '12px',
-      padding: '20px',
-      maxWidth: '800px',
-      margin: '0 auto',
-      border: '2px solid #5d3494',
-      color: '#e0e0e0',
-      fontFamily: 'Courier New, monospace'
-    }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '20px' 
-      }}>
-        <h2 style={{ margin: 0, color: '#ffffff' }}>属性点分配</h2>
-        <div style={{
-          backgroundColor: '#4caf50',
-          color: 'white',
-          padding: '8px 12px',
-          borderRadius: '6px',
-          fontWeight: 'bold',
-          border: '2px solid #388e3c'
-        }}>
-          可用点数: {unspentPoints - getTotalAllocated()}
+    <div className="bg-[#3a1f6b] rounded-xl p-5 max-w-3xl mx-auto border-2 border-[#5d3494] text-[#e0e0e0] font-mono">
+      <div className="flex justify-between items-center mb-5">
+        <h2 className="m-0 text-white font-bold text-xl">Stat Point Allocation</h2>
+        <div className="bg-[#4caf50] text-white px-3 py-2 rounded border-2 border-[#388e3c] font-bold">
+          Available Points: {unspentPoints - getTotalAllocated()}
         </div>
       </div>
       
       {error && (
-        <div style={{
-          backgroundColor: '#d32f2f',
-          color: '#ffffff',
-          padding: '10px',
-          borderRadius: '6px',
-          marginBottom: '15px',
-          border: '2px solid #b71c1c'
-        }}>
+        <div className="bg-[#d32f2f] text-white p-2 rounded mb-4 border-2 border-[#b71c1c]">
           {error}
         </div>
       )}
       
       {success && (
-        <div style={{
-          backgroundColor: '#2e7d32',
-          color: '#ffffff',
-          padding: '10px',
-          borderRadius: '6px',
-          marginBottom: '15px',
-          border: '2px solid #1b5e20'
-        }}>
+        <div className="bg-[#2e7d32] text-white p-2 rounded mb-4 border-2 border-[#1b5e20]">
           {success}
         </div>
       )}
       
-      {/* 主要属性网格 */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(3, 1fr)', 
-        gap: '15px',
-        marginBottom: '15px'
-      }}>
+      {/* Main stat grid */}
+      <div className="grid grid-cols-3 gap-4 mb-4">
         {Object.keys(STAT_MULTIPLIERS).map(stat => (
           <div 
             key={stat} 
-            style={{ 
-              backgroundColor: STAT_COLORS[stat],
-              padding: '12px',
-              borderRadius: '8px',
-              position: 'relative',
-              border: '2px solid rgba(255,255,255,0.1)',
-              color: '#ffffff'
-            }}
+            className="p-3 rounded-lg relative border-2 border-white/10 text-white"
+            style={{ backgroundColor: STAT_COLORS[stat] }}
           >
-            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
+            <div className="text-sm font-bold">
               {STAT_NAMES[stat]}
             </div>
-            <div style={{ 
-              fontWeight: 'bold', 
-              fontSize: '18px',
-              marginTop: '5px',
-              marginBottom: '5px'
-            }}>
+            <div className="font-bold text-lg mt-1 mb-1">
               {Math.round((currentStats[stat] || 0) * 10) / 10}
               {allocation[stat] > 0 && (
-                <span style={{ color: '#81c784', marginLeft: '5px' }}>
+                <span className="text-[#81c784] ml-1">
                   +{Math.round((allocation[stat] * STAT_MULTIPLIERS[stat]) * 10) / 10}
                   {(stat === 'critRate' || stat === 'evasion') ? '%' : ''}
                 </span>
@@ -266,66 +209,34 @@ const StatAllocation = ({ onClose }) => {
             </div>
             
             {unspentPoints > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px' }}>
+              <div className="flex items-center mt-1">
                 <button 
                   onClick={() => handleDecrement(stat)}
                   disabled={allocation[stat] <= 0}
-                  style={{
-                    backgroundColor: allocation[stat] <= 0 ? '#666' : '#f44336',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: allocation[stat] <= 0 ? 'not-allowed' : 'pointer',
-                    opacity: allocation[stat] <= 0 ? 0.5 : 1,
-                    fontFamily: 'Courier New, monospace',
-                    fontWeight: 'bold'
-                  }}
+                  className={`w-6 h-6 flex items-center justify-center font-mono font-bold text-white border-none rounded transition-all duration-200 ${
+                    allocation[stat] <= 0 
+                      ? 'bg-[#666] cursor-not-allowed opacity-50' 
+                      : 'bg-[#f44336] cursor-pointer hover:bg-[#d32f2f]'
+                  }`}
                 >
                   -
                 </button>
-                <div style={{ 
-                  margin: '0 8px',
-                  width: '24px',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  backgroundColor: '#2c1810',
-                  borderRadius: '4px',
-                  padding: '2px'
-                }}>
+                <div className="mx-2 w-6 text-center font-bold bg-[#2c1810] rounded py-0.5">
                   {allocation[stat] || 0}
                 </div>
                 <button 
                   onClick={() => handleIncrement(stat)}
                   disabled={getTotalAllocated() >= unspentPoints}
-                  style={{
-                    backgroundColor: getTotalAllocated() >= unspentPoints ? '#666' : '#4caf50',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: getTotalAllocated() >= unspentPoints ? 'not-allowed' : 'pointer',
-                    opacity: getTotalAllocated() >= unspentPoints ? 0.5 : 1,
-                    fontFamily: 'Courier New, monospace',
-                    fontWeight: 'bold'
-                  }}
+                  className={`w-6 h-6 flex items-center justify-center font-mono font-bold text-white border-none rounded transition-all duration-200 ${
+                    getTotalAllocated() >= unspentPoints 
+                      ? 'bg-[#666] cursor-not-allowed opacity-50' 
+                      : 'bg-[#4caf50] cursor-pointer hover:bg-[#388e3c]'
+                  }`}
                 >
                   +
                 </button>
-                <div style={{ 
-                  fontSize: '12px', 
-                  color: '#b89be6', 
-                  marginLeft: '8px' 
-                }}>
-                  (1点 = {STAT_MULTIPLIERS[stat]}{(stat === 'critRate' || stat === 'evasion') ? '%' : ''})
+                <div className="text-xs text-[#b89be6] ml-2">
+                  (1pt = {STAT_MULTIPLIERS[stat]}{(stat === 'critRate' || stat === 'evasion') ? '%' : ''})
                 </div>
               </div>
             )}
@@ -333,64 +244,25 @@ const StatAllocation = ({ onClose }) => {
         ))}
       </div>
       
-      {/* 提交按钮 */}
+      {/* Submit button */}
       {showSubmit && (
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <div className="text-center mt-5">
           <button 
             onClick={handleSubmit}
             disabled={getTotalAllocated() <= 0 || loading}
-            style={{
-              backgroundColor: '#2196f3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '10px 25px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              fontFamily: 'Courier New, monospace',
-              border: '2px solid #1976d2',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#1976d2';
-              e.target.style.transform = 'translateY(-1px)';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = '#2196f3';
-              e.target.style.transform = 'translateY(0)';
-            }}
+            className="bg-[#2196f3] text-white border-2 border-[#1976d2] rounded px-6 py-2 text-base cursor-pointer font-bold font-mono transition-all duration-200 hover:bg-[#1976d2] hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? '提交中...' : '确认分配'}
+            {loading ? 'Submitting...' : 'Confirm Allocation'}
           </button>
         </div>
       )}
       
-      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+      <div className="text-center mt-5">
         <button 
           onClick={onClose}
-          style={{
-            backgroundColor: '#757575',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '8px 20px',
-            cursor: 'pointer',
-            fontFamily: 'Courier New, monospace',
-            fontWeight: 'bold',
-            border: '2px solid #616161',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#616161';
-            e.target.style.transform = 'translateY(-1px)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = '#757575';
-            e.target.style.transform = 'translateY(0)';
-          }}
+          className="bg-[#757575] text-white border-2 border-[#616161] rounded px-5 py-2 cursor-pointer font-mono font-bold transition-all duration-200 hover:bg-[#616161] hover:-translate-y-px"
         >
-          返回游戏
+          Return to Game
         </button>
       </div>
     </div>

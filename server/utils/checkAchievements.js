@@ -2,7 +2,6 @@ import UserStats from "../models/UserStats.js";
 import Achievement from "../models/Achievement.js";
 import UserAchievement from "../models/UserAchievement.js";
 import User from "../models/User.js";
-import { checkIfGodAchievementUnlocked } from "./userStatsSync.js";
 
 export async function checkAndUnlockAchievements(userId) {
   try {
@@ -77,15 +76,9 @@ export async function checkAndUnlockAchievements(userId) {
             task_long_slot: ach.reward.task_long_slot || 0,
           }
         });
-
-        console.log("experience+", ach.reward.exp);
-        console.log("gold+", ach.reward.coins);
-        console.log("shortCardSlot+", ach.reward.task_short_slot);
-        console.log("longCardSlot+", ach.reward.task_long_slot);
       }
     }
-
-    await checkIfGodAchievementUnlocked(userId);
+    console.log("🎉 newly unlocked achievements:", newlyUnlocked);
     return newlyUnlocked;
   } catch (error) {
     console.error("❌ fail:", error);

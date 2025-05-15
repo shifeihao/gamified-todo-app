@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import SocketManager from "./components/SocketManager.js";
 
-// 导入页面组件
-
+// components
 import HomePage from "./pages/HomePage";
 import TasksPage from "./pages/TasksPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -15,17 +14,17 @@ import DungeonTest from "./pages/DungeonTest";
 import TemplatePage from "./pages/TemplatePage";
 import GameLayout from "./pages/Gamelayout.js";
 
-// 导入上下文
+// context
 import { AuthProvider } from "./context/AuthContext";
 
-// 受保护的路由组件
+// styles
 const ProtectedRoute = ({ children }) => {
   // 从本地存储中获取用户信息
   const userInfo = localStorage.getItem("userInfo")
     ? JSON.parse(localStorage.getItem("userInfo"))
     : null;
 
-  // 如果用户未登录，重定向到登录页面
+  // After successful login, a prompt will be displayed and the page will be redirected.
   if (!userInfo) {
     return <Navigate to="/login" replace />;
   }
@@ -36,17 +35,18 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <SocketManager />
       <div className="min-h-screen bg-gray-50">
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
-          {/* 公开路由 */}
+          {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/inventoryShopTest" element={<InventoryShopPage />} />
           <Route path="/dungeon-test" element={<DungeonTest />} />
           <Route path="/inventory" element={<InventoryShopPage />} />
           <Route path="/gamePanel" element={<GameLayout />} />
 
-          {/* 受保护的路由 */}
+          {/* Protected Routes */}
           <Route
             path="/tasks"
             element={
@@ -79,7 +79,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* 404页面 */}
+          {/* 404 Pages */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

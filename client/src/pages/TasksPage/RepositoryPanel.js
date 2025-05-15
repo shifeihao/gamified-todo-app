@@ -56,7 +56,7 @@ const RepositoryPanel = ({
         }
     }, [activeTab, user?.token]);
 
-    // 处理模板选择（创建任务）
+    // Processing template selection (create task)
     const handleTemplateSelect = (template) => {
         // 使用onEdit来触发CreateTaskModal，并预填模板数据
         if (onEdit) {
@@ -149,7 +149,7 @@ const RepositoryPanel = ({
     };
 
     return (
-        <div className="bg-white bg-opacity-90 rounded-lg shadow-lg p-4 border-2 border-amber-300 backdrop-blur-sm h-full relative">
+        <div className="bg-[#e8e0f5] rounded-xl shadow-lg p-4 border border-amber-200 backdrop-blur-sm h-full relative">
             {/* 展开/收起按钮 */}
             <button
                 onClick={() => onExpand(!isExpanded)}
@@ -175,7 +175,7 @@ const RepositoryPanel = ({
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-amber-900 flex items-center truncate">
                     <Vault className="h-6 w-6 mr-2 flex-shrink-0" />
-                    <span className="truncate">Quest Vault</span>
+                    <span className="truncate">Task Library</span>
                 </h2>
                 <div className="flex space-x-2 flex-shrink-0">
                     {[

@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-
+import dotenv from "dotenv";
+dotenv.config(); 
 // JWT密钥，在实际项目中应该存储在环境变量中
-const JWT_SECRET = process.env.JWT_SECRET || 'mern_demo_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // 验证用户是否已登录的中间件
 const protect = async (req, res, next) => {

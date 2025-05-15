@@ -1,12 +1,12 @@
-// 导入所需的图标信息，以供TaskCard.js使用
-// 这里不直接导入图标组件，而是定义图标名称，以便动态导入
+// Import the required icon information for use by TaskCard.js
+// // Here, instead of directly importing the icon component, define the icon name for dynamic import
 export const tagStyleMap = {
-  // 学习与教育
+  // Learning and Education
   study: {
     bgColor: 'bg-blue-100',
     borderColor: 'border-blue-300',
     textColor: 'text-blue-800',
-    iconName: 'BookOpen' // 替换表情符号为图标名称
+    iconName: 'BookOpen' // Replace emojis with icon names
   },
   reading: {
     bgColor: 'bg-indigo-100',
@@ -41,7 +41,7 @@ export const tagStyleMap = {
     iconName: 'Kanban'
   },
 
-  // 技术与编程
+  // Technology and Programming
   coding: {
     bgColor: 'bg-emerald-100',
     borderColor: 'border-emerald-300',
@@ -61,7 +61,7 @@ export const tagStyleMap = {
     iconName: 'Wrench'
   },
 
-  // 健康与运动
+  // Health and Sports
   fitness: {
     bgColor: 'bg-green-100',
     borderColor: 'border-green-300',
@@ -81,7 +81,7 @@ export const tagStyleMap = {
     iconName: 'Heart'
   },
 
-  // 生活与娱乐
+  // Lifestyle & Entertainment
   life: {
     bgColor: 'bg-orange-100',
     borderColor: 'border-orange-300',
@@ -101,7 +101,7 @@ export const tagStyleMap = {
     iconName: 'Share2'
   },
 
-  // 基础分类
+  // Basic classification
   default: {
     bgColor: 'bg-blue-100',
     borderColor: 'border-blue-300',
@@ -121,7 +121,7 @@ export const tagStyleMap = {
     iconName: 'CalendarDays'
   },
 
-  // 其他
+  // other
   others: {
     bgColor: 'bg-gray-100',
     borderColor: 'border-gray-300',

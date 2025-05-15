@@ -3,18 +3,25 @@ import React, { useState, useEffect, useContext } from "react";
 import { Navbar } from "../../components";
 import { CreateTaskModal } from "../../components";
 import AuthContext from "../../context/AuthContext";
-import { NewTaskCard } from '../../components/task/NewTaskCard';
-import { useToast } from '../../context/ToastContext';
-import toast from 'react-hot-toast';
-import { TASK_COMPLETED_EVENT, SUBTASK_COMPLETED_EVENT } from "../../components/navbar/Navbar";
+import { NewTaskCard } from "../../components/task/NewTaskCard";
+import { useToast } from "../../context/ToastContext";
+import toast from "react-hot-toast";
+import {
+  TASK_COMPLETED_EVENT,
+  SUBTASK_COMPLETED_EVENT,
+} from "../../components/navbar/Navbar";
 
 import DailyTaskPanel from "./DailyTaskPanel";
 import TimetablePanel from "./TimetablePanel";
 import RepositoryPanel from "./RepositoryPanel";
-import { getCardInventory, getNewDailyCards, createBlankCard } from "../../services/cardService";
+import {
+  getCardInventory,
+  getNewDailyCards,
+  createBlankCard,
+} from "../../services/cardService";
 import axios from "axios";
 
-// 仅用于读数据，不纳入 useApiAction
+// Only used for reading data, not included in useApiAction
 import {
   getTasks,
   getEquippedTasks,
@@ -22,7 +29,7 @@ import {
   getEquippedLongTasks,
 } from "../../services/taskService";
 
-// 下面这些带 Service 后缀的函数，交给 useApiAction 管理 loading / error / 回调
+// The following functions with the Service suffix are handed over to useApiAction to manage loading / error / callback
 import {
   createTask as createTaskService,
   updateTask as updateTaskService,
@@ -34,6 +41,10 @@ import {
 } from "../../services/taskService";
 
 import { useApiAction } from "../../components/hooks";
+import {
+  showTaskCompletedToast,
+  showLongTaskCompletedToast,
+} from "../../components/modal/TaskCompletedToast";
 
 const TasksPage = () => {
   const { user } = useContext(AuthContext);
@@ -41,183 +52,239 @@ const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
   const [cards, setCards] = useState([]);
   const [equippedTasks, setEquippedTasks] = useState([]);
-  const [equippedShortTasks, setEquippedShortTasks] = useState([]); // short任务槽
-  const [equippedLongTasks, setEquippedLongTasks] = useState([]); // 长期任务槽
+  const [equippedShortTasks, setEquippedShortTasks] = useState([]); // Short-term task slot
+  const [equippedLongTasks, setEquippedLongTasks] = useState([]); // Long-term task slot
   const [rewardInfo, setRewardInfo] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [createSlotIndex, setCreateSlotIndex] = useState(-1);
-  const [createSlotType, setCreateSlotType] = useState("short"); // 默认创建任务类型
+  const [createSlotType, setCreateSlotType] = useState("short");
 
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // 当前激活的 tab: 'daily' | 'repository' | 'timetable'
+  // Currently active tab: 'daily' | 'repository' | 'timetable'
   const [activeTab, setActiveTab] = useState("daily");
 
-  // 添加一个状态，用于记录最近是否有任务完成
+  // Add a status to record whether the task has been completed recently
   const [recentlyCompletedTask, setRecentlyCompletedTask] = useState(false);
 
-  // 标记任务最近完成，并在5秒后重置
+  // Marks the task as recently completed and resets after 5 seconds
   const markTaskAsRecentlyCompleted = () => {
     setRecentlyCompletedTask(true);
     setTimeout(() => setRecentlyCompletedTask(false), 5000);
   };
 
-  // 拉取任务与卡片库存
+  // Pull tasks and card inventory
   const fetchTasks = async () => {
+    if (!user?.token) {
+      console.log("The user is not logged in, skip the acquisition task");
+      return;
+    }
+
     try {
-      // 优先尝试获取当前卡片库存
+      // First try to get the current card inventory
       let cardData = { inventory: [] };
       try {
         cardData = await getCardInventory(user.token);
-        console.log("获取到的卡片库存数据:", cardData);
+        console.log("Obtained card inventory data:", cardData);
       } catch (err) {
-        console.error("获取卡片库存失败:", err);
-        // 不显示错误提示，继续执行其他获取
+        console.error("Failed to obtain card inventory:", err);
       }
-      
-      // 如果卡片库存为空或少于5张，尝试初始化新用户卡片
+
+      // If the card inventory is empty or has less than 5 cards, try to initialize a new user card
       if (!cardData.inventory || cardData.inventory.length < 5) {
-        console.log("卡片库存不足，尝试获取每日卡片和补充卡片...");
-        
-        // 先尝试获取每日卡片（对于新用户很重要）
+        console.log("Low card stock, try to get daily cards and replenishment cards...");
+
         try {
           await getNewDailyCards(user.token);
-          console.log("成功获取每日卡片");
+          console.log("Successfully obtained the daily card");
         } catch (err) {
-          console.log("尝试获取每日卡片失败，可能已经获取过", err);
-          // 不显示错误提示，继续执行
+          console.log("An attempt to obtain a daily card failed. You may have already obtained it.", err);
         }
-        
-        // 如果卡片仍然不足，尝试通过login/register中的初始化逻辑获取卡片
+
         if (!cardData.inventory || cardData.inventory.length < 2) {
-          console.log("新用户可能需要初始化卡片，尝试创建额外的空白卡片...");
-          
-          // 创建空白短期卡片
+          console.log("New users may need to initialize their cards, try creating additional blank cards...");
+
           try {
             await createBlankCard(user.token);
-            console.log("成功创建补充空白卡片");
+            console.log("Supplemental blank card created successfully");
           } catch (err) {
-            console.log("创建空白卡片失败", err);
-            // 不显示错误提示，继续执行
+            console.log("Failed to create blank card", err);
           }
         }
-        
-        // 重新获取卡片库存
+
         try {
           cardData = await getCardInventory(user.token);
-          console.log("更新后的卡片库存:", cardData);
+          console.log("Updated card inventory:", cardData);
         } catch (err) {
-          console.error("重新获取卡片库存失败:", err);
-          // 不阻止后续操作
+          console.error("Failed to retrieve card inventory:", err);
         }
       }
 
-      // 获取任务和其他必要数据
-      let allTasks = [], equipped = [], shortTasks = [], longTasks = [], levelInfo = { data: {} };
-      
-      try {
-        // 尝试并行获取所有任务数据
-        [allTasks, equipped, shortTasks, longTasks, levelInfo] = await Promise.all([
-          getTasks(user.token),
-          getEquippedTasks(user.token),
-          getEquippedShortTasks(user.token),
-          getEquippedLongTasks(user.token),
-          axios.get("/api/levels/userLevelBar", {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }),
-        ]);
-        
-        // 成功获取所有数据，清除错误状态
-        setError("");
-      } catch (err) {
-        console.error("获取任务数据部分失败:", err);
-        // 这里我们不立即显示错误，而是尝试单独获取各个数据
-        try {
-          // 尝试单独获取任务列表
-          allTasks = await getTasks(user.token);
-        } catch (getTasksErr) {
-          console.error("获取所有任务失败:", getTasksErr);
-        }
-        
-        try {
-          // 尝试单独获取已装备任务
-          shortTasks = await getEquippedShortTasks(user.token);
-          longTasks = await getEquippedLongTasks(user.token);
-        } catch (getEquippedErr) {
-          console.error("获取已装备任务失败:", getEquippedErr);
-        }
+      // Use Promise.allSettled instead of Promise.all so that even if some requests fail, it will not affect other requests.
+      const results = await Promise.allSettled([
+        getTasks(user.token),
+        getEquippedTasks(user.token),
+        getEquippedShortTasks(user.token),
+        getEquippedLongTasks(user.token),
+        axios.get("/api/levels/userLevelBar", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }),
+      ]);
+
+      // Process the results of each request
+      const [
+        tasksResult,
+        equippedResult,
+        shortTasksResult,
+        longTasksResult,
+        levelInfoResult,
+      ] = results;
+
+      // Update status, only update successfully acquired data
+      if (tasksResult.status === "fulfilled" && tasksResult.value) {
+        setTasks(tasksResult.value);
       }
-      
-      // 即使部分数据获取失败，我们仍然更新已获取的数据
-      if (allTasks.length > 0) setTasks(allTasks);
-      if (shortTasks.length > 0) setEquippedShortTasks(shortTasks);
-      if (longTasks.length > 0) setEquippedLongTasks(longTasks);
-      if (cardData.inventory) setCards(cardData.inventory);
-      if (levelInfo.data) setRewardInfo(levelInfo.data);
-      
-      // 只有在所有数据都没有获取到，并且最近没有任务完成时才显示错误
-      if (allTasks.length === 0 && shortTasks.length === 0 && longTasks.length === 0 && !recentlyCompletedTask) {
-        console.error("所有任务数据获取失败");
-        showError("获取任务数据失败，请尝试刷新页面");
+
+      if (shortTasksResult.status === "fulfilled" && shortTasksResult.value) {
+        setEquippedShortTasks(shortTasksResult.value);
+      }
+
+      if (longTasksResult.status === "fulfilled" && longTasksResult.value) {
+        setEquippedLongTasks(longTasksResult.value);
+      }
+
+      if (
+        levelInfoResult.status === "fulfilled" &&
+        levelInfoResult.value?.data
+      ) {
+        setRewardInfo(levelInfoResult.value.data);
+      }
+
+      // Update Card Inventory
+      if (cardData.inventory) {
+        setCards(cardData.inventory);
+      }
+
+      // Check if all requests failed
+      const allFailed = results.every((result) => result.status === "rejected");
+      if (allFailed && !recentlyCompletedTask) {
+        console.error("Failed to obtain all task data");
+        showError("Failed to obtain task data, please try refreshing the page");
       }
     } catch (err) {
-      console.error("获取任务数据出错:", err);
-      // 只有在最近没有任务完成时才显示错误
+      console.error("Error in getting task data:", err);
+      // Show error only if no task has been completed recently
       if (!recentlyCompletedTask) {
-        showError("获取任务数据失败");
+        showError("Failed to obtain task data, please try refreshing the page");
       }
     }
   };
 
+  // 添加自动重试机制
   useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1秒
+
+    const tryFetchTasks = async () => {
+      try {
+        await fetchTasks();
+      } catch (err) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`NO. ${retryCount} retry to get task data...`);
+          setTimeout(tryFetchTasks, retryDelay);
+        }
+      }
+    };
+
     if (user?.token) {
-      fetchTasks();
+      tryFetchTasks();
     }
   }, [user]);
 
-  // 监听任务和子任务完成事件，刷新任务数据
+  // Monitor task and subtask completion events and refresh task data
   useEffect(() => {
-    // 创建事件处理函数
-    const handleTaskOrSubtaskCompleted = () => {
+    // Creating an event handler
+    const handleTaskOrSubtaskCompleted = (event) => {
+      console.log("Task or subtask completion event triggered", event.type, event.detail);
+      
+      // If we have detailed task information in the event, update state directly
+      if (event.detail && event.detail.taskId && event.detail.updatedTask) {
+        const { taskId, updatedTask, isLongTask, isSubtaskCompletion } = event.detail;
+        
+        // Update tasks in repository
+        setTasks(prevTasks => 
+          prevTasks.map(task => 
+            task._id === taskId ? updatedTask : task
+          )
+        );
+        
+        // Update equipped short tasks
+        setEquippedShortTasks(prevTasks => 
+          prevTasks.map(task => 
+            task._id === taskId ? updatedTask : task
+          )
+        );
+        
+        // Update equipped long tasks
+        setEquippedLongTasks(prevTasks => 
+          prevTasks.map(task => 
+            task._id === taskId ? updatedTask : task
+          )
+        );
+        
+        // If task is completed and was a long task, ensure it's unequipped
+        if (updatedTask.status === 'completed' && isLongTask) {
+          try {
+            unequipTaskService(taskId, user?.token);
+            console.log("Unequipping completed long task from event handler");
+          } catch (err) {
+            console.error("Failed to unequip task from event handler:", err);
+          }
+        }
+        
+        // For subtask completion, we don't need to do anything special except update the state
+        if (isSubtaskCompletion) {
+          console.log("Subtask completion detected, state updated without opening edit window");
+        }
+      }
+      
+      // Always fetch tasks to ensure we have the latest data
       fetchTasks();
     };
 
-    // 添加事件监听器
-    window.addEventListener(SUBTASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
+    // Adding event listeners
+    window.addEventListener(
+      SUBTASK_COMPLETED_EVENT,
+      handleTaskOrSubtaskCompleted
+    );
     window.addEventListener(TASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
 
-    // 清理函数
+    // Cleanup Function
     return () => {
-      window.removeEventListener(SUBTASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
-      window.removeEventListener(TASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
+      window.removeEventListener(
+        SUBTASK_COMPLETED_EVENT,
+        handleTaskOrSubtaskCompleted
+      );
+      window.removeEventListener(
+        TASK_COMPLETED_EVENT,
+        handleTaskOrSubtaskCompleted
+      );
     };
-  }, []);
+  }, [user?.token]); // Add user token as dependency to ensure we have it available
 
-  // 显示成功信息
+  // Display success information
   const showSuccessMessage = (msg) => {
     setSuccessMessage(msg);
     setTimeout(() => setSuccessMessage(""), 3000);
   };
 
-  // 显示任务完成通知
-  const showTaskCompletedToast = (title, expGained, goldGained, isSubtask = false) => {
-    toast.success(
-      <div className="flex flex-col space-y-1">
-        <span className="font-semibold text-sm">{isSubtask ? "Subtask completed!" : "Quest Completed!"}</span>
-        <div className="flex items-center">
-          <span className="text-yellow-500 mr-1">🏅</span>
-          <span className="text-xs">Earned <span className="font-bold text-yellow-600">{expGained} XP</span> and <span className="font-bold text-amber-500">{goldGained} Gold</span></span>
-        </div>
-      </div>,
-      { duration: 5000, position: 'top-center' }
-    );
-  };
-
   // -----------------------------
-  // 1. 删除任务
+  // 1. Deleting a task
   // -----------------------------
   const {
     execute: doDeleteTask,
@@ -240,7 +307,7 @@ const TasksPage = () => {
   };
 
   // -----------------------------
-  // 2. 完成任务（并卸下已完成的任务）
+  // 2. Complete the task (and remove the completed task)
   // -----------------------------
   const {
     execute: doCompleteTask,
@@ -248,70 +315,71 @@ const TasksPage = () => {
     error: completeError,
   } = useApiAction(completeTaskService, {
     onSuccess: async (response) => {
-      console.log("任务完成响应:", response);
-      
-      // 标记任务最近完成，避免显示数据获取失败的警告
+      console.log("Task completion response:", response);
+
+      // Mark the task as recently completed to avoid displaying warnings about data acquisition failures
       markTaskAsRecentlyCompleted();
-      
-      // 清除编辑任务状态，确保不会带入到新建任务中
+
+      // Clear the edit task status to ensure that it will not be carried over to the new task
       setEditingTask(null);
-      
+
       try {
-        // 更宽容的成功判断条件
-        // 只有在明确收到错误标识并且没有有效数据时才认为是失败
+        // More tolerant success judgment conditions
+        // It is considered a failure only when an error flag is clearly received and there is no valid data
         if (response?.success === false && !response.task && !response.reward) {
-          showError(response?.message || "任务完成失败");
-          console.error("任务完成明确失败:", response);
+          showError(response?.message || "Task completion failed");
+          console.error("Task completed with clear failure:", response);
           return;
         }
-        
-        // 从这里往下，我们尝试提取任务信息和奖励，无论响应格式如何
+
+        // From here on, we try to extract the task information and reward, regardless of the response format
         let task = response?.task;
         let reward = response?.reward;
-        
-        // 如果直接从response中获取失败，尝试其他可能的位置
+
+        // If getting it directly from the response fails, try other possible locations
         if (!task && response?.data?.task) task = response.data.task;
         if (!reward && response?.data?.reward) reward = response.data.reward;
-        
-        console.log("提取后的任务数据:", task);
-        console.log("提取后的奖励数据:", reward);
-        
-        // 显示更详细的完成信息和奖励通知
+
+        console.log("Extracted task data:", task);
+        console.log("Reward data after extraction:", reward);
+
+        // Display more detailed completion information and reward notifications
         if (reward) {
           const xp = reward.expGained || 0;
           const gold = reward.goldGained || 0;
-          
-          // 确保经验和金币不为0，如果是0使用默认值
-          if (xp === 0 && gold === 0 && task) {
-            const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
-            const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
-            
-            console.log(`奖励值异常，使用默认值 - XP: ${defaultXp}, Gold: ${defaultGold}`);
-            showTaskCompletedToast(task.title || "任务", defaultXp, defaultGold);
-          } else {
-            console.log(`任务完成奖励: ${xp} XP, ${gold} Gold`);
-            showTaskCompletedToast(task?.title || "任务", xp, gold);
-          }
+
+          // Use the new component to display task completion notifications
+          showTaskCompletedToast(task?.title || "task", xp, gold, false, task);
         } else {
-          // 特殊处理：如果没有收到奖励信息但有任务信息
+          // Special handling: If you have not received reward information but have task information
           if (task) {
-            // 使用任务自身的奖励值或默认值
-            const defaultXp = task.experienceReward || (task.type === 'long' ? 30 : 10);
-            const defaultGold = task.goldReward || (task.type === 'long' ? 15 : 5);
-            
-            console.log(`未收到奖励信息，使用任务自身或默认值: ${defaultXp} XP, ${defaultGold} Gold`);
-            showTaskCompletedToast(task.title || "任务", defaultXp, defaultGold);
+            // Use the task's own reward value or a default value
+            const defaultXp =
+              task.experienceReward || (task.type === "long" ? 30 : 10);
+            const defaultGold =
+              task.goldReward || (task.type === "long" ? 15 : 5);
+
+            console.log(
+              `No reward information received, use the task itself or the default value: ${defaultXp} XP, ${defaultGold} Gold`
+            );
+            showTaskCompletedToast(
+              task.title || "task",
+              defaultXp,
+              defaultGold,
+              false,
+              task
+            );
           } else {
-            // 完全没有任务和奖励信息的情况
-            showSuccess("Task completed successfully");
-            console.log("任务可能已完成，但未收到任务或奖励数据");
+            // There is no task or reward information at all
+            showSuccess("Task Completed");
+            console.log("The task may be completed, but no task or reward data is received");
           }
         }
 
-        // 触发等级更新事件
+        // Trigger level update event
         window.dispatchEvent(new CustomEvent(TASK_COMPLETED_EVENT));
 
-        // 确保任务完成后自动卸下任务
+        // Ensure that the task is automatically removed after completion
         if (task && task._id) {
           try {
             await unequipTaskService(task._id, user.token);
@@ -321,86 +389,91 @@ const TasksPage = () => {
           }
         }
       } catch (error) {
-        // 处理解析响应时可能出现的任何错误
-        console.error("处理任务完成响应时出错:", error);
-        showSuccess("Task may have been completed, but there was an issue displaying rewards");
+        // Handle any errors that may occur while parsing the response
+        console.error("Error processing task completion response:", error);
+        showSuccess(
+          "Task may have been completed, but there was an issue displaying rewards"
+        );
       } finally {
-        // 无论如何，刷新任务列表以获取最新状态
+        // In any case, refresh the task list to get the latest status
         fetchTasks();
       }
     },
     onError: (err) => {
-      console.error("任务完成请求出错:", err);
+      console.error("Task completion request error:", err);
       showError(err?.response?.data?.message || "Failed to complete the task");
-      // 也需要清除编辑任务状态
+      // Also need to clear the editing task status
       setEditingTask(null);
-      // 尝试重新获取任务列表
+      // Try to retrieve the task list
       fetchTasks();
     },
   });
 
   const handleComplete = async (id) => {
     try {
-      // 找到对应的任务
-      let taskToComplete = tasks.find(t => t._id === id) || 
-                          equippedShortTasks.find(t => t._id === id) ||
-                          equippedLongTasks.find(t => t._id === id);
+      // Find the corresponding task
+      let taskToComplete =
+        tasks.find((t) => t._id === id) ||
+        equippedShortTasks.find((t) => t._id === id) ||
+        equippedLongTasks.find((t) => t._id === id);
 
-      // 如果任务不存在，尝试重新获取任务列表后再查找
+      // If the task does not exist, try to retrieve the task list and then search again.
       if (!taskToComplete) {
-        console.log(`找不到ID为 ${id} 的任务，尝试重新获取任务列表...`);
-        
+        console.log(`Unable to find task with ID ${id}, trying to retrieve task list...`);
+
         try {
-          // 尝试直接获取单个任务
+          // Try getting a single task directly
           const result = await axios.get(`/api/tasks/${id}`, {
-            headers: { Authorization: `Bearer ${user.token}` }
+            headers: { Authorization: `Bearer ${user.token}` },
           });
-          
+
           if (result.data) {
             taskToComplete = result.data;
-            console.log("成功获取单个任务:", taskToComplete);
+            console.log("Successfully obtained a single task:", taskToComplete);
           }
         } catch (err) {
-          console.error("获取单个任务失败:", err);
-          // 尝试刷新所有任务
+          console.error("Failed to obtain a single task:", err);
+          // Try refreshing all tasks
           try {
             await fetchTasks();
-            taskToComplete = tasks.find(t => t._id === id) || 
-                            equippedShortTasks.find(t => t._id === id) ||
-                            equippedLongTasks.find(t => t._id === id);
+            taskToComplete =
+              tasks.find((t) => t._id === id) ||
+              equippedShortTasks.find((t) => t._id === id) ||
+              equippedLongTasks.find((t) => t._id === id);
           } catch (fetchErr) {
-            console.error("刷新任务列表失败:", fetchErr);
+            console.error("Failed to refresh task list:", fetchErr);
           }
         }
-        
+
         if (!taskToComplete) {
-          console.error(`无法找到ID为 ${id} 的任务`);
-          showError("找不到要完成的任务，请刷新页面后再试");
+          console.error(`Unable to find task with ID ${id}`);
+          showError("The task to be completed cannot be found. Please refresh the page and try again.");
           return;
         }
       }
 
-      console.log(`准备完成任务: ${taskToComplete.title} (ID: ${id}, 类型: ${taskToComplete.type})`);
-      
-      // 如果是长期任务，使用专用的完成方法
-      if (taskToComplete.type === 'long') {
+      console.log(
+        `Prepare to complete the task: ${taskToComplete.title} (ID: ${id}, type: ${taskToComplete.type})`
+      );
+
+      // If it is a long-term task, use a dedicated completion method
+      if (taskToComplete.type === "long") {
         await doCompleteLongTask(id, user.token);
       } else {
-        // 否则使用普通完成方法
+        // Otherwise use normal completion method
         await doCompleteTask(id, user.token);
       }
-      
-      // 任务完成后，确保我们有最新的任务列表
+
+      // Once the task is completed, make sure we have an up-to-date task list
       setTimeout(() => fetchTasks(), 500);
-      
     } catch (err) {
-      console.error("完成任务过程出错:", err);
-      showError("完成任务失败，请稍后再试");
+      console.error("Error in completing task:", err);
+      showError("Failed to complete the task, please try again later");
     }
   };
 
   // -----------------------------
-  // 2.1. 完成长期任务（专用方法）
+  // 2.1. Completing long-term tasks (dedicated methods)
   // -----------------------------
   const {
     execute: doCompleteLongTask,
@@ -408,68 +481,41 @@ const TasksPage = () => {
     error: completeLongError,
   } = useApiAction(completeLongTaskService, {
     onSuccess: async (response) => {
-      console.log("长期任务完成响应:", response); // 添加日志来调试
-      
-      // 标记任务最近完成，避免显示数据获取失败的警告
+      console.log("Long-term task completion response:", response);
+
+      // Mark the task as recently completed to avoid displaying warnings about data acquisition failures
       markTaskAsRecentlyCompleted();
-      
-      // 清除编辑任务状态，确保不会带入到新建任务中
+
+      // Clear the edit task status to ensure that it will not be carried over to the new task
       setEditingTask(null);
-      
+
       try {
-        // 更宽容的成功判断条件
-        // 只有在明确收到错误标识并且没有有效数据时才认为是失败
+        // More tolerant success judgment conditions
+       // It is considered a failure only when an error flag is clearly received and there is no valid data
         if (response?.success === false && !response.task && !response.reward) {
-          showError(response?.message || "完成长期任务失败");
-          console.error("长期任务完成明确失败:", response);
+          showError(response?.message || "Failed to complete long-term task");
+          console.error("Long-term task completion clearly failed:", response);
           return;
         }
-        
-        // 从这里往下，我们尝试提取任务信息和奖励，无论响应格式如何
+
+        // From here on down, we try to extract the task information and rewards, regardless of the response format
         let task = response?.task;
         let reward = response?.reward;
-        
-        // 如果直接从response中获取失败，尝试其他可能的位置
+
+        // If getting it directly from the response fails, try other possible locations
         if (!task && response?.data?.task) task = response.data.task;
         if (!reward && response?.data?.reward) reward = response.data.reward;
-        
-        console.log("提取后的长期任务数据:", task);
-        console.log("提取后的长期任务奖励数据:", reward);
-        
-        // 显示奖励信息
-        if (reward) {
-          const xp = reward.expGained || 0;
-          const gold = reward.goldGained || 0;
-          
-          // 确保奖励值有效
-          if (xp === 0 && gold === 0 && task) {
-            // 使用任务自身的奖励值或默认值
-            const defaultXp = task.experienceReward || 30;
-            const defaultGold = task.goldReward || 15;
-            
-            console.log(`长期任务奖励值异常，使用默认值 - XP: ${defaultXp}, Gold: ${defaultGold}`);
-            showTaskCompletedToast(task.title || "长期任务", defaultXp, defaultGold);
-          } else {
-            console.log(`长期任务完成奖励: ${xp} XP, ${gold} Gold`);
-            showTaskCompletedToast(task?.title || "长期任务", xp, gold);
-          }
-        } else if (task) {
-          // 如果没有奖励信息但有任务信息，使用默认值
-          const defaultXp = task.experienceReward || 30;
-          const defaultGold = task.goldReward || 15;
-          
-          console.log(`长期任务无奖励信息，使用默认值: ${defaultXp} XP, ${defaultGold} Gold`);
-          showTaskCompletedToast(task.title || "长期任务", defaultXp, defaultGold);
-        } else {
-          // 完全没有任务和奖励信息的情况
-          showSuccess("Long task completed successfully");
-          console.log("长期任务可能已完成，但未收到任务或奖励数据");
-        }
 
-        // 触发等级更新事件
+        console.log("Extracted long-term task data:", task);
+        console.log("Extracted long-term task reward data:", reward);
+
+        // Use a dedicated long-term task completion notification component
+        showLongTaskCompletedToast(response, task);
+
+        // Trigger level update event
         window.dispatchEvent(new CustomEvent(TASK_COMPLETED_EVENT));
 
-        // 确保任务完成后自动卸下任务
+        // Ensure that the task is automatically removed after completion
         if (task && task._id) {
           try {
             await unequipTaskService(task._id, user.token);
@@ -479,26 +525,55 @@ const TasksPage = () => {
           }
         }
       } catch (error) {
-        // 处理解析响应时可能出现的任何错误
-        console.error("处理长期任务完成响应时出错:", error);
-        showSuccess("Long task may have been completed, but there was an issue displaying rewards");
+        // Handle any errors that may occur while parsing the response
+        console.error("Error processing long task completion response:", error);
+        showSuccess(
+          "Long task may have been completed, but there was an issue displaying rewards"
+        );
       } finally {
-        // 无论如何，刷新任务列表以获取最新状态
+        // In any case, refresh the task list to get the latest status
         fetchTasks();
       }
     },
     onError: (err) => {
-      console.error("长期任务完成请求出错:", err);
-      showError(err?.response?.data?.message || "Failed to complete the long task");
-      // 也需要清除编辑任务状态
+      console.error("Error in long task completion request:", err);
+      showError(
+        err?.response?.data?.message || "Failed to complete the long task"
+      );
+
+      // Get task data to display rewards
+      const taskId = err?.config?.url?.split("/").pop();
+      if (taskId) {
+        const task =
+          tasks.find((t) => t._id === taskId) ||
+          equippedLongTasks.find((t) => t._id === taskId);
+
+        if (task) {
+          // Display default reward value even if failed
+          const defaultXp = task.experienceReward || 30;
+          const defaultGold = task.goldReward || 15;
+          console.log(
+            `Task completion request failed, using default reward: ${defaultXp} XP, ${defaultGold} Gold`
+          );
+          showTaskCompletedToast(
+            task.title || "Long-term tasks",
+            defaultXp,
+            defaultGold,
+            false,
+            task
+          );
+        }
+      }
+
+      // You also need to clear the editing task status
       setEditingTask(null);
-      // 尝试重新获取任务列表
+      // Try to retrieve the task list again
       fetchTasks();
     },
   });
 
   // -----------------------------
-  // 3. 创建任务
+  // 3. Create a task
   // -----------------------------
   const {
     execute: doCreateTask,
@@ -506,12 +581,19 @@ const TasksPage = () => {
     error: createError,
   } = useApiAction(createTaskService, {
     onSuccess: async (res, input) => {
+      // Check if the returned result is an error object
+      if (res && res.success === false) {
+        // If the error is already displayed via toast, there is no need to display the error message here
+        console.error("Failed to create task:", res.message);
+        return;
+      }
+
       showSuccess("Task created");
       if (input?.fromSlot && input?.slotIndex >= 0) {
         const isLong = input.type === "long";
         const slotType = isLong ? "long" : "short";
         await equipTaskService(res._id, input.slotIndex, user.token, slotType);
-        showSuccess(`已装备${isLong ? "long" : "short"}任务`);
+        showSuccess(`Equipped ${isLong ? "long" : "short"} task`);
       }
       fetchTasks();
       setShowForm(false);
@@ -520,12 +602,13 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error(err);
-      showError("Failed to create task");
+      // The error has been handled by taskService and does not need to be displayed again
+     // But we still keep this callback in case there is an uncaught error
     },
   });
 
   // -----------------------------
-  // 4. 更新任务
+  // 4. Update Tasks
   // -----------------------------
   const {
     execute: doUpdateTask,
@@ -545,7 +628,7 @@ const TasksPage = () => {
   });
 
   // -----------------------------
-  // 5. 装备任务
+  // 5. Equipment Task
   // -----------------------------
   const {
     execute: doEquipTask,
@@ -558,51 +641,59 @@ const TasksPage = () => {
     },
     onError: (err) => {
       console.error(err);
-      showError("Equipment mission failed");
+      showError("Equipment task failed");
     },
   });
 
   const handleEquip = (task) => {
     if (task.status === "Completed") {
-      showError("Cannot equip completed quests");
+      showError("Cannot equip completed tasks");
       return;
     }
-    // 选择short/长期槽
+    // Select short/long slot
     const isLong = task.type === "long";
     const occupied = (isLong ? equippedLongTasks : equippedShortTasks).map(
       (t) => t.slotPosition
     );
     let freeSlot = [...Array(3).keys()].find((i) => !occupied.includes(i));
     if (freeSlot == null) {
-      showError(isLong ? "The long-term task slot is full" : "The short-term task slot is full");
+      showError(
+        isLong
+          ? "The long-term task slot is full"
+          : "The short-term task slot is full"
+      );
       return;
     }
     const slotType = isLong ? "long" : "short";
     doEquipTask(task._id, freeSlot, user.token, slotType);
   };
 
-  // 拖放装备
+  // Drag and drop equipment
   const handleDropToSlot = (taskId, slotIndex, slotType = "short") => {
-    // 检查任务类型是否与槽位类型匹配
-    const task = tasks.find(t => t._id === taskId);
+    // 检Check if the task type matches the slot type
+    const task = tasks.find((t) => t._id === taskId);
     if (!task) {
       showError("任务不存在");
       return;
     }
-    
-    // 检查任务类型是否与槽位类型匹配
+
+    // Check if the task type matches the slot type
     const expectedType = slotType === "long" ? "long" : "short";
     if (task.type !== expectedType) {
-      showError(`Only can put ${expectedType === "long" ? "long-term" : "short-term"} task into this slot`);
+      showError(
+        `Only can put ${
+          expectedType === "long" ? "long-term" : "short-term"
+        } task into this slot`
+      );
       return;
     }
-    
-    // 类型匹配，继续装备
+
+    // Type matches, continue to equip
     doEquipTask(taskId, slotIndex, user.token, slotType);
   };
 
   // -----------------------------
-  // 6. 卸下任务
+  // 6. Unload Task
   // -----------------------------
   const {
     execute: doUnequipTask,
@@ -623,16 +714,16 @@ const TasksPage = () => {
     doUnequipTask(id, user.token);
   };
 
-  // 7. 从槽位新建
+  // 7.Create from Slot
   const handleCreateFromSlot = (slotIndex, slotType) => {
     setCreateSlotIndex(slotIndex);
     setCreateSlotType(slotType);
     setShowForm(true);
   };
 
-  // 8. 提交表单（新建或更新）
+  // 8. Submit a form (create or update)
   const handleSubmit = (formData) => {
-    console.log("[TasksPage] handleSubmit 收到数据：", formData);
+    console.log("[TasksPage] handleSubmit receive data：", formData);
     if (editingTask && editingTask._id) {
       doUpdateTask(editingTask._id, formData, user.token);
     } else {
@@ -640,7 +731,7 @@ const TasksPage = () => {
     }
   };
 
-  // 合并所有 loading / error
+  // Merge all loading / errors
   const loadingAny =
     deleting || completing || creating || updating || equipping || unequipping;
   const errorAny =
@@ -653,17 +744,21 @@ const TasksPage = () => {
     error;
 
   const [isExpanded, setIsExpanded] = useState(false);
+  console.log(" the shortslot of user is", user?.shortCardSlot);
+  console.log(" the longslot of user is", user?.longCardSlot);
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-fixed" style={{
-      // backgroundImage: "url('/rpg-background.png')",
-      backgroundColor: "rgba(191, 191, 191, 0.6)", // 暗色背景作为备用
-      // backgroundBlendMode: "overlay" // 使背景图片变暗，提高内容可读性
-    }}>
+    <div
+      className="min-h-screen bg-cover bg-center bg-fixed"
+      style={{
+        background: "linear-gradient(to bottom, #7b5cd6, #9370db)",
+        backgroundSize: "cover"
+      }}
+    >
       <Navbar />
       <div className="max-w-[95%] mx-auto py-4 space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">My  Tasks</h1>
+          <h1 className="text-2xl font-bold text-white">My Tasks</h1>
 
           <button
             onClick={() => {
@@ -678,14 +773,23 @@ const TasksPage = () => {
           </button>
         </div>
 
-
-        {errorAny && <div className="text-red-400 bg-black bg-opacity-50 p-2 rounded">{errorAny}</div>}
-        {loadingAny && <div className="text-gray-200 bg-black bg-opacity-50 p-2 rounded">Loading...</div>}
+        {errorAny && (
+          <div className="text-red-400 bg-black bg-opacity-50 p-2 rounded">
+            {errorAny}
+          </div>
+        )}
+        {loadingAny && (
+          <div className="text-gray-200 bg-black bg-opacity-50 p-2 rounded">
+            Loading...
+          </div>
+        )}
         {successMessage && (
-          <div className="text-green-400 bg-black bg-opacity-50 p-2 rounded">{successMessage}</div>
+          <div className="text-green-400 bg-black bg-opacity-50 p-2 rounded">
+            {successMessage}
+          </div>
         )}
 
-        {/* 添加 NewTaskCard 作为特色任务展示 */}
+        {/* Add NewTaskCard as a featured task display */}
         {/* <div className="mb-6">
           <h2 className="text-xl font-semibold text-white mb-4">特色任务</h2>
           <NewTaskCard />
@@ -697,7 +801,7 @@ const TasksPage = () => {
             setShowForm(false);
             setEditingTask(null);
             setCreateSlotIndex(-1);
-            setCreateSlotType("short"); // 每次关闭时都重置任务类型，确保下次能准确控制
+            setCreateSlotType("short"); // Reset task type every time you close it，确保下次能准确控制
           }}
           onSubmit={handleSubmit}
           loading={editingTask ? updating : creating}
@@ -714,16 +818,28 @@ const TasksPage = () => {
         />
 
         <div className="flex gap-4 relative">
-          {/* 左侧：任务槽区域 */}
-          <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-1/2' : 'w-3/4'}`}>
-            <div className="grid grid-cols-2 gap-4">  {/* 改回 grid-cols-2 实现水平排列 */}
+          {/* Left: Task slot area */}
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              isExpanded ? "w-1/2" : "w-3/4"
+            }`}
+          >
+            <div className="grid grid-cols-2 gap-4">
+              {" "}
+              {/* Change back to grid-cols-2 to achieve horizontal arrangement */}
               <DailyTaskPanel
                 tasks={tasks}
                 user={user}
                 equippedTasks={equippedShortTasks}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
-                onEdit={(task) => {
+                onEdit={(task, forceEdit = false, isCompletion = false) => {
+                  // If this is a task completion update, just update the state without opening edit window
+                  if (isCompletion) {
+                    console.log("Task completed, updating state without opening edit window");
+                    return;
+                  }
+                  
                   setEditingTask(task);
                   setShowForm(true);
                   if (task.type) {
@@ -741,7 +857,21 @@ const TasksPage = () => {
                 equippedTasks={equippedLongTasks}
                 onComplete={handleComplete}
                 onDelete={handleDelete}
-                onEdit={(task) => {
+                onEdit={(task, forceEdit = false, isCompletion = false) => {
+                  // If this is a task completion update, just update the state without opening edit window
+                  if (isCompletion) {
+                    console.log("Task completed, updating state without opening edit window");
+                    return;
+                  }
+                  
+                  // When the task has the isFromSubtaskComplete flag and is not forced to edit, only update the task without opening the edit window
+                  if (!forceEdit && task.isFromSubtaskComplete) {
+                    // Only update the task data, do not open the edit window
+                    console.log("Update long-term task data without opening the edit window");
+                    return;
+                  }
+
+                  // Normal editing process
                   setEditingTask(task);
                   setShowForm(true);
                   if (task.type) {
@@ -754,8 +884,12 @@ const TasksPage = () => {
             </div>
           </div>
 
-          {/* 右侧：可调整宽度的任务仓库 */}
-          <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-1/2' : 'w-1/4'}`}>
+          {/* Right: Task warehouse with adjustable width */}
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              isExpanded ? "w-1/2" : "w-1/4"
+            }`}
+          >
             <RepositoryPanel
               tasks={tasks}
               cards={cards}

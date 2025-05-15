@@ -10,10 +10,10 @@ export const TaskRepository = ({
                           onEquip,
                           isExpanded = true
                         }) => {
-  // 只取未装备的任务（包括已完成）
+  // Only take unequipped tasks (including completed ones)
   const unequippedTasks = tasks.filter(t => !t.equipped);
 
-  // 本地状态：搜索、分类、类型、排序
+  // Local status: search, classification, type, sort
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
@@ -21,7 +21,7 @@ export const TaskRepository = ({
   const [sortOrder, setSortOrder] = useState('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  // 清除所有筛选条件
+  // Clear all filters
   const clearFilters = () => {
     setSelectedCategory('All');
     setSelectedType('All');
@@ -29,21 +29,21 @@ export const TaskRepository = ({
     setSortOrder('desc');
   };
 
-  // 分类与类型选项
+  // Category and Type Options
   const categories = ['All', 'Default'];
   const types = ['All', 'short', 'long'];
 
-  // 拖拽开始
+  // Drag to start
   const handleDragStart = (e, task) => {
     e.dataTransfer.setData('task', JSON.stringify(task));
     e.currentTarget.classList.add('opacity-50');
   };
-  // 拖拽结束
+  // Drag ends
   const handleDragEnd = e => {
     e.currentTarget.classList.remove('opacity-50');
   };
 
-  // 过滤 + 排序
+  // Filter + Sort
   const filtered = unequippedTasks
       .filter(task => {
         if (
@@ -66,7 +66,7 @@ export const TaskRepository = ({
           valA = a.dueDate ? new Date(a.dueDate) : new Date(8640000000000000);
           valB = b.dueDate ? new Date(b.dueDate) : new Date(8640000000000000);
         } else if (sortBy === 'priority') {
-          const map = { '高': 3, '中': 2, '低': 1 };
+          const map = { 'high': 3, 'mid': 2, 'low': 1 };
           valA = map[a.priority] || 0;
           valB = map[b.priority] || 0;
         } else if (sortBy === 'experienceReward') {
@@ -84,7 +84,7 @@ export const TaskRepository = ({
         }
       });
 
-  // 获取活跃筛选器数量
+  // Get the number of active filters
   const activeFilterCount = [
     selectedCategory !== 'All',
     selectedType !== 'All',
@@ -93,7 +93,7 @@ export const TaskRepository = ({
 
   return (
       <div className="mb-8">
-        {/* 搜索条 */}
+        {/* Search bar */}
         <div className="card mb-4 p-4">
           <div className="relative flex items-center">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -122,10 +122,10 @@ export const TaskRepository = ({
           </div>
         </div>
 
-        {/* 筛选面板 - 可折叠 */}
+        {/* Filter Panel - Collapsible */}
         {showFilters && (
           <div className="flex items-center gap-2 mb-4 bg-gray-50 p-3 rounded-lg">
-            {/* 分类筛选 */}
+            {/* Category Filter */}
             <div className="flex items-center mr-6">
               <span className="text-sm text-gray-600 mr-2">Category:</span>
               <div className="flex gap-1">
@@ -145,7 +145,7 @@ export const TaskRepository = ({
               </div>
             </div>
 
-            {/* 类型筛选 */}
+            {/* Type Filter */}
             <div className="flex items-center mr-6">
               <span className="text-sm text-gray-600 mr-2">Type:</span>
               <div className="flex gap-1">
@@ -165,7 +165,7 @@ export const TaskRepository = ({
               </div>
             </div>
 
-            {/* 排序方式 */}
+            {/* sort by */}
             <div className="flex items-center ml-auto">
               <span className="text-sm text-gray-600 mr-2">Sort By:</span>
               <div className="flex items-center">
@@ -191,7 +191,7 @@ export const TaskRepository = ({
           </div>
         )}
 
-        {/* 任务列表展示 */}
+        {/* Task list display */}
         {filtered.length === 0 ? (
             <div className="text-center py-10 bg-gray-50 rounded-lg">
               <p className="text-gray-500">No matching tasks found</p>
