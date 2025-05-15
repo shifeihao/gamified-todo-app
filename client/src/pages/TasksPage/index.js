@@ -209,29 +209,69 @@ const TasksPage = () => {
   // Monitor task and subtask completion events and refresh task data
   useEffect(() => {
     // Creating an event handler
-    const handleTaskOrSubtaskCompleted = () => {
+    const handleTaskOrSubtaskCompleted = (event) => {
+      console.log("Task or subtask completion event triggered", event.type, event.detail);
+      
+      // If we have detailed task information in the event, update state directly
+      if (event.detail && event.detail.taskId && event.detail.updatedTask) {
+        const { taskId, updatedTask, isLongTask, status } = event.detail;
+        console.log("Updating task state with data from event:", updatedTask);
+        
+        // Update tasks in repository
+        setTasks(prevTasks => 
+          prevTasks.map(task => 
+            task._id === taskId ? updatedTask : task
+          )
+        );
+        
+        // Update equipped short tasks
+        setEquippedShortTasks(prevTasks => 
+          prevTasks.map(task => 
+            task._id === taskId ? updatedTask : task
+          ).filter(task => task.status !== 'completed')
+        );
+        
+        // Update equipped long tasks
+        setEquippedLongTasks(prevTasks => 
+          prevTasks.map(task => 
+            task._id === taskId ? updatedTask : task
+          ).filter(task => task.status !== 'completed')
+        );
+        
+        // If task is completed, ensure it's unequipped
+        if (updatedTask.status === 'completed') {
+          try {
+            console.log("Automatically unequipping completed task:", taskId);
+            unequipTaskService(taskId, user?.token);
+          } catch (err) {
+            console.error("Failed to unequip task from event handler:", err);
+          }
+        }
+      }
+      
+      // Always fetch tasks to ensure we have the latest data
       fetchTasks();
     };
 
     // Adding event listeners
     window.addEventListener(
-        SUBTASK_COMPLETED_EVENT,
-        handleTaskOrSubtaskCompleted
+      SUBTASK_COMPLETED_EVENT,
+      handleTaskOrSubtaskCompleted
     );
     window.addEventListener(TASK_COMPLETED_EVENT, handleTaskOrSubtaskCompleted);
 
     // Cleanup Function
     return () => {
       window.removeEventListener(
-          SUBTASK_COMPLETED_EVENT,
-          handleTaskOrSubtaskCompleted
+        SUBTASK_COMPLETED_EVENT,
+        handleTaskOrSubtaskCompleted
       );
       window.removeEventListener(
-          TASK_COMPLETED_EVENT,
-          handleTaskOrSubtaskCompleted
+        TASK_COMPLETED_EVENT,
+        handleTaskOrSubtaskCompleted
       );
     };
-  }, []);
+  }, [user?.token]); // Add user token as dependency to ensure we have it available
 
   // Display success information
   const showSuccessMessage = (msg) => {

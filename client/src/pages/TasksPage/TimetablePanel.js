@@ -17,6 +17,21 @@ const TimetablePanel = ({
 }) => {
   const [activeTab, setActiveTab] = useState("list");
   const longTasks = equippedTasks.filter((t) => t.type === "long");
+  
+  // 处理任务编辑，确保完成的任务不会打开编辑窗口
+  const handleEdit = (task, forceEdit = false, isCompletion = false) => {
+    // 如果是从任务完成触发的，不打开编辑窗口
+    if (isCompletion) {
+      console.log("Task completed, not opening edit window for long task");
+      return;
+    }
+    
+    // 正常传递给onEdit
+    if (onEdit) {
+      onEdit(task, forceEdit);
+    }
+  };
+  
   return (
     <div className="bg-white/90 rounded-xl shadow-lg p-4 border border-blue-200 backdrop-blur-sm">
       {/* Fixed height title area */}
@@ -84,7 +99,7 @@ const TimetablePanel = ({
           onDrop={(taskId, slotIdx) => onDrop(taskId, slotIdx, "long")}
           onComplete={onComplete}
           onDelete={onDelete}
-          onEdit={onEdit}
+          onEdit={handleEdit}
           onUnequip={onUnequip}
         />
       ) : (
