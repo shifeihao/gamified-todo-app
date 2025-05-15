@@ -814,7 +814,7 @@ const CombatSystem = ({
           {/* Cards */}
           {dropResults.cards && dropResults.cards.length > 0 && (
             <div className="mb-5">
-              <h3 className="text-white mb-2 text-lg">Quest Cards Obtained</h3>
+              <h3 className="text-white mb-2 text-lg">Task Cards Obtained</h3>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2">
                 {dropResults.cards.map((card, index) => (
                   <div 

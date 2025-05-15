@@ -17,7 +17,6 @@ const TemplatePage = () => {
         subTasks: []
     });
 
-    // 获取模板列表
     const fetchTemplates = async () => {
         try {
             const { data } = await axios.get('/api/templates');
@@ -35,7 +34,6 @@ const TemplatePage = () => {
         fetchTemplates();
     }, []);
 
-    // 处理表单提交
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -67,7 +65,6 @@ const TemplatePage = () => {
         }
     };
 
-    // 处理模板编辑
     const handleEdit = (template) => {
         setEditingTemplate(template);
         setFormData({
@@ -80,7 +77,6 @@ const TemplatePage = () => {
         setShowForm(true);
     };
 
-    // 处理模板删除
     const handleDelete = async (template) => {
         if (window.confirm('Are you sure you want to delete this template?')) {
             try {
@@ -94,16 +90,14 @@ const TemplatePage = () => {
         }
     };
 
-    // 处理模板选择
     const handleSelect = (template) => {
-        // TODO: 实现从模板创建任务的功能
         console.log('Selected template:', template);
     };
 
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Quest Template</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Task Template</h1>
                 <button
                     onClick={() => {
                         setEditingTemplate(null);

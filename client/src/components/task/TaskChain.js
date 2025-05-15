@@ -70,7 +70,7 @@ export const TaskChain = ({
                     <div className="bg-purple-100 text-purple-600 w-10 h-10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                         <Plus className="w-5 h-5" />
                     </div>
-                    <p className="text-sm text-purple-500 group-hover:text-purple-600">Create Quest Chain</p>
+                    <p className="text-sm text-purple-500 group-hover:text-purple-600">Create Task Chain</p>
                     <p className="text-xs text-gray-400 mt-1">Chain Slot {idx + 1}</p>
                 </button>
             )}

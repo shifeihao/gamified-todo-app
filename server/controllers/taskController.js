@@ -230,7 +230,7 @@ const updateTask = async (req, res) => {
 
       return res.json({
         message: allSubTasksCompleted
-          ? "Subtask completed! All subtasks have been completed, click the Complete Quest button to get additional rewards"
+          ? "Subtask completed! All subtasks have been completed, click the Complete Task button to get additional rewards"
           : "Subtask completed",
         task: result.task,
         subTaskReward: result.subTaskReward,

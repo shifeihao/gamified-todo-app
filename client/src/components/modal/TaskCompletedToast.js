@@ -77,7 +77,7 @@ export const showLongTaskCompletedToast = (response, task) => {
     // Show detailed reward distribution
     toast.success(
       <div className="flex flex-col space-y-1">
-        <span className="font-semibold text-sm">Long Quest & Subtasks Completed!</span>
+        <span className="font-semibold text-sm">Long Task & Subtasks Completed!</span>
         {subTaskCount > 0 && (
           <div className="flex items-center">
             <span className="text-yellow-500 mr-1">🏅</span>
@@ -115,7 +115,7 @@ export const showLongTaskCompletedToast = (response, task) => {
     
     toast.success(
       <div className="flex flex-col space-y-1">
-        <span className="font-semibold text-sm">Long Quest Complete!</span>
+        <span className="font-semibold text-sm">Long Task Complete!</span>
         <div className="flex items-center">
           <span className="text-yellow-500 mr-1">🏆</span>
           <span className="text-xs">

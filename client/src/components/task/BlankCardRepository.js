@@ -46,7 +46,7 @@ export const BlankCardRepository = ({ cards }) => {
                     {/* 类型筛选 */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Applicable Quest Type
+                            Applicable Task Type
                         </label>
                         <select
                             value={selectedType}

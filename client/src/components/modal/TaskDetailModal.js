@@ -346,7 +346,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             if (expGained > 0 || goldGained > 0) {
               toast.success(
                 <div className="flex flex-col space-y-1">
-                  <span className="font-semibold text-sm">Quest Complete!</span>
+                  <span className="font-semibold text-sm">Task Complete!</span>
                   <div className="flex items-center">
                     <span className="text-yellow-500 mr-1">🏅</span>
                     <span className="text-xs">
@@ -373,7 +373,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
               
               toast.success(
                 <div className="flex flex-col space-y-1">
-                  <span className="font-semibold text-sm">Quest Complete!</span>
+                  <span className="font-semibold text-sm">Task Complete!</span>
                   <div className="flex items-center">
                     <span className="text-yellow-500 mr-1">🏅</span>
                     <span className="text-xs">
@@ -395,7 +395,7 @@ export const TaskDetailModal = ({ isOpen, onClose, taskId, onTaskUpdated, onTask
             
             toast.success(
               <div className="flex flex-col space-y-1">
-                <span className="font-semibold text-sm">Quest Complete!</span>
+                <span className="font-semibold text-sm">Task Complete!</span>
                 <div className="flex items-center">
                   <span className="text-yellow-500 mr-1">🏅</span>
                   <span className="text-xs">

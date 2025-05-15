@@ -5,6 +5,7 @@ import Level from "../models/Level.js";
 import Task from "../models/Task.js";
 import { calculateReward } from "../utils/TaskRewardCalculator.js";
 import eventBus from "../events/eventBus.js";
+import { SyncTaskHistory, SyncUser } from "../path/to/sync/functions.js";
 
 export const handleTaskCompletion = async (req) => {
   try {
@@ -18,7 +19,7 @@ export const handleTaskCompletion = async (req) => {
     const task = await Task.findById(taskId).populate("cardUsed");
     if (!task || task.user.toString() !== userId.toString()) {
       console.error(
-        `任务无效或不属于当前用户 - 任务ID: ${taskId}, 用户ID: ${userId}`
+        `Task is invalid or does not belong to the current user – Task ID: ${taskId}, User ID: ${userId}`
       );
       return {
         success: false,
@@ -38,10 +39,10 @@ export const handleTaskCompletion = async (req) => {
       throw new Error("Task has already been completed and reward claimed");
     }
 
-    // 查找用户信息
+    // Find user information
     const user = await User.findById(userId);
     if (!user) {
-      console.error(`用户不存在 - 用户ID: ${userId}`);
+      console.error(`User not found – User ID: ${userId}`);
       return {
         success: false,
         message: "User not found",
@@ -108,7 +109,7 @@ export const handleTaskCompletion = async (req) => {
         pendingSubTasksGold += gold;
 
         console.log(
-          `自动完成子任务: ${subTask.title}, 获得 ${experience} XP, ${gold} Gold`
+          `Automatically completed subtask: ${subTask.title}, gained ${experience} XP, ${gold} Gold`
         );
       }
 
@@ -124,7 +125,7 @@ export const handleTaskCompletion = async (req) => {
         );
       }
 
-      // 计算长期任务额外奖励
+      // Calculate extra rewards for long-term tasks
       const bonusExp = task.experienceReward || task.finalBonusExperience || 30;
       const bonusGold = task.goldReward || task.finalBonusGold || 15;
 
@@ -140,36 +141,18 @@ export const handleTaskCompletion = async (req) => {
       console.log("Long-term task bonus (with multiplier) - XP:", finalExp);
       console.log("Long-term task bonus (with multiplier) - Gold:", finalGold);
 
-      // 计算最终奖励
-      // 如果所有子任务都已经完成，只给予额外奖励；否则给予未完成子任务+额外奖励的总和
+      // If all subtasks are already completed, only give the bonus reward; otherwise give the sum of unfinished-subtask rewards + bonus reward
       if (pendingSubTasks.length === 0 && completedSubTasks.length > 0) {
-        // 所有子任务都已完成，只给予额外奖励（长期任务完成奖励）
-        console.log("所有子任务已完成，只给予额外奖励");
+        // All subtasks have been completed, only give the bonus reward (long-term task completion reward)
+        console.log("All subtasks have been completed, only give the bonus reward");
         totalExp = finalExp;
         totalGold = finalGold;
-        console.log("最终奖励(仅额外奖励) - XP:", totalExp, "Gold:", totalGold);
+        console.log("Final reward (only bonus) – XP:", totalExp, "Gold:", totalGold);
       } else {
-        // 总奖励 = 未完成子任务奖励 + 长期任务额外奖励
         totalExp = pendingSubTasksExp + finalExp;
         totalGold = pendingSubTasksGold + finalGold;
-        console.log(
-          "总计奖励 - XP:",
-          totalExp,
-          "(子任务:",
-          pendingSubTasksExp,
-          "+ 任务奖励:",
-          finalExp,
-          ")"
-        );
-        console.log(
-          "总计奖励 - Gold:",
-          totalGold,
-          "(子任务:",
-          pendingSubTasksGold,
-          "+ 任务奖励:",
-          finalGold,
-          ")"
-        );
+        console.log("Total reward – XP:", totalExp, "(subtasks:", pendingSubTasksExp, "+ task bonus:", finalExp, ")");
+        console.log("Total reward – Gold:", totalGold, "(subtasks:", pendingSubTasksGold, "+ task bonus:", finalGold, ")");
       }
     } else if (task.type === "short") {
       if (task.status !== "completed") {
@@ -190,7 +173,6 @@ export const handleTaskCompletion = async (req) => {
       console.log("Short task reward - XP:", baseExp);
       console.log("Short task reward - Gold:", baseGold);
 
-      // 计算短期任务奖励（包含任何加成）
       const { experience, gold } = calculateReward(
         baseExp,
         baseGold,
@@ -203,28 +185,22 @@ export const handleTaskCompletion = async (req) => {
       console.log("Final short task reward - XP:", totalExp);
       console.log("Final short task reward - Gold:", totalGold);
     }
-    // ... 其他任务类型 ...
 
-    // 更新用户经验和金币
     user.experience += totalExp;
     user.gold += totalGold;
 
-    // 更新任务标记为奖励已领取
     task.rewardClaimed = true;
 
-    // 保存更改到数据库
     await user.save();
     await task.save();
 
-    // 保存任务进度
     await SyncTaskHistory({ user, task, exp: totalExp, gold: totalGold });
     await SyncUser(user);
 
     console.log(
-      `奖励已发放 - 用户: ${userId}, 获得 ${totalExp} XP, ${totalGold} Gold`
+      `Reward has been issued – User: ${userId}, gained ${totalExp} XP, ${totalGold} Gold`
     );
 
-    // 计算用户当前等级和等级进度
     const newExp = user.experience;
     const currentLevel = await Level.findOne({
       expRequired: { $lte: newExp },
@@ -239,16 +215,15 @@ export const handleTaskCompletion = async (req) => {
       };
     }
 
-    // 检查用户是否升级
     const leveledUp = currentLevel.level > user.level;
 
     if (leveledUp) {
       user.level = currentLevel.level;
       await user.save();
-      console.log(`用户升级! 新等级: ${currentLevel.level}`);
+      console.log(`Level up！New Level: ${currentLevel.level}`);
     }
 
-    // 计算到下一级所需经验值
+    // to calculate required EXP to the next level
     const nextLevel = await Level.findOne({ level: currentLevel.level + 1 });
     const nextLevelExp = nextLevel
       ? nextLevel.expRequired
@@ -279,7 +254,6 @@ export const handleTaskCompletion = async (req) => {
     });
     eventBus.emit("checkAchievements", userId);
 
-    // 准备要返回的响应数据
     const responseData = {
       success: true,
       message: "Rewards and level updated successfully",
@@ -306,7 +280,6 @@ export const handleTaskCompletion = async (req) => {
       },
     };
 
-    // 如果是长期任务并且有自动完成的子任务，添加相关信息到响应中
     if (task.type === "long") {
       const allSubTasksCompleted = pendingSubTasks.length === 0;
       const alreadyCompletedSubTasksCount = task.subTasks.filter(
@@ -416,7 +389,6 @@ export const handleSubTaskCompletion = async (req) => {
 
     // 8. If all subtasks are done, mark the main task as completed without granting bonus rewards
     if (allSubTasksCompleted && task.status !== "completed") {
-      // 不自动设置长期任务为完成状态，需要用户手动完成
       console.log(
         "All subtasks completed. The user must manually click the 'complete' button to finish the task and claim the bonus reward."
       );
