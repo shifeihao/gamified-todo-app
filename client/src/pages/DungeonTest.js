@@ -32,8 +32,8 @@ const ShopInterface = ({ items, gold, onBuyItem, onLeaveShop }) => {
       </h3>
       
       <div className="flex justify-end mb-4">
-        <div className="bg-[#ffa726] p-2 rounded-md flex items-center shadow-lg text-[#2c1810] border-2 border-[#ff8f00] font-bold">
-          <span className="mr-1">💰</span>
+        <div className="bg-[#ffb74d] p-2 rounded-md flex items-center shadow-lg text-[#2c1810] border-2 border-[#ff8f00] font-bold">
+          <span className="mr-1">🪙</span>
           <span>{gold}</span>
         </div>
       </div>

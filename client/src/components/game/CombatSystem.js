@@ -306,15 +306,15 @@ const CombatSystem = ({
         return getEmojiAvatar();
       };
       const getEmojiAvatar = () => {
-        const emojiMap = {
-          'warrior': '⚔️',
-          'mage': '🔮',
-          'rogue': '🗡️',
-          'archer': '🏹'
-        };
-        
-        return `<span style="font-size: 24px; color: white;">${emojiMap[actualPlayerClass] || '👤'}</span>`;
+      const emojiMap = {
+        'warrior': '⚔️',
+        'mage': '🔮',
+        'rogue': '🗡️',
+        'archer': '🏹'
       };
+      
+      return <span className="text-2xl text-white">{emojiMap[actualPlayerClass] || '👤'}</span>;
+    };
   
   // Apply skill effects
   const applySkillEffects = (effects, target) => {
@@ -625,6 +625,7 @@ const CombatSystem = ({
               // Reset monster statuses
               setMonsterStatuses({});
             }
+            return; 
           } else {
             setIsFirstAttack(false); // Not first attack
             setIsPlayerTurn(false);
@@ -639,6 +640,9 @@ const CombatSystem = ({
     } 
     // Monster turn
     else {
+      if (combatEnded || monsterHp <= 0) {
+        return;
+      }
       const timer = setTimeout(() => {
         // Evasion detection
         const baseEvasion = playerStats.evasion || 0;

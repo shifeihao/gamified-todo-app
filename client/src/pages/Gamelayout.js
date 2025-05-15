@@ -1,4 +1,4 @@
-// Redesigned GameLayout.jsx with Tailwind CSS
+// Redesigned GameLayout.jsx with Tailwind CSS - Part 1
 import React, { useState, useEffect, useMemo } from 'react';
 import DungeonTest from './DungeonTest';
 import InventoryShopPage from './InventoryShopPage';
@@ -158,6 +158,7 @@ export const GameLayout = () => {
   const [selectedGender, setSelectedGender] = useState('male');
   const [showNarrative, setShowNarrative] = useState(false);
   const [narrativeComplete, setNarrativeComplete] = useState(false);
+  const [taskLevel, setTaskLevel] = useState(0); // 新增：任务等级
 
   // Get token
   const token = userInfo?.token || null;
@@ -185,7 +186,7 @@ export const GameLayout = () => {
     }
 
     try {
-      // Get user stats
+      // Get user stats (dungeon character data)
       const stats = await getUserStats(token);
       console.log('User stats:', stats);
       
@@ -202,23 +203,25 @@ export const GameLayout = () => {
         setClasses(classData.classes);
       }
         
-        // Get user gold
-        try {
-          const res = await axios.get('/api/users/profile', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setGold(res.data.gold || 0);
-        } catch (profileErr) {
-          console.error('Failed to get user profile:', profileErr);
-        }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Failed to initialize user data:', err);
-        setError(err.message);
-        setLoading(false);
+      // Get user profile (including task level and gold)
+      try {
+        const res = await axios.get('/api/users/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setGold(res.data.gold || 0);
+        setTaskLevel(res.data.level || 0); // 获取任务等级
+        console.log('User task level:', res.data.level);
+      } catch (profileErr) {
+        console.error('Failed to get user profile:', profileErr);
       }
-    };
+        
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to initialize user data:', err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
     if (userInfo?.token) {
       initializeUser();
@@ -270,6 +273,7 @@ export const GameLayout = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setGold(res.data.gold || 0);
+      setTaskLevel(res.data.level || 0); // 同时更新任务等级
     } catch (err) {
       console.error('Failed to refresh gold:', err);
     }
@@ -285,57 +289,62 @@ export const GameLayout = () => {
     }
   };
   
-
+  // 计算装备加成
   const bonusStats = useMemo(() => {
     return equipment ? computeTotalStats(equipment?.slots) : { hp: 0, attack: 0, defense: 0, magicPower: 0, speed: 0, critRate: 0, evasion: 0 }
   }, [equipment]);
 
+  // 计算任务等级加成：每级增加5%基础属性
+  const taskLevelBonus = useMemo(() => {
+    const multiplier = 1 + (taskLevel * 0.05);
+    return { multiplier, percentage: taskLevel * 5 };
+  }, [taskLevel]);
+
+  // 计算最终有效属性：基础属性 × 任务等级加成 + 装备加成
   const effectiveBaseStats = useMemo(() => {
-    const base = userStats?.baseStats || {}
+    const base = userStats?.baseStats || {};
+    const { multiplier } = taskLevelBonus;
+    
     return Object.fromEntries(
       Object.entries(base).map(([key, val]) => [
         key,
-        val + (bonusStats[key] || 0)
+        Math.floor(val * multiplier) + (bonusStats[key] || 0)
       ])
-    )
-  }, [userStats?.baseStats, bonusStats]);
-
-  
-      const getPlayerAvatar = () => {
-      if (userStats?.images && userStats?.gender) {
-        const avatarPath = userStats.images[userStats.gender]?.avatar;
-        if (avatarPath) {
-          return (
-            <img 
-              src={`/icon/characters/${avatarPath}`}
-              alt={`${userStats.name} ${userStats.gender}`}
-              className="w-full h-full object-cover rounded-lg"
-              onError={(e) => {
-                // 图片加载失败时的处理
-                console.log('Character avatar loading failed, using emoji fallback');
-                e.target.style.display = 'none';
-                e.target.parentNode.innerHTML = getEmojiAvatar();
-              }}
-            />
-          );
-        }
+    );
+  }, [userStats?.baseStats, taskLevelBonus, bonusStats]);
+  const getPlayerAvatar = () => {
+    if (userStats?.images && userStats?.gender) {
+      const avatarPath = userStats.images[userStats.gender]?.avatar;
+      if (avatarPath) {
+        return (
+          <img 
+            src={`/icon/characters/${avatarPath}`}
+            alt={`${userStats.name} ${userStats.gender}`}
+            className="w-full h-full object-cover rounded-lg"
+            onError={(e) => {
+              console.log('Character avatar loading failed, using emoji fallback');
+              e.target.style.display = 'none';
+              e.target.parentNode.innerHTML = getEmojiAvatar();
+            }}
+          />
+        );
       }
-      
-      // 否则使用 emoji 兜底
-      return getEmojiAvatar();
-    };
+    }
+    
+    return getEmojiAvatar();
+  };
 
-    const getEmojiAvatar = () => {
-      const emojiMap = {
-        'warrior': '⚔️',
-        'mage': '🔮',
-        'archer': '🏹',
-        'rogue': '🗡️',
-        'cleric': '✨'
-      };
-      
-      return <span className="text-2xl">{emojiMap[userStats.slug] || '👤'}</span>;
+  const getEmojiAvatar = () => {
+    const emojiMap = {
+      'warrior': '⚔️',
+      'mage': '🔮',
+      'archer': '🏹',
+      'rogue': '🗡️',
+      'cleric': '✨'
     };
+    
+    return <span className="text-2xl">{emojiMap[userStats.slug] || '👤'}</span>;
+  };
 
   // Show loading
   if (loading && !userStats) {
@@ -352,11 +361,8 @@ export const GameLayout = () => {
   }
 
   if (showNarrative && !narrativeComplete) {
-  return <NarrativeIntro onComplete={handleNarrativeComplete} />;
-}
-
-  // 创建叙事组件
-  
+    return <NarrativeIntro onComplete={handleNarrativeComplete} />;
+  }
 
   // Class selection interface
   if (isSelecting && classes.length > 0) {
@@ -550,8 +556,8 @@ export const GameLayout = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-[#ffa726] rounded-lg px-3 py-2 text-[#2c1810] font-bold text-sm border-2 border-[#ff8f00] shadow-md shadow-black/20">
-              <span className="text-base">💰</span>
+            <div className="flex items-center gap-1.5 bg-[#ffb74d] rounded-lg px-3 py-2 text-[#2c1810] font-bold text-sm border-2 border-[#ff8f00] shadow-md shadow-black/20">
+              <span className="text-base">🪙</span>
               <span>{gold}</span>
             </div>
             {userInfo && (
@@ -575,40 +581,78 @@ export const GameLayout = () => {
               
               <div>
                 <h3 className="text-lg font-bold m-0">{userStats.name}</h3>
-                <p className="text-sm text-[#666] m-0 mt-1">
-                  DungeonLevel: {userStats.level || 1} | EXP: {userStats.exp || 0}
-                </p>
+                <div className="text-sm text-[#666] m-0 mt-1 flex items-center gap-4">
+                  <span>DungeonLevel: {userStats.level || 1} | EXP: {userStats.exp || 0}</span>
+                  <span className="text-[#4caf50] font-bold">
+                    TaskLevel: {taskLevel} {taskLevel > 0 && `(+${taskLevelBonus.percentage}% Stats)`}
+                  </span>
+                </div>
               </div>
             </div>
             
             <div className="flex gap-4">
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">HP</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.hp || 100) + (bonusStats.hp || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.hp}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">ATK</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.attack || 10) + (bonusStats.attack || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.attack}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">DEF</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.defense || 5) + (bonusStats.defense || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.defense}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">MAG</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.magicPower || 0) + (bonusStats.magicPower || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.magicPower}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">SPD</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.speed || 0) + (bonusStats.speed || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.speed}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">CRIT</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.critRate || 0) + (bonusStats.critRate || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.critRate}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
-              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc]">
+              <div className="text-center w-16 px-3 py-1.5 bg-[#e8e8e8] rounded border border-[#ccc] relative">
                 <span className="block text-xs text-[#666] font-medium">EVA</span>
-                <span className="block text-base font-bold text-[#333] mt-0.5">{(userStats.baseStats?.evasion || 0) + (bonusStats.critRate || 0)}</span>
+                <span className="block text-base font-bold text-[#333] mt-0.5">
+                  {effectiveBaseStats.evasion}
+                  {taskLevel > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs text-[#4caf50] font-bold">+</span>
+                  )}
+                </span>
               </div>
             </div>
             

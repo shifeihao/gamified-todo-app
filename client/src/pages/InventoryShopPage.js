@@ -203,12 +203,13 @@ export default function InventoryShopPage({ onEquipmentChange }) {
               right: "0",
               fontSize: "16px", 
               color: "#2c1810",
-              backgroundColor: "#ffa726",
+              fontWeight:"bold",
+              backgroundColor: "#ffb74d",
               padding: "6px 12px",
               borderRadius: "8px",
               border: "2px solid #ff8f00"
             }}>
-              💰 {gold} Gold
+              🪙{gold} 
             </span>
           )}
         </h2>
