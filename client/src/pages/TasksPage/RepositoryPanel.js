@@ -33,7 +33,6 @@ const RepositoryPanel = ({
     });
     const { user } = useContext(AuthContext);
 
-    // 获取模板列表
     const fetchTemplates = async () => {
         try {
             setLoadingTemplates(true);
@@ -49,7 +48,6 @@ const RepositoryPanel = ({
         }
     };
 
-    // 当切换到模板标签页时加载模板
     useEffect(() => {
         if (activeTab === 'template' && user?.token) {
             fetchTemplates();
@@ -58,30 +56,27 @@ const RepositoryPanel = ({
 
     // Processing template selection (create task)
     const handleTemplateSelect = (template) => {
-        // 使用onEdit来触发CreateTaskModal，并预填模板数据
         if (onEdit) {
             const templateData = {
                 ...template,
-                _id: undefined, // 清除模板ID，这样会创建新任务而不是编辑模板
-                status: undefined, // 清除状态
-                equipped: undefined, // 清除装备状态
-                cardUsed: undefined, // 清除使用的卡片
+                _id: undefined, 
+                status: undefined, 
+                equipped: undefined, 
+                cardUsed: undefined, 
                 dueDate: template.type === 'short' ? 
                     new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 19) : 
-                    undefined, // 如果是短期任务，设置24小时后的截止时间
-                isFromTemplate: true // 标记这是从模板创建的任务
+                    undefined, 
+                isFromTemplate: true 
             };
             console.log('Creating task from template:', templateData);
             onEdit(templateData);
         }
     };
 
-    // 处理模板删除
     const handleTemplateDelete = async (template) => {
         setDeletingTemplate(template);
     };
 
-    // 确认删除模板
     const confirmDeleteTemplate = async () => {
         try {
             await axios.delete(`/api/templates/${deletingTemplate._id}`, {
@@ -96,7 +91,6 @@ const RepositoryPanel = ({
         }
     };
 
-    // 处理编辑模板
     const handleEditTemplate = (template) => {
         setEditingTemplate(template);
         setTemplateFormData({
@@ -109,7 +103,6 @@ const RepositoryPanel = ({
         setShowTemplateForm(true);
     };
 
-    // 处理创建或更新模板
     const handleSubmitTemplate = async (e) => {
         e.preventDefault();
         try {
@@ -119,13 +112,11 @@ const RepositoryPanel = ({
             }
 
             if (editingTemplate) {
-                // 更新模板
                 await axios.put(`/api/templates/${editingTemplate._id}`, templateFormData, {
                     headers: { Authorization: `Bearer ${user.token}` }
                 });
                 toast.success('Template updated successfully');
             } else {
-                // 创建新模板
                 await axios.post('/api/templates', templateFormData, {
                     headers: { Authorization: `Bearer ${user.token}` }
                 });
@@ -150,7 +141,6 @@ const RepositoryPanel = ({
 
     return (
         <div className="bg-[#e8e0f5] rounded-xl shadow-lg p-4 border border-amber-200 backdrop-blur-sm h-full relative">
-            {/* 展开/收起按钮 */}
             <button
                 onClick={() => onExpand(!isExpanded)}
                 className="absolute -left-3 top-1/2 transform -translate-y-1/2 bg-amber-500 text-white rounded-full p-1 shadow-lg hover:bg-amber-600 transition-colors duration-200 z-10"
@@ -171,7 +161,6 @@ const RepositoryPanel = ({
                 </svg>
             </button>
 
-            {/* 标题与标签同一行 */}
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-amber-900 flex items-center truncate">
                     <Vault className="h-6 w-6 mr-2 flex-shrink-0" />
@@ -180,7 +169,7 @@ const RepositoryPanel = ({
                 <div className="flex space-x-2 flex-shrink-0">
                     {[
                         { id: 'store', icon: <Vault size={18} />, label: 'Vault' },
-                        { id: 'blank', icon: <Award size={18} />, label: 'Rewards' },
+                        { id: 'blank', icon: <Award size={18} />, label: 'Special Cards' },
                         { id: 'template', icon: <FileText size={18} />, label: 'Template' }
                     ].map(tab => (
                         <button
@@ -200,7 +189,6 @@ const RepositoryPanel = ({
                 </div>
             </div>
 
-            {/* 内容区域 */}
             <div className="mt-4 overflow-auto" style={{ maxHeight: 'calc(100vh - 120px)' }}>
                 {activeTab === 'store' && (
                     <TaskRepository
@@ -255,7 +243,6 @@ const RepositoryPanel = ({
                 )}
             </div>
 
-            {/* 删除确认模态框 */}
             <Modal
                 isOpen={!!deletingTemplate}
                 onClose={() => setDeletingTemplate(null)}
@@ -297,7 +284,6 @@ const RepositoryPanel = ({
                 </div>
             </Modal>
 
-            {/* 创建/编辑模板的模态框 */}
             <Modal
                 isOpen={showTemplateForm}
                 onClose={() => {
