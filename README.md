@@ -4,8 +4,14 @@
   </a>
 </h1>
 
+<!--
 <p align="center">
     <a href="http://134.199.168.173:5000/"> 🌍 Demo Deployment </a> <br>
+</p>
+-->
+
+<p align="center">
+    <i>Demo deployment was available during the course evaluation period. The deployment has been taken down after the assessment.</i>
 </p>
 
 # TaskMasters - Gamified Task Management System
@@ -20,6 +26,8 @@ TaskMasters combines traditional task management with gamification elements incl
 - **Achievement System**: Track progress and unlock achievements
 - **Dungeon Mode**: Combat system with monsters and reward cards
 - **Inventory & Shop**: Collect and purchase equipment and items
+
+This project was developed as part of the CS732 coursework at the University of Auckland, showcasing the ability to design and implement a gamified task management system.
 
 ## Features
 
@@ -287,7 +295,11 @@ TaskMasters/
 
 ## License
 
-This project is part of CS732 coursework at the University of Auckland.
+## License
+
+This project was developed for CS732 coursework at the University of Auckland.
+
+All source code is open for personal learning and demonstration purposes. Commercial use is not allowed without permission.
 
 All visual assets were AI-generated via ChatGPT and are used solely for this project.
 
